@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Optional, Dict
+from typing import Dict
 from models.training import TrainingPipeline, TrainingStatus
 from datetime import datetime
 import uuid
