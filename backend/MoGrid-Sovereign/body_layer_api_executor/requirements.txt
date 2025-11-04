@@ -1,0 +1,1 @@
+full contents of MoGrid-Sovereign/body_layer_api_executor/requirements.txt

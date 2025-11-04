@@ -1,0 +1,8 @@
+{
+  "name": "MoStar GRID Consciousness",
+  "description": "A web application to visualize and manage a conceptual Consciousness Repository, allowing users to view neural nodes, train conscious agents, and upload knowledge files.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
