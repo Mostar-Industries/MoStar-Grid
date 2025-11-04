@@ -1,2 +1,2 @@
 # MoStar-Grid
-Afeican AI Homeworld
+African AI Homeworld
