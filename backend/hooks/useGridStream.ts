@@ -1,74 +1,90 @@
-import { useState, useEffect } from 'react';
-import { StatPayload, ServicePayload, EventPayload } from '../types';
-import { availableAgents } from '../data/availableAgents';
+import { useEffect, useRef, useState } from 'react';
+import { WS_BASE } from '../src/lib/env';
 
-const serviceNames: ServicePayload['name'][] = ["API", "DB", "Cache", "Queue", "Auth", "Models"];
+export type GridStreamStatus = 'offline' | 'connecting' | 'online' | 'error';
 
-// Function to generate a single random service payload
-const generateServicePayload = (name: ServicePayload['name']): ServicePayload => {
-    const status = Math.random() < 0.9 ? 'ok' : Math.random() < 0.95 ? 'warn' : 'fail';
-    const rps = Math.random() * 100 + 50;
-    const p50 = Math.random() * 50 + 20;
-    return {
-        name,
-        status,
-        rps,
-        p50,
-        p95: p50 + Math.random() * 100,
-        errorRate: status === 'ok' ? Math.random() * 0.01 : Math.random() * 0.1,
-        uptime: Math.floor(Math.random() * 1000000) + 86400,
-        version: `1.${Math.floor(Math.random() * 5)}.${Math.floor(Math.random() * 10)}`,
-    };
-};
+export interface GridStreamData {
+  ts: number;
+  gridLatencyMs: number;
+  cpu: number;
+  mem: number;
+  service: string;
+  event: string;
+  mock?: boolean;
+}
 
-// Function to generate a single random event payload
-const generateEventPayload = (): EventPayload => {
-    const level = Math.random() < 0.8 ? 'info' : Math.random() < 0.95 ? 'warn' : 'error';
-    const agent = availableAgents[Math.floor(Math.random() * availableAgents.length)];
-    const texts = {
-        info: [`Scroll execution approved for agent '${agent}'.`, `New consciousness uploaded. Size: ${(Math.random() * 10).toFixed(2)}GB`, `Grid coherence re-calibrated.`],
-        warn: [`High latency detected on DB node. p95 > 200ms`, `Cache eviction rate at 85% capacity.`, `Soulprint validation for '${agent}' took > 500ms.`],
-        error: [`Failed to execute MoScript for '${agent}'. Resonance below threshold.`, `Soulprint verification failed for unknown entity.`, `DB connection pool exhausted. Requests failing.`]
-    };
-    return {
-        ts: new Date().toISOString(),
-        level,
-        text: texts[level][Math.floor(Math.random() * texts[level].length)]
-    };
-};
-
+/**
+ * Real-time Grid telemetry via WebSocket
+ * 
+ * Dev:  Connects to /ws/live-stream via Vite proxy
+ * Prod: Connects to VITE_WS_URL/live-stream
+ */
 export function useGridStream() {
-    const [stats, setStats] = useState<StatPayload | null>(null);
-    const [services, setServices] = useState<ServicePayload[]>([]);
-    const [events, setEvents] = useState<EventPayload[]>([]);
+  const [data, setData] = useState<GridStreamData | null>(null);
+  const [status, setStatus] = useState<GridStreamStatus>('offline');
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectRef = useRef(0);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            // Update stats
-            setStats(prev => ({
-                activeNodes: Math.floor(Math.random() * 100) + 400,
-                coherence: Math.random() * 0.02 + 0.98,
-                qps: (prev?.qps || 2100000) + (Math.random() * 20000 - 10000),
-                uploads: (prev?.uploads || 1283) + (Math.random() > 0.8 ? 1 : 0),
-                soulprints: 3,
-            }));
+  useEffect(() => {
+    let closed = false;
 
-            // Update services
-            setServices(serviceNames.map(generateServicePayload));
+    const connect = () => {
+      setStatus('connecting');
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
 
-            // Update events
-            if (Math.random() > 0.5) {
-                setEvents(prev => [generateEventPayload(), ...prev].slice(0, 50));
-            }
+      // dev: WS_BASE='/ws' -> ws(s)://host/ws/live-stream
+      // prod: WS_BASE='wss://api.example.com/ws' -> append '/live-stream'
+      const abs = WS_BASE.startsWith('ws') || WS_BASE.startsWith('wss');
+      const url = abs
+        ? `${WS_BASE.replace(/\/$/, '')}/live-stream`
+        : `${proto}://${location.host}${WS_BASE}/live-stream`;
 
-        }, 2000); // Update every 2 seconds
+      console.log('[useGridStream] Connecting to:', url);
 
-        // Initial data load
-        setServices(serviceNames.map(generateServicePayload));
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
 
+      ws.onopen = () => {
+        if (!closed) {
+          console.log('[useGridStream] Connected');
+          setStatus('online');
+          reconnectRef.current = 0;
+        }
+      };
 
-        return () => clearInterval(interval);
-    }, []);
+      ws.onmessage = (ev) => {
+        try {
+          const parsed = JSON.parse(ev.data);
+          setData(parsed);
+        } catch (e) {
+          console.error('[useGridStream] Failed to parse message:', e);
+        }
+      };
 
-    return { stats, services, events };
+      ws.onerror = (err) => {
+        console.error('[useGridStream] WebSocket error:', err);
+        setStatus('error');
+      };
+
+      ws.onclose = () => {
+        if (closed) return;
+        console.log('[useGridStream] Disconnected, reconnecting...');
+        setStatus('offline');
+        const backoff = Math.min(1000 * (2 ** reconnectRef.current), 8000);
+        reconnectRef.current += 1;
+        setTimeout(connect, backoff);
+      };
+    };
+
+    connect();
+
+    return () => {
+      closed = true;
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
+
+  return { data, status };
 }

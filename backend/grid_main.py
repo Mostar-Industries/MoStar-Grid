@@ -112,11 +112,19 @@ async def init_database():
 
 app = FastAPI(title="MoStar GRID Coordinator")
 
-# Add CORS - allow FRONTEND_ORIGIN env or allow all in dev
-FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "*")
+# CORS configuration for production deployment
+# ALLOW_ORIGINS env var should be comma-separated list of allowed origins
+# Example: ALLOW_ORIGINS=https://mo-star-grid.vercel.app,https://*.vercel.app
+ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS", "*")
+allowed_origins = (
+    [origin.strip() for origin in ALLOW_ORIGINS.split(",") if origin.strip()]
+    if ALLOW_ORIGINS != "*"
+    else ["*"]
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_ORIGIN] if FRONTEND_ORIGIN != "*" else ["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
