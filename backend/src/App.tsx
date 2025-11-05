@@ -11,6 +11,7 @@ import ImageForgePage from './pages/ImageForgePage';
 import MoScriptPage from './pages/MoScriptPage';
 import NotesPage from './pages/NotesPage';
 import ConnectionPage from './pages/ConnectionPage';
+import DoctrineIndex from './pages/DoctrineIndex';
 import UploadModal from './components/UploadModal';
 import TrainingModal from './components/TrainingModal';
 import { Page } from './types';
@@ -50,6 +51,8 @@ const App: React.FC = () => {
                 return <NotesPage />;
             case 'connection':
                 return <ConnectionPage />;
+            case 'doctrine':
+                return <DoctrineIndex />;
             // Add other pages here
             // case 'analytics':
             // case 'settings':

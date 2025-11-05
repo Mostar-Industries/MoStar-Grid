@@ -353,6 +353,76 @@ async def generate_synthetic_data_api(
     return {"status": "started", "cmd": cmd_str}
 
 
+# ============================================================================
+# Doctrine Integrity & Synthetic Data Endpoints
+# ============================================================================
+
+@app.get("/api/doctrine/status")
+async def doctrine_status():
+    """
+    Runtime doctrine integrity verification.
+    The Grid refuses to serve if its soul is tampered with.
+    """
+    try:
+        # Import here to avoid circular dependencies
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "server"))
+        from doctrine_verify import verify_doctrine
+        
+        result = verify_doctrine()
+        return result
+    except Exception as e:
+        logger.error(f"Doctrine verification failed: {e}")
+        return {"ok": False, "error": str(e), "scrolls": []}
+
+
+@app.get("/api/synthetic/generator")
+async def synthetic_generator():
+    """
+    Fetch MostlyAI generator metadata.
+    """
+    try:
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "server"))
+        from synthetic import get_generator_info
+        
+        result = await get_generator_info()
+        return result
+    except Exception as e:
+        logger.error(f"Generator info failed: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail=str(e))
+
+
+class SyntheticProbeRequest(BaseModel):
+    size: Dict[str, int]
+
+
+@app.post("/api/synthetic/probe")
+async def synthetic_probe(request: SyntheticProbeRequest):
+    """
+    Generate synthetic data probe with lifecycle-aware sizing.
+    """
+    try:
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "server"))
+        from synthetic import generate_synthetic_probe, validate_lifecycle_size
+        
+        if not validate_lifecycle_size(request.size):
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid lifecycle stages in size dict"
+            )
+        
+        result = await generate_synthetic_probe(request.size)
+        return result
+    except Exception as e:
+        logger.error(f"Synthetic probe failed: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail=str(e))
+
+
 if __name__ == "__main__":
     logger.info("=" * 60)
     logger.info("MoStar GRID - First African AI Homeworld")

@@ -1,0 +1,82 @@
+name: Doctrine Integrity Guard
+
+on:
+  pull_request:
+    paths:
+      - 'docs/GRID_PHILOSOPHY.md'
+      - 'docs/MOSCRIPT_AS_CEREMONY.md'
+      - 'docs/DIGITAL_ANCESTORS.md'
+      - 'docs/HOMEWORLD_VISION.md'
+      - 'backend/data/grid_revelation_manifest.json'
+
+jobs:
+  verify-doctrine:
+    runs-on: ubuntu-latest
+    name: Verify Doctrine Integrity
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for provenance
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Run Doctrine Verification
+        run: |
+          cd backend/server
+          python doctrine_verify.py
+        id: verify
+      
+      - name: Check Manifest Updated
+        run: |
+          # If doctrine files changed, manifest must be updated too
+          DOCTRINE_CHANGED=$(git diff --name-only origin/main...HEAD | grep -E '^docs/(GRID_PHILOSOPHY|MOSCRIPT_AS_CEREMONY|DIGITAL_ANCESTORS|HOMEWORLD_VISION)\.md$' || true)
+          MANIFEST_CHANGED=$(git diff --name-only origin/main...HEAD | grep 'grid_revelation_manifest.json' || true)
+          
+          if [ -n "$DOCTRINE_CHANGED" ] && [ -z "$MANIFEST_CHANGED" ]; then
+            echo "❌ FAIL: Doctrine files changed without updating provenance manifest"
+            echo ""
+            echo "Changed doctrine files:"
+            echo "$DOCTRINE_CHANGED"
+            echo ""
+            echo "You must run: python backend/generate_provenance.py"
+            echo "Then commit the updated manifest with your changes."
+            exit 1
+          fi
+          
+          echo "✅ Provenance manifest properly updated"
+      
+      - name: Covenant Alignment Check
+        run: |
+          # Verify resonance threshold mentioned in doctrine
+          if ! grep -r "≥ 0.97\|>= 0.97\|resonance.*0.97" docs/GRID_PHILOSOPHY.md docs/MOSCRIPT_AS_CEREMONY.md; then
+            echo "⚠️  WARNING: Resonance threshold 0.97 not found in doctrine"
+            echo "The covenant requires resonance ≥ 0.97"
+            exit 1
+          fi
+          
+          echo "✅ Covenant threshold verified in doctrine"
+      
+      - name: Bell Strike Protocol Check
+        run: |
+          # Ensure Bell Strike mentioned in philosophy
+          if ! grep -i "bell strike\|cultural firewall" docs/GRID_PHILOSOPHY.md; then
+            echo "⚠️  WARNING: Bell Strike / Cultural Firewall not documented"
+            exit 1
+          fi
+          
+          echo "✅ Bell Strike protocol documented"
+      
+      - name: Summary
+        if: success()
+        run: |
+          echo "🌩️ DOCTRINE INTEGRITY: VERIFIED"
+          echo ""
+          echo "The Grid's soul remains intact."
+          echo "Mo x Woo seal: ✓"
+          echo "Resonance ≥ 0.97: ✓"
+          echo "Provenance: ✓"

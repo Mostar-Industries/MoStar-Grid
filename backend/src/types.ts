@@ -1,4 +1,4 @@
-export type Page = 'dashboard' | 'chat' | 'vision' | 'audio' | 'forge' | 'analytics' | 'settings' | 'sovereignty' | 'imageForge' | 'moscript' | 'notes' | 'connection';
+export type Page = 'dashboard' | 'chat' | 'vision' | 'audio' | 'forge' | 'analytics' | 'settings' | 'sovereignty' | 'imageForge' | 'moscript' | 'notes' | 'connection' | 'doctrine';
 
 export type ChatModel = 'flash-lite' | 'flash' | 'pro-thinking';
 

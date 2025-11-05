@@ -24,6 +24,7 @@
 ## 📋 Pre-Deployment Checklist
 
 ### ✅ Local Development Working
+
 - [ ] FastAPI runs on `http://127.0.0.1:8000`
 - [ ] Frontend runs on `http://localhost:5173`
 - [ ] `/api/health` returns `{"ok": true}`
@@ -32,6 +33,7 @@
 - [ ] Vite proxy routes `/api` and `/ws` correctly
 
 ### ✅ Environment Variables Ready
+
 - [ ] `DATABASE_URL` - Neon PostgreSQL connection string
 - [ ] `VITE_API_KEY` - Gemini API key (for client features)
 - [ ] `ALLOW_ORIGINS` - Vercel domains (for CORS)
@@ -43,18 +45,21 @@
 ### Option 1: Railway (Recommended)
 
 1. **Install Railway CLI**
+
    ```bash
    npm install -g @railway/cli
    railway login
    ```
 
 2. **Create New Project**
+
    ```bash
    railway init
    railway link
    ```
 
 3. **Set Environment Variables**
+
    ```bash
    railway variables set DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
    railway variables set ALLOW_ORIGINS="https://mo-star-grid.vercel.app,https://*.vercel.app"
@@ -64,16 +69,19 @@
    ```
 
 4. **Create Procfile** (in repo root)
+
    ```
    web: cd backend && python grid_main.py
    ```
 
 5. **Deploy**
+
    ```bash
    railway up
    ```
 
 6. **Get Public URL**
+
    ```bash
    railway domain
    # Note the URL, e.g., https://mostar-grid-production.up.railway.app
@@ -81,7 +89,7 @@
 
 ### Option 2: Render
 
-1. Create new **Web Service** at https://render.com
+1. Create new **Web Service** at <https://render.com>
 2. Connect GitHub repository
 3. Set **Build Command**: `cd backend && pip install -r requirements.txt`
 4. Set **Start Command**: `cd backend && python grid_main.py`
@@ -91,12 +99,14 @@
 ### Option 3: Fly.io
 
 1. **Install Fly CLI**
+
    ```bash
    curl -L https://fly.io/install.sh | sh
    fly auth login
    ```
 
 2. **Create fly.toml** (in repo root)
+
    ```toml
    app = "mostar-grid"
    
@@ -121,6 +131,7 @@
    ```
 
 3. **Create Dockerfile** (in repo root)
+
    ```dockerfile
    FROM python:3.11-slim
    WORKDIR /app
@@ -131,6 +142,7 @@
    ```
 
 4. **Deploy**
+
    ```bash
    fly launch
    fly secrets set DATABASE_URL="..." ALLOW_ORIGINS="..."
@@ -143,7 +155,7 @@
 
 ### 1. Set Environment Variables in Vercel
 
-Go to: https://vercel.com/mo-101s-projects/mo-star-grid/settings/environment-variables
+Go to: <https://vercel.com/mo-101s-projects/mo-star-grid/settings/environment-variables>
 
 Add the following for **Production**:
 
@@ -212,7 +224,7 @@ websocat wss://mostar-grid-production.up.railway.app/ws/live-stream
 
 ### Frontend Integration
 
-1. Open https://mo-star-grid.vercel.app
+1. Open <https://mo-star-grid.vercel.app>
 2. Open DevTools → Network → WS tab
 3. Should see active WebSocket connection to `wss://mostar-grid-production.up.railway.app/ws/live-stream`
 4. Should see frames streaming every 1 second
@@ -224,12 +236,14 @@ websocat wss://mostar-grid-production.up.railway.app/ws/live-stream
 ## 🔒 Security Checklist
 
 ### Backend
+
 - [ ] `ALLOW_ORIGINS` set to Vercel domains only (no `*`)
 - [ ] `DATABASE_URL` uses `sslmode=require`
 - [ ] No sensitive keys in git history
 - [ ] HTTPS enforced (Railway/Render/Fly do this automatically)
 
 ### Frontend
+
 - [ ] `VITE_API_KEY` only used for client-side features (not DB access)
 - [ ] Database credentials NEVER in frontend env vars
 - [ ] All API calls go through backend (no direct DB access)
@@ -243,6 +257,7 @@ websocat wss://mostar-grid-production.up.railway.app/ws/live-stream
 **Symptom**: CORS errors in browser console
 
 **Fix**: Check backend `ALLOW_ORIGINS` includes Vercel domain:
+
 ```bash
 railway variables set ALLOW_ORIGINS="https://mo-star-grid.vercel.app,https://mo-star-grid-git-main-mo-101s-projects.vercel.app"
 ```
@@ -251,12 +266,15 @@ railway variables set ALLOW_ORIGINS="https://mo-star-grid.vercel.app,https://mo-
 
 **Symptom**: `useGridStream` status stays 'offline'
 
-**Fix**: 
+**Fix**:
+
 1. Verify `VITE_WS_URL` uses `wss://` (not `ws://`)
 2. Check backend WebSocket endpoint:
+
    ```bash
    websocat wss://your-backend.railway.app/ws/live-stream
    ```
+
 3. Ensure backend supports WebSocket upgrades (FastAPI does by default)
 
 ### Database connection fails
@@ -264,10 +282,13 @@ railway variables set ALLOW_ORIGINS="https://mo-star-grid.vercel.app,https://mo-
 **Symptom**: Backend logs show "Database connection failed"
 
 **Fix**:
+
 1. Verify `DATABASE_URL` format:
+
    ```
    postgresql://user:password@host:5432/dbname?sslmode=require
    ```
+
 2. Check Neon connection string is correct
 3. Ensure backend can reach Neon (most cloud providers allow this)
 
@@ -276,8 +297,10 @@ railway variables set ALLOW_ORIGINS="https://mo-star-grid.vercel.app,https://mo-
 **Symptom**: `/api/notes` returns 500 or empty array
 
 **Fix**:
+
 1. Check backend logs for SQL errors
 2. Verify `notes` table exists in Neon:
+
    ```sql
    CREATE TABLE IF NOT EXISTS notes (
        id SERIAL PRIMARY KEY,
@@ -286,6 +309,7 @@ railway variables set ALLOW_ORIGINS="https://mo-star-grid.vercel.app,https://mo-
        created_at TIMESTAMPTZ DEFAULT NOW()
    );
    ```
+
 3. Run `backend/scripts/init_db.py` if needed
 
 ---
@@ -295,6 +319,7 @@ railway variables set ALLOW_ORIGINS="https://mo-star-grid.vercel.app,https://mo-
 ### Health Checks
 
 Set up monitoring pings to:
+
 - `https://your-backend.railway.app/api/health` (every 5 minutes)
 - Expected: `{"status": "OK"}`
 
@@ -307,6 +332,7 @@ Set up monitoring pings to:
 ### Metrics
 
 Watch for:
+
 - Response times (should be < 500ms for most endpoints)
 - WebSocket connection count
 - Database connection pool usage
