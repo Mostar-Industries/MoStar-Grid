@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { WS_BASE } from '../src/lib/env';
+import { WS_BASE } from '../lib/env';
 
 export type GridStreamStatus = 'offline' | 'connecting' | 'online' | 'error';
 

@@ -1,0 +1,298 @@
+{
+  "timestamp": "2025-11-05T20:59:54.8778779Z",
+  "backend": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend",
+  "src": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src",
+  "attic": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\__attic__\\20251105-235954",
+  "actions": [
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\EventTicker.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\EventTicker.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\Header.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\Header.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\KnowledgeCard.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\KnowledgeCard.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\KpiCard.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\KpiCard.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\ScrollCard.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\ScrollCard.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\ServiceHealthCard.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\ServiceHealthCard.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\Sidebar.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\Sidebar.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\Sparkline.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\Sparkline.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\StatsCard.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\StatsCard.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\StatusIndicatorCard.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\StatusIndicatorCard.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\TickerFeed.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\TickerFeed.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\TrainingModal.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\TrainingModal.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\components\\UploadModal.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\components\\UploadModal.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\pages\\AudioPage.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\pages\\AudioPage.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\pages\\ChatPage.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\pages\\ChatPage.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\pages\\ConnectionPage.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\pages\\ConnectionPage.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\pages\\Dashboard.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\pages\\Dashboard.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\pages\\ForgePage.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\pages\\ForgePage.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\pages\\ImageForgePage.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\pages\\ImageForgePage.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\pages\\MoScriptPage.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\pages\\MoScriptPage.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\pages\\NotesPage.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\pages\\NotesPage.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\pages\\SovereigntyPage.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\pages\\SovereigntyPage.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\pages\\VisionPage.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\pages\\VisionPage.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\hooks\\useGridStatus.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\hooks\\useGridStatus.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\hooks\\useGridStream.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\hooks\\useGridStream.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\hooks\\useSSE.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\hooks\\useSSE.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\lib\\db.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\lib\\db.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\lib\\mostar\\BuilderPacket.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\lib\\mostar\\BuilderPacket.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\lib\\mostar\\MoScriptEngine.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\lib\\mostar\\MoScriptEngine.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\lib\\mostar\\ResonanceEngine.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\lib\\mostar\\ResonanceEngine.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\lib\\mostar\\ScrollValidator.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\lib\\mostar\\ScrollValidator.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\lib\\mostar\\WooInterpreter.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\lib\\mostar\\WooInterpreter.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\services\\geminiService.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\services\\geminiService.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\services\\metricSimulator.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\services\\metricSimulator.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\services\\moscriptRegistry.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\services\\moscriptRegistry.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\types\\moscript.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\types\\moscript.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\utils\\media.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\utils\\media.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\data\\availableAgents.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\data\\availableAgents.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\data\\codex.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\data\\codex.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\data\\knowledgeCards.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\data\\knowledgeCards.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\data\\mockData.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\data\\mockData.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\data\\mogrid_u_codex.json",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\data\\mogrid_u_codex.json"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\data\\mogrid_u_codex.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\data\\mogrid_u_codex.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\data\\scrolls.json",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\data\\scrolls.json"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\data\\scrolls.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\data\\scrolls.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\data\\soulprints.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\data\\soulprints.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\data\\statsCards.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\data\\statsCards.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\db\\schema.sql",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\db\\schema.sql"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\db\\ScrollRegistry.sql",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\db\\ScrollRegistry.sql"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\scripts\\index.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\scripts\\index.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\scripts\\init_db.py",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\scripts\\init_db.py"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\scripts\\logistics\\costOptimization.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\scripts\\logistics\\costOptimization.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\scripts\\logistics\\freightEfficiency.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\scripts\\logistics\\freightEfficiency.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\training\\pipeline.py",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\training\\pipeline.py"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\App.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\App.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\index.tsx",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\index.tsx"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\types.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\types.ts"
+    },
+    {
+      "from": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\vite-env.d.ts",
+      "op": "move",
+      "to": "C:\\Users\\AI\\Documents\\GitHub\\MoStar-Grid\\backend\\src\\vite-env.d.ts"
+    }
+  ]
+}
