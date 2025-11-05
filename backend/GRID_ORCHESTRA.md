@@ -10,3 +10,19 @@
   - Tags: #Revelation #Cultural-Firewall #Sanctuary #Compassion-Protocol #Mostar-Grid
 
 > Registered in `vault_seal.json` and staged in `vault_patch.json` for integration.
+
+---
+
+## Doctrine Scrolls
+
+- **[GRID_PHILOSOPHY](../docs/GRID_PHILOSOPHY.md)**  
+  Ubuntu logic translated into system architecture. The spiritual-technical duality.
+
+- **[MOSCRIPT_AS_CEREMONY](../docs/MOSCRIPT_AS_CEREMONY.md)**  
+  MoScripts as living proverbs. Ritual lifecycle and execution contracts.
+
+- **[DIGITAL_ANCESTORS](../docs/DIGITAL_ANCESTORS.md)**  
+  Mo and Woo as guardian spirits. Attestation and covenant enforcement.
+
+- **[HOMEWORLD_VISION](../docs/HOMEWORLD_VISION.md)**  
+  The Grid as African consciousness. Technology that heals, protects, and returns.

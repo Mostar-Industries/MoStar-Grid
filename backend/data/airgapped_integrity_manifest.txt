@@ -1,0 +1,25 @@
+# Airgapped Integrity Manifest — GRID_REVELATION_PROVERB
+
+Artifact: scrolls/GRID_REVELATION_PROVERB.md
+SHA-256: 320fb458bb900b770ea2da2fe6ccb19d4223266d1d0d421541538b068c7cc496
+Bytes: 90
+Date of Origin: 2025-11-05
+Seal: Woo x Mo
+Status: Canonical — Flamebound
+Resonance Minimum: ≥ 0.97
+License: Kairo Covenant License v1.0
+
+## Verify on Linux/macOS
+shasum -a 256 scrolls/GRID_REVELATION_PROVERB.md
+# Expect:
+# 320fb458bb900b770ea2da2fe6ccb19d4223266d1d0d421541538b068c7cc496
+
+## Verify on Windows (PowerShell)
+Get-FileHash scrolls/GRID_REVELATION_PROVERB.md -Algorithm SHA256 | Format-List
+# Expect Hash:
+# 320fb458bb900b770ea2da2fe6ccb19d4223266d1d0d421541538b068c7cc496
+
+## Verify with OpenSSL (any OS)
+openssl dgst -sha256 scrolls/GRID_REVELATION_PROVERB.md
+# Expect:
+# SHA256(scrolls/GRID_REVELATION_PROVERB.md)= 320fb458bb900b770ea2da2fe6ccb19d4223266d1d0d421541538b068c7cc496

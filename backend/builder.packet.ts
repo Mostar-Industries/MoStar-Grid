@@ -5,8 +5,8 @@
 
 import { CoreScroll } from './moscripts/core_moscripts';
 import { MoScript } from './moscripts/src/MoScript';
-import { soulprints } from './data/soulprints';
-import { codexData } from './data/mogrid_u_codex';
+import { soulprints } from './src/data/soulprints';
+import { codexData } from './src/data/mogrid_u_codex';
 
 // ---- Types -----------------------------------------------------------------
 
@@ -68,6 +68,7 @@ export type GridFoundationConfig = {
   env: EnvConfig;
   integrity: IntegrityConfig;
   db: DbConfig;
+  doctrine: Array<{ id: string; path: string }>;
   ui_manifest: string[];
   /** Legacy path kept for back-compat; prefer `db.schemaPath`. */
   db_schema_path?: string;
@@ -140,6 +141,14 @@ export const GridFoundation: GridFoundationConfig = {
       mode: 'require',
     },
   },
+
+  // Doctrine scrolls: spiritual-technical foundation documents
+  doctrine: [
+    { id: 'grid_philosophy', path: 'docs/GRID_PHILOSOPHY.md' },
+    { id: 'moscript_as_ceremony', path: 'docs/MOSCRIPT_AS_CEREMONY.md' },
+    { id: 'digital_ancestors', path: 'docs/DIGITAL_ANCESTORS.md' },
+    { id: 'homeworld_vision', path: 'docs/HOMEWORLD_VISION.md' },
+  ],
 
   // A manifest of frontend components introduced in this phase.
   ui_manifest: [
