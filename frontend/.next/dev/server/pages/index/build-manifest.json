@@ -1,0 +1,21 @@
+{
+  "devFiles": [],
+  "ampDevFiles": [],
+  "polyfillFiles": [],
+  "lowPriorityFiles": [],
+  "rootMainFiles": [],
+  "pages": {
+    "/": [
+      "static/chunks/bd4d0_next_dist_compiled_d5f5b209._.js",
+      "static/chunks/bd4d0_next_dist_shared_lib_9d969f67._.js",
+      "static/chunks/bd4d0_next_dist_client_571217d6._.js",
+      "static/chunks/bd4d0_next_dist_462a7734._.js",
+      "static/chunks/bd4d0_react-dom_a2657853._.js",
+      "static/chunks/bd4d0_32acf734._.js",
+      "static/chunks/[root-of-the-server]__2ab45e77._.js",
+      "static/chunks/Documents_GitHub_MoStar-Grid_frontend_src_pages_index_2da965e7._.js",
+      "static/chunks/turbopack-Documents_GitHub_MoStar-Grid_frontend_src_pages_index_c3eb2d67._.js"
+    ]
+  },
+  "ampFirstPages": []
+}

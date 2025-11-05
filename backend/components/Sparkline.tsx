@@ -14,7 +14,7 @@ export function Sparkline({ data, width = 120, height = 28 }: { data: number[]; 
     }, [data, width, height]); // Recalculate if data or dimensions change
 
     if (!data || data.length < 2) {
-        return <div style={{ width, height }} className="flex items-center justify-center text-gray-500 text-xs">...</div>;
+        return <div style={{ width, height }} className="flex items-center justify-center text-yellow-500 text-xs">...</div>;
     }
 
     const max = Math.max(...data);

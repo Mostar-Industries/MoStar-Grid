@@ -1,0 +1,1 @@
+full contents of MoGrid-Sovereign/mind_layer_verdict_engine/requirements.txt

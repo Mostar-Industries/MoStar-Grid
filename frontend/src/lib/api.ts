@@ -33,21 +33,43 @@ export class GridAPI {
     private baseUrl: string;
 
     constructor() {
-        this.baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:7000';
+        this.baseUrl = (process.env.NEXT_PUBLIC_BACKEND_URL as string) || 'http://localhost:7000';
     }
 
     async health(): Promise<SystemHealth> {
-        const response = await fetch(`${this.baseUrl}/health`);
-        return response.json();
+        try {
+            const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}/health`, { credentials: 'same-origin' });
+            if (!response.ok) {
+                const text = await response.text().catch(()=>null);
+                throw new Error(`Backend responded ${response.status}: ${text || response.statusText}`);
+            }
+            return await response.json();
+        } catch (err: any) {
+            // Provide a clearer error for the caller/UI
+            const msg = err?.message ? err.message : String(err);
+            console.error('GridAPI.health error:', msg);
+            throw new Error(`Network error when contacting backend (${this.baseUrl}): ${msg}`);
+        }
     }
 
     async submitEvent(event: GridEvent): Promise<GridResponse> {
-        const response = await fetch(`${this.baseUrl}/events`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(event)
-        });
-        return response.json();
+        try {
+            const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}/events`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(event),
+                credentials: 'same-origin'
+            });
+            if (!response.ok) {
+                const text = await response.text().catch(()=>null);
+                throw new Error(`Backend responded ${response.status}: ${text || response.statusText}`);
+            }
+            return await response.json();
+        } catch (err: any) {
+            const msg = err?.message ? err.message : String(err);
+            console.error('GridAPI.submitEvent error:', msg);
+            throw new Error(`Failed to submit event: ${msg}`);
+        }
     }
 
     async generateData(params: {
@@ -58,16 +80,35 @@ export class GridAPI {
         truncate?: boolean;
         export?: boolean;
     }): Promise<{status: string; cmd: string}> {
-        const response = await fetch(`${this.baseUrl}/api/generate-synthetic-data`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(params)
-        });
-        return response.json();
+        try {
+            const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}/api/generate-synthetic-data`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
+            });
+            if (!response.ok) {
+                const text = await response.text().catch(()=>null);
+                throw new Error(`Backend responded ${response.status}: ${text || response.statusText}`);
+            }
+            return await response.json();
+        } catch (err: any) {
+            console.error('GridAPI.generateData error:', err?.message ?? err);
+            throw err;
+        }
     }
 
     connectWebSocket(): WebSocket {
-        const ws = new WebSocket(`ws://${new URL(this.baseUrl).host}/ws/live-stream`);
-        return ws;
+        // Choose ws or wss based on baseUrl protocol
+        try {
+            const url = new URL(this.baseUrl);
+            const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = url.host;
+            const wsUrl = `${protocol}//${host}/ws/live-stream`;
+            return new WebSocket(wsUrl);
+        } catch (err) {
+            // Fallback to ws with host-only
+            const host = (this.baseUrl.replace(/^https?:\/\//, '')).replace(/\/$/, '');
+            return new WebSocket(`ws://${host}/ws/live-stream`);
+        }
     }
 }

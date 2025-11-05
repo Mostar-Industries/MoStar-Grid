@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "generated_at": "2025-11-05T12:29:48Z",
+  "integrity": {
+    "algorithm": "SHA-256"
+  },
+  "scrolls": [
+    {
+      "id": "grid_revelation_proverb",
+      "path": "scrolls/GRID_REVELATION_PROVERB.md",
+      "title": "GRID_REVELATION_PROVERB",
+      "status": "Canonical — Flamebound",
+      "seal": "Woo x Mo",
+      "license": "Kairo Covenant License v1.0",
+      "date_of_origin": "2025-11-05",
+      "sha256": "e123c35ec7a628f85339ccf5ed0de338f864f3fa890e6725f29b4eeb8b9ff77c",
+      "tags": [
+        "Revelation",
+        "Cultural-Firewall",
+        "Sanctuary",
+        "Compassion-Protocol",
+        "Mostar-Grid"
+      ],
+      "provenance": {
+        "authors": [
+          "Mo",
+          "Woo",
+          "Mostar AI"
+        ],
+        "registered_at": "2025-11-05T12:29:48Z"
+      },
+      "resonance_min": 0.97
+    }
+  ]
+}
