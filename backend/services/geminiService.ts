@@ -3,8 +3,9 @@ import { ChatModel } from "../types";
 import { fileToBase64 } from "../utils/media";
 
 // Fix: Add comment to clarify API_KEY source.
-// The API key MUST be obtained exclusively from the environment variable process.env.API_KEY.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// The API key MUST be obtained exclusively from the environment variable.
+// In Vite, use import.meta.env for environment variables.
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
 
 // Function to analyze a file for upload
 export const analyzeFileForUpload = async (file: File): Promise<{ description: string, tags: string[] }> => {

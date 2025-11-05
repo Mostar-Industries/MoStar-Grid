@@ -24,7 +24,7 @@ const ForgePage: React.FC = () => {
 
         try {
             // Fix: Create a new instance of GoogleGenAI for the API call.
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
             // Fix: Use a powerful model suitable for "The Forge".
             const response = await ai.models.generateContent({
                 model: "gemini-2.5-pro",
