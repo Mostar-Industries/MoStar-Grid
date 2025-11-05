@@ -1,12 +1,16 @@
 import asyncio
+import json
 import logging
+import os
+import shlex
+import subprocess
 import time
 import uuid
 import asyncpg
 import uvicorn
 from config import get_db_connection_string
 from datetime import datetime, timezone
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from contextlib import asynccontextmanager
 from config import ALLOW_NO_DB, API_HOST, API_PORT, GRID_MODE, get_db_connection_string
 from fastapi import BackgroundTasks, FastAPI, WebSocket
@@ -246,13 +250,41 @@ async def submit_event(event: GridEvent):
 
 
 @app.websocket("/ws/live-stream")
-async def websocket_endpoint(websocket: WebSocket):
+async def ws_live_stream(websocket: WebSocket):
     await websocket.accept()
     try:
+        # Import psutil here to avoid startup dependency
+        try:
+            import psutil
+            has_psutil = True
+        except ImportError:
+            has_psutil = False
+            logger.warning("psutil not installed; using simulated metrics")
+        
         while True:
-            data = await websocket.receive_text()
-            await websocket.send_text(f"Message received: {data}")
-    except Exception:
+            if has_psutil:
+                cpu = psutil.cpu_percent(interval=None)
+                mem = psutil.virtual_memory().percent
+            else:
+                # Fallback simulation
+                cpu = 45.0 + (time.time() % 30) - 15
+                mem = 60.0 + (time.time() % 20) - 10
+            
+            payload = {
+                "ts": time.time(),
+                "gridLatencyMs": int(max(1, 6 * (100 - cpu))),
+                "cpu": cpu,
+                "mem": mem,
+                "service": "gateway",
+                "event": "telemetry.tick",
+                "mock": not has_psutil
+            }
+            await websocket.send_text(json.dumps(payload))
+            await asyncio.sleep(1)
+    except WebSocketDisconnect:
+        logger.info("WebSocket client disconnected")
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
         await websocket.close()
 
 
