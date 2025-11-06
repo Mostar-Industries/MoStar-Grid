@@ -1,4 +1,4 @@
-# MoStar GRID
+# MoStar GRID - MoStar Industries
 
 **Sovereign, Africa-centric intelligence stack.**
 
@@ -296,7 +296,7 @@ Set `ALLOW_ORIGINS` to your frontend origin (local or Vercel).
 
 ## License
 
-Unless otherwise noted, code is under the project's default license.
+Unless otherwise noted, code is under the Kairo Covenant License v1.0. governed by MoStar Industries
 
 Sacred scrolls (e.g., `GRID_REVELATION_PROVERB.md`) are **Flamebound** under Kairo Covenant License v1.0. Do not modify without Council Patch.
 
