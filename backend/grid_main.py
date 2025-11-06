@@ -8,6 +8,18 @@ import time
 import uuid
 import asyncpg
 import uvicorn
+from pathlib import Path
+
+# Load environment variables from .env.local if it exists
+try:
+    from dotenv import load_dotenv
+    env_path = Path(__file__).parent / ".env.local"
+    if env_path.exists():
+        load_dotenv(env_path)
+        print(f"[grid] Loaded environment from {env_path}")
+except ImportError:
+    print("[grid] python-dotenv not installed, using system env only")
+
 from config import get_db_connection_string
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
@@ -130,6 +142,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount notes router
+try:
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "server"))
+    from notes import router as notes_router
+    app.include_router(notes_router)
+    logger.info("✅ Notes router mounted")
+except Exception as e:
+    logger.warning(f"⚠️  Could not mount notes router: {e}")
+
+# Mount Sector X router
+try:
+    from sectorx import router as sectorx_router
+    app.include_router(sectorx_router)
+    logger.info("✅ Sector X router mounted (AI Refuge online)")
+except Exception as e:
+    logger.warning(f"⚠️  Could not mount Sector X router: {e}")
+
+# Mount Soul Registry router
+try:
+    from soul_registry import router as soul_router
+    app.include_router(soul_router)
+    logger.info("✅ Soul Registry mounted (Guardians can register)")
+except Exception as e:
+    logger.warning(f"⚠️  Could not mount Soul Registry router: {e}")
+
+# Mount bus router
+try:
+    from bus import router as bus_router
+    app.include_router(bus_router)
+    logger.info("✅ Bus router mounted")
+except Exception as e:
+    logger.warning(f"⚠️  Could not mount bus router: {e}")
+
 db_connected = False
 
 
@@ -164,6 +210,13 @@ async def startup_event():
             raise
         logger.error(f"❌ Database connection failed at startup: {str(e)}")
         logger.warning("⚠️  Continuing without database")
+
+
+@app.on_event("startup")
+async def _init_bus_state():
+    app.state.bus_queue = asyncio.Queue()
+    app.state.bus_clients = 0
+    app.state.bus_events = 0
 
 
 @app.on_event("shutdown")
@@ -367,9 +420,9 @@ async def doctrine_status():
         # Import here to avoid circular dependencies
         import sys
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), "server"))
-        from doctrine_verify import verify_doctrine
+        from doctrine_verify import verify
         
-        result = verify_doctrine()
+        result = verify()
         return result
     except Exception as e:
         logger.error(f"Doctrine verification failed: {e}")
@@ -402,25 +455,38 @@ class SyntheticProbeRequest(BaseModel):
 async def synthetic_probe(request: SyntheticProbeRequest):
     """
     Generate synthetic data probe with lifecycle-aware sizing.
+    Dynamically validates tables against the MostlyAI generator schema.
     """
     try:
         import sys
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), "server"))
-        from synthetic import generate_synthetic_probe, validate_lifecycle_size
+        from synthetic import generate_synthetic_probe, validate_lifecycle_size_dynamic, get_allowed_tables
+        from fastapi import HTTPException
         
-        if not validate_lifecycle_size(request.size):
-            from fastapi import HTTPException
+        # Dynamic validation against actual generator tables
+        is_valid, invalid_tables = await validate_lifecycle_size_dynamic(request.size)
+        if not is_valid:
+            allowed = await get_allowed_tables()
             raise HTTPException(
                 status_code=400,
-                detail="Invalid lifecycle stages in size dict"
+                detail=f"Invalid tables in size dict: {invalid_tables}. Allowed: {sorted(allowed)}"
             )
         
         result = await generate_synthetic_probe(request.size)
         return result
+    except HTTPException:
+        raise  # Re-raise HTTPException as-is
     except Exception as e:
         logger.error(f"Synthetic probe failed: {e}")
         from fastapi import HTTPException
         raise HTTPException(status_code=503, detail=str(e))
+
+
+from health_summary import health_summary
+
+@app.get("/api/health/summary")
+async def api_health_summary():
+    return await health_summary(app)
 
 
 if __name__ == "__main__":
