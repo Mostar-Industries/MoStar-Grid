@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone-esm';
+import { useDropzone } from 'react-dropzone';
 import { analyzeImage, analyzeVideo } from '../services/geminiService';
 
 const PageTitle: React.FC<{ title: string; children?: React.ReactNode }> = ({ title, children }) => (

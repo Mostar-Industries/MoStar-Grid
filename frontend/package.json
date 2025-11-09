@@ -1,5 +1,5 @@
 {
-  "name": "mostar-grid-consciousness",
+  "name": "the-grid:-african-ai-consciousness",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,18 +9,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^1.29.0",
+    "axios": "^1.13.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@google/genai": "^1.28.0",
-    "marked": "^12.0.2",
-    "react-dropzone-esm": "^15.2.0",
-    "path": "^0.12.7",
-    "vite": "^7.2.0",
-    "@vitejs/plugin-react": "^5.1.0",
-    "url": "^0.11.4"
+    "react-dropzone": "^14.3.8",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.0",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
+    "@types/react-dropzone": "^4.2.2",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"

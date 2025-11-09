@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generateImageFromText } from '../services/geminiService';
+import { generateImageFromText } from '../services/geminiService'; // FIX: Corrected import path for generateImageFromText
 
 const PageTitle: React.FC<{ title: string; children?: React.ReactNode }> = ({ title, children }) => (
     <div className="mb-6 flex justify-between items-center">

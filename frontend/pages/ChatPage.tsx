@@ -1,143 +1,139 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { marked } from "marked";
-import { startChat } from '../services/geminiService';
-import { ChatMessage, ChatModel } from '../types';
-
-interface Chat {
-  sendMessage: (message: string) => Promise<any>;
-}
-
-const PageTitle: React.FC<{ title: string; children?: React.ReactNode }> = ({ title, children }) => (
-    <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">{title}</h2>
-        {children && <div className="flex space-x-2">{children}</div>}
-    </div>
-);
+import React, { useState } from 'react';
+import axios from 'axios';
 
 const ChatPage: React.FC = () => {
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [input, setInput] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [chatModel, setChatModel] = useState<ChatModel>('flash');
-    const chatRef = useRef<any>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [input, setInput] = useState('');
+  const [response, setResponse] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [contextUsed, setContextUsed] = useState(false);
 
-    useEffect(() => {
-        // Initialize chat session when model changes
-        try {
-           chatRef.current = startChat(chatModel);
-           setMessages([]); // Clear history when model changes
-           setError('');
-        } catch (e) {
-            console.error(e);
-            setError('Failed to initialize chat. API Key might be missing.');
-        }
-    }, [chatModel]);
+  const sendMessage = async () => {
+    if (!input.trim()) return;
 
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+    setLoading(true);
+    setError('');
+    setResponse('');
 
-    const handleSend = async () => {
-        if (!input.trim() || isLoading) return;
+    try {
+      const res = await axios.post('http://localhost:7000/api/chat', { 
+        prompt: input 
+      });
+      
+      setResponse(res.data.response || '[No reply]');
+      setContextUsed(res.data.context_used || false);
+    } catch (err: any) {
+      if (err.response?.status === 503) {
+        setError('⚠️ Ollama is not running. Start it with: ollama run mistral');
+      } else {
+        setError(`Error: ${err.response?.data?.detail || err.message}`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const userMessage: ChatMessage = { role: 'user', parts: [{ text: input }], timestamp: Date.now() };
-        setMessages(prev => [...prev, userMessage]);
-        const currentInput = input;
-        setInput('');
-        setIsLoading(true);
-        setError('');
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      sendMessage();
+    }
+  };
 
-        try {
-            if (!chatRef.current) throw new Error("Chat session not initialized.");
-
-            const stream = await chatRef.current.sendMessageStream({ message: currentInput });
-
-            let modelResponse = '';
-            let firstChunk = true;
-
-            for await (const chunk of stream) {
-                // Fix: Correctly access text from streaming response chunk
-                const chunkText = chunk.text;
-                modelResponse += chunkText;
-                
-                if (firstChunk) {
-                    setMessages(prev => [...prev, { role: 'model', parts: [{ text: modelResponse }], timestamp: Date.now() }]);
-                    firstChunk = false;
-                } else {
-                    setMessages(prev => {
-                        const newMessages = [...prev];
-                        const lastMessage = newMessages[newMessages.length - 1];
-                        if (lastMessage.role === 'model') {
-                            lastMessage.parts[0].text = modelResponse;
-                        }
-                        return newMessages;
-                    });
-                }
-            }
-        } catch (err) {
-            console.error(err);
-            setError("Sorry, I couldn't get a response. Please check the console for details.");
-            setMessages(prev => { // Remove the potentially empty model message on error
-                const lastMessage = prev[prev.length - 1];
-                if (lastMessage && lastMessage.role === 'model' && lastMessage.parts[0].text === '') {
-                    return prev.slice(0, -1);
-                }
-                return prev;
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <div className="flex flex-col h-full max-h-[calc(100vh-150px)]">
-            <PageTitle title="GRID Chat">
-                <div className="flex items-center space-x-2 bg-gray-800 p-1 rounded-lg">
-                    <button onClick={() => setChatModel('flash-lite')} className={`px-3 py-1 text-sm rounded-md ${chatModel === 'flash-lite' ? 'bg-purple-600 text-white' : 'text-gray-300'}`}>Fast</button>
-                    <button onClick={() => setChatModel('flash')} className={`px-3 py-1 text-sm rounded-md ${chatModel === 'flash' ? 'bg-purple-600 text-white' : 'text-gray-300'}`}>Balanced</button>
-                    <button onClick={() => setChatModel('pro-thinking')} className={`px-3 py-1 text-sm rounded-md ${chatModel === 'pro-thinking' ? 'bg-purple-600 text-white' : 'text-gray-300'}`}>Complex</button>
-                </div>
-            </PageTitle>
-
-            <div className="flex-1 overflow-y-auto pr-4 space-y-4">
-                {messages.map((msg, index) => (
-                    <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`p-4 rounded-lg max-w-xl ${msg.role === 'user' ? 'bg-purple-800' : 'bg-gray-700'}`}>
-                           <div className="prose prose-invert text-white" dangerouslySetInnerHTML={{ __html: marked.parse(msg.parts[0].text) }} />
-                        </div>
-                    </div>
-                ))}
-                {isLoading && messages[messages.length-1]?.role === 'user' && (
-                     <div className="flex justify-start">
-                        <div className="p-4 rounded-lg max-w-xl bg-gray-700">
-                           <i className="fas fa-spinner fa-spin text-purple-400"></i>
-                        </div>
-                    </div>
-                )}
-                 <div ref={messagesEndRef} />
-            </div>
-
-            <div className="mt-6">
-                 {error && <p className="text-red-400 text-center mb-2">{error}</p>}
-                <div className="relative">
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder="Ask the GRID anything..."
-                        className="w-full pl-4 pr-12 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                    <button onClick={handleSend} disabled={isLoading || !input.trim()} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-400 disabled:opacity-50">
-                        <i className="fas fa-paper-plane text-xl"></i>
-                    </button>
-                </div>
-            </div>
+  return (
+    <div className="flex flex-col h-full p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+            <span className="text-4xl">🧠</span>
+            MostarAI Chat
+          </h2>
+          <p className="text-gray-400 mt-1">
+            Sovereign AI powered by African knowledge systems
+          </p>
         </div>
-    );
+        {contextUsed && (
+          <div className="px-3 py-1 bg-green-900/30 border border-green-700 rounded-lg text-green-400 text-sm">
+            ✓ Neo4j Context Active
+          </div>
+        )}
+      </div>
+
+      {/* Input Area */}
+      <div className="space-y-3">
+        <textarea
+          rows={4}
+          className="w-full p-4 border border-gray-700 rounded-lg bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Ask about Ifá, Orisha, Gacaca, Oba Kingship, traditional medicine..."
+          disabled={loading}
+        />
+        
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-500">
+            Ctrl+Enter to send
+          </span>
+          <button
+            className="px-6 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            onClick={sendMessage}
+            disabled={loading || !input.trim()}
+          >
+            {loading ? (
+              <>
+                <i className="fas fa-spinner fa-spin"></i>
+                Thinking...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-paper-plane"></i>
+                Ask MostarAI
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="p-4 bg-red-900/30 border border-red-700 rounded-lg text-red-300">
+          <i className="fas fa-exclamation-triangle mr-2"></i>
+          {error}
+        </div>
+      )}
+
+      {/* Response Display */}
+      {response && (
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6 bg-gray-800 border border-gray-700 rounded-lg">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-700">
+              <span className="text-2xl">🌍</span>
+              <span className="text-lg font-semibold text-white">MostarAI Response</span>
+            </div>
+            <div className="text-gray-200 whitespace-pre-line leading-relaxed">
+              {response}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!response && !loading && !error && (
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          <div className="text-center space-y-4">
+            <div className="text-6xl">🌿</div>
+            <p className="text-lg">Ask MostarAI about African wisdom traditions</p>
+            <div className="text-sm space-y-1">
+              <p>• "What is the Gadaa System?"</p>
+              <p>• "Tell me about Ifá divination"</p>
+              <p>• "What does Oba Kingship connect to?"</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default ChatPage;

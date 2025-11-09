@@ -15,7 +15,7 @@ try:
     from dotenv import load_dotenv
     env_path = Path(__file__).parent / ".env.local"
     if env_path.exists():
-        load_dotenv(env_path)
+        load_dotenv(env_path, override=True)
         print(f"[grid] Loaded environment from {env_path}")
 except ImportError:
     print("[grid] python-dotenv not installed, using system env only")
@@ -176,12 +176,29 @@ try:
 except Exception as e:
     logger.warning(f"⚠️  Could not mount bus router: {e}")
 
+# Mount Neo4j router
+try:
+    from neo4j_routes import router as neo4j_router
+    app.include_router(neo4j_router)
+    logger.info("✅ Neo4j router mounted (Graph API online)")
+except Exception as e:
+    logger.warning(f"⚠️  Could not mount Neo4j router: {e}")
+
+# Mount Chat router (MostarAI with Neo4j context)
+try:
+    from server.routes.chat import router as chat_router
+    app.include_router(chat_router)
+    logger.info("✅ MostarAI Chat router mounted (Sovereign AI online)")
+except Exception as e:
+    logger.warning(f"⚠️  Could not mount Chat router: {e}")
+
 db_connected = False
+neo4j_connected = False
 
 
 @app.on_event("startup")
 async def startup_event():
-    global db_connected
+    global db_connected, neo4j_connected
     conn_str = get_db_connection_string()
 
     if not conn_str:
@@ -210,6 +227,17 @@ async def startup_event():
             raise
         logger.error(f"❌ Database connection failed at startup: {str(e)}")
         logger.warning("⚠️  Continuing without database")
+    
+    # Initialize Neo4j connection
+    try:
+        from server.neo4j_client import get_neo4j_client
+        neo4j = get_neo4j_client()
+        neo4j_connected = neo4j.connect()
+        if neo4j_connected:
+            app.state.neo4j = neo4j
+    except Exception as e:
+        logger.warning(f"⚠️  Neo4j connection skipped: {e}")
+        neo4j_connected = False
 
 
 @app.on_event("startup")
@@ -228,6 +256,13 @@ async def shutdown_event():
             logger.info("✅ Database pool closed")
     except Exception as e:
         logger.warning(f"Error closing DB pool: {e}")
+    
+    # Close Neo4j connection
+    try:
+        if hasattr(app.state, 'neo4j'):
+            app.state.neo4j.close()
+    except Exception as e:
+        logger.warning(f"Error closing Neo4j: {e}")
 
 
 @app.get("/")
@@ -242,9 +277,14 @@ async def health():
         "pool_min": getattr(db_pool, "_min_size", None) if db_pool else None,
         "pool_max": getattr(db_pool, "_max_size", None) if db_pool else None,
     }
+    neo4j_info = {
+        "connected": neo4j_connected,
+        "type": "graph_database"
+    }
     return {
         "status": "OK",
         "db": db_info,
+        "neo4j": neo4j_info,
         "consciousness": {
             "active_nodes": memory.metrics["active_nodes"],
             "coherence": memory.metrics["coherence"],

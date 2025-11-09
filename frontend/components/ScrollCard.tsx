@@ -1,54 +1,58 @@
 import React from 'react';
-import { Scroll } from '../types/moscript';
-import { Interpretation } from '../lib/mostar/WooInterpreter';
+import { Scroll, Interpretation } from '../types';
 
 interface ScrollCardProps {
     scroll: Scroll;
-    interpretation: Interpretation;
-    onRun: (scroll: Scroll) => void;
-    isSentinelMode: boolean;
+    interpretation?: Interpretation;
+    onViewDetails?: (scrollId: string) => void;
 }
 
-const statusColors = {
-    approved: { border: 'border-green-500', text: 'text-green-400', bg: 'bg-green-900/50' },
-    warning: { border: 'border-yellow-500', text: 'text-yellow-400', bg: 'bg-yellow-900/50' },
-    denied: { border: 'border-red-500', text: 'text-red-400', bg: 'bg-red-900/50' },
-};
-
-const ScrollCard: React.FC<ScrollCardProps> = ({ scroll, interpretation, onRun, isSentinelMode }) => {
-    const colors = statusColors[interpretation.status];
-    const scorePercent = (interpretation.score * 100).toFixed(2);
+const ScrollCard: React.FC<ScrollCardProps> = ({ scroll, interpretation, onViewDetails }) => {
+    const statusColor = interpretation 
+        ? interpretation.status === 'approved' ? 'bg-green-500/20 text-green-300'
+            : interpretation.status === 'warning' ? 'bg-amber-500/20 text-amber-300'
+            : 'bg-red-500/20 text-red-300'
+        : 'bg-gray-500/20 text-gray-300';
+    
+    const icon = interpretation 
+        ? interpretation.status === 'approved' ? 'fa-check-circle'
+            : interpretation.status === 'warning' ? 'fa-exclamation-triangle'
+            : 'fa-times-circle'
+        : 'fa-scroll';
 
     return (
-        <div className={`grid-card rounded-lg shadow p-4 flex flex-col border-l-4 ${colors.border} ${colors.bg}`}>
-            <div className="flex items-start justify-between mb-3">
+        <div className="rounded-lg shadow p-4 flex flex-col bg-card border border-white/10">
+            <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
-                    <div className={`p-2 rounded-lg mr-3 ${colors.text}`}>
-                        <i className="fas fa-file-code"></i>
+                    <div className={`p-2 rounded-lg ${statusColor} mr-3`}>
+                        <i className={`fas ${icon}`}></i>
                     </div>
                     <div>
                         <h4 className="font-bold text-white">{scroll.name}</h4>
                         <p className="text-gray-400 text-sm">by {scroll.author}</p>
                     </div>
                 </div>
-                <div className={`px-2 py-1 ${colors.bg} ${colors.text} text-xs rounded-full`}>
-                    {interpretation.status.toUpperCase()}
-                </div>
+                {interpretation && (
+                    <span className={`px-2 py-0.5 text-xs rounded ${statusColor}`}>
+                        {interpretation.status.toUpperCase()}
+                    </span>
+                )}
             </div>
             <p className="text-gray-300 text-sm mb-3 flex-grow">{scroll.description}</p>
-            <div className="text-xs text-gray-500 mb-3">
-                <p>Resonance Score: <span className={colors.text}>{scorePercent}%</span></p>
-                <p className="italic">Woo: "{interpretation.proverb}"</p>
-            </div>
-            <div className="mt-auto">
-                <button
-                    onClick={() => onRun(scroll)}
-                    disabled={isSentinelMode}
-                    className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg font-medium text-sm flex items-center justify-center hover:bg-purple-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
-                >
-                    <i className={`fas ${isSentinelMode ? 'fa-lock' : 'fa-play'} mr-2`}></i>
-                    {isSentinelMode ? 'Execution Sealed' : 'Run Scroll'}
-                </button>
+            {interpretation && (
+                <div className="text-xs text-gray-500 mb-3">
+                    <p><strong>Score:</strong> {(interpretation.score * 100).toFixed(1)}%</p>
+                    <p><em>"{interpretation.proverb}"</em></p>
+                </div>
+            )}
+            <div className="flex items-center justify-end text-xs text-gray-500 mt-auto">
+                {onViewDetails && (
+                    <button 
+                        onClick={() => onViewDetails(scroll.id)}
+                        className="text-blue-400 hover:text-blue-300 text-sm">
+                        View MoScript <i className="fas fa-arrow-right ml-1"></i>
+                    </button>
+                )}
             </div>
         </div>
     );

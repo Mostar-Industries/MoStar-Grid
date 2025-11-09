@@ -51,7 +51,7 @@ async def _soul_active(slug: str) -> bool:
 # ---------- Models ----------
 class BusPublish(BaseModel):
     origin: str = Field(min_length=2)   # must be active soulprint
-    topic: str = Field(min_length=2, regex=r"^[a-z0-9\.\-\_:]+$")
+    topic: str = Field(min_length=2, pattern=r"^[a-z0-9\.\-\_:]+$")
     payload: Dict[str, Any]
     target: Optional[str] = None        # direct message (optional)
     sig: Optional[str] = None           # placeholder for future signatures

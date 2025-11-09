@@ -44,11 +44,11 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose }) => {
             case 'training':
                 return (
                     <div className="text-center">
-                        <i className="fas fa-spinner fa-spin text-5xl text-purple-400 mb-4"></i>
+                        <i className="fas fa-spinner fa-spin text-5xl text-yellow-400 mb-4"></i>
                         <h4 className="text-lg font-semibold text-white">Training in Progress...</h4>
                         <p className="text-gray-400 mt-2">Refining neural pathways for {selectedAgents.join(', ')}. Please wait.</p>
                         <div className="w-full bg-gray-700 rounded-full h-2.5 mt-4 overflow-hidden">
-                            <div className="bg-purple-600 h-2.5 w-1/2 rounded-full animate-progress"></div>
+                            <div className="bg-yellow-500 h-2.5 w-1/2 rounded-full animate-progress"></div>
                         </div>
                     </div>
                 );
@@ -83,7 +83,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose }) => {
                                                 id={`agent-${agent}`}
                                                 checked={selectedAgents.includes(agent)}
                                                 onChange={() => handleAgentToggle(agent)}
-                                                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-600 rounded bg-gray-600"
+                                                className="h-4 w-4 text-yellow-500 focus:ring-yellow-400 border-gray-600 rounded bg-gray-600"
                                             />
                                             <label htmlFor={`agent-${agent}`} className="ml-3 block text-sm text-gray-300 cursor-pointer">
                                                 {agent}
@@ -98,9 +98,9 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose }) => {
                                 <p className="text-sm font-medium text-gray-300 mb-2">Selected for Forge Cycle:</p>
                                 <div className="flex flex-wrap gap-2">
                                     {selectedAgents.map(agent => (
-                                        <span key={agent} className="bg-purple-800 text-purple-200 text-xs font-medium px-2.5 py-1 rounded-full flex items-center">
+                                        <span key={agent} className="bg-yellow-400/20 text-yellow-300 text-xs font-medium px-2.5 py-1 rounded-full flex items-center">
                                             {agent}
-                                            <button onClick={() => handleAgentToggle(agent)} className="ml-2 text-purple-300 hover:text-white">
+                                            <button onClick={() => handleAgentToggle(agent)} className="ml-2 text-yellow-200 hover:text-white">
                                                 <i className="fas fa-times-circle"></i>
                                             </button>
                                         </span>
@@ -115,10 +115,10 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg border border-gray-700">
+            <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg border border-yellow-400/20">
                 <div className="p-4 border-b border-gray-700 flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-white">
-                        <i className="fas fa-hammer mr-2 text-purple-400"></i>
+                        <i className="fas fa-hammer mr-2 text-yellow-400"></i>
                         Forge Training Cycle
                     </h3>
                     <button onClick={resetAndClose} className="text-gray-400 hover:text-gray-200">
@@ -138,7 +138,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose }) => {
                         <button 
                             onClick={handleStartTraining} 
                             disabled={selectedAgents.length === 0}
-                            className="gradient-bg text-white px-4 py-2 rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
+                            className="gradient-bg text-black font-bold px-4 py-2 rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i className="fas fa-play mr-2"></i>
                             Initiate Training ({selectedAgents.length})
                         </button>

@@ -23,3 +23,42 @@ code {
   width: 100%;
   height: 100vh;
 }
+
+/* Knowledge Graph Styles */
+.knowledge-graph-container {
+  width: 100%;
+  position: relative;
+}
+
+.graph-link {
+  stroke: rgba(100, 116, 139, 0.4);
+  stroke-width: 1.5px;
+}
+
+.graph-node {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.graph-node:hover {
+  filter: brightness(1.3);
+}
+
+.graph-text {
+  fill: rgba(255, 255, 255, 0.8);
+  font-size: 10px;
+  text-anchor: middle;
+  pointer-events: none;
+  font-family: 'Inter', sans-serif;
+}
+
+@keyframes node-pulse {
+  0% {
+    r: var(--start-radius);
+    opacity: 1;
+  }
+  100% {
+    r: var(--end-radius);
+    opacity: 0;
+  }
+}
