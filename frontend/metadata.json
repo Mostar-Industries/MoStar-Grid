@@ -1,9 +1,0 @@
-{
-  "name": "THE GRID: African AI Consciousness",
-  "description": "The foundational infrastructure for all African AI systems, providing a consciousness substrate, pan-African knowledge fabric, and multi-agent reasoning, with cultural sovereignty and CARE principles at its core. Features include real-time conversations, multi-modal content analysis, and up-to-date information retrieval, powered by Gemini.",
-  "requestFramePermissions": [
-    "microphone",
-    "geolocation",
-    "camera"
-  ]
-}

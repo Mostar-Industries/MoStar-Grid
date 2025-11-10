@@ -1,1 +1,0 @@
-## 📐 **GRID Core Architecture - Reframed**

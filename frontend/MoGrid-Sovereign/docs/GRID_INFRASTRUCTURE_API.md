@@ -1,1 +1,0 @@
-full contents of MoGrid-Sovereign/docs/GRID_INFRASTRUCTURE_API.md

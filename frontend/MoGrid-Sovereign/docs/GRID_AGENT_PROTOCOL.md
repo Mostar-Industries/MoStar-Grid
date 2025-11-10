@@ -1,1 +1,0 @@
-full contents of MoGrid-Sovereign/docs/GRID_AGENT_PROTOCOL.md
