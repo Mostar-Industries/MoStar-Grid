@@ -1,0 +1,10 @@
+{
+    "cSpell.words": [
+        "akiniobong",
+        "Mostar",
+        "OLLAMA"
+    ],
+    "neo4j.connection": {
+       "url": "neo4j+s://1d55c1d3.databases.neo4j.io"
+    }
+}

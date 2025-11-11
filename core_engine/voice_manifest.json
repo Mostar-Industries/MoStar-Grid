@@ -1,0 +1,17 @@
+{
+  "yoruba": {
+    "seal_covenant": "remostar_voice.mp3",
+    "ignite_grid": "ignite_voice.mp3",
+    "invoke_truth": "truth_voice.mp3",
+    "fallback": "remostar_voice.mp3"
+  },
+  "english": {
+    "seal_covenant": "seal_voice_en.mp3",
+    "ignite_grid": "ignite_voice_en.mp3",
+    "fallback": "default_voice.mp3"
+  },
+  "swahili": {
+    "ignite_grid": "moto_wa_ukweli.mp3",
+    "fallback": "ujumbe.mp3"
+  }
+}

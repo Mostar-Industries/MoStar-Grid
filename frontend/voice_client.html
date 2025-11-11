@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🧠 MoStar Voice Interface</title>
+  <style>
+    body {
+      background: #0d0d0d; color: #e6e6e6; font-family: monospace;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100vh;
+    }
+    button {
+      margin: 10px; padding: 10px 20px; font-size: 1.2em;
+      border: none; border-radius: 6px; cursor: pointer;
+      background: #222; color: #0ff;
+    }
+    #log { margin-top: 20px; max-width: 600px; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>🌌 MoStar Voice Portal</h1>
+  <p>Speak, and the Grid shall answer.</p>
+  <button id="mic">🎤 Activate Microphone</button>
+  <button id="send">🗣 Send Message</button>
+  <input id="textInput" placeholder="Say or type a command..." size="50"/>
+  <audio id="output" controls autoplay></audio>
+  <pre id="log"></pre>
+
+  <script>
+    const ws = new WebSocket("ws://localhost:8000/ws/voice");
+    const log = (msg) => document.getElementById("log").textContent += msg + "\n";
+
+    const audio = document.getElementById("output");
+    const micBtn = document.getElementById("mic");
+    const sendBtn = document.getElementById("send");
+    const input = document.getElementById("textInput");
+
+    let mediaRecorder, chunks = [];
+
+    ws.onopen = () => log("🌀 Connected to MoStar Voice Server");
+    ws.onmessage = (event) => {
+      if (typeof event.data === "string") {
+        log("💬 " + event.data);
+      } else {
+        const blob = new Blob([event.data], { type: "audio/mpeg" });
+        const url = URL.createObjectURL(blob);
+        audio.src = url;
+        audio.play();
+        log("🎧 Played voice response.");
+      }
+    };
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+      mediaRecorder = new MediaRecorder(stream);
+      micBtn.onclick = () => {
+        if (mediaRecorder.state === "inactive") {
+          mediaRecorder.start();
+          micBtn.textContent = "🔴 Listening...";
+          log("🎙 Microphone active...");
+        } else {
+          mediaRecorder.stop();
+          micBtn.textContent = "🎤 Activate Microphone";
+        }
+      };
+
+      mediaRecorder.ondataavailable = e => chunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        chunks = [];
+        // Future: send raw mic audio for Whisper transcription
+        ws.send(input.value || "MoStar AI, speak with \u00c0\u015f\u00c9.");
+        log("🗣 Sent text to Grid.");
+      };
+    });
+
+    sendBtn.onclick = () => {
+      ws.send(input.value);
+      log("🗣 Sent text to Grid.");
+    };
+  </script>
+</body>
+</html>

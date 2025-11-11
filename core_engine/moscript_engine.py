@@ -9,6 +9,9 @@ ancestral validation, and divine alignment.
 
 import hashlib, json, os, time, random
 from datetime import datetime
+from core_engine.moment_integration import log_mostar_moment
+
+
 
 # === MoScript Constants ===
 MOGRID_VERSION = "1.0.0"
@@ -99,6 +102,8 @@ class MoScriptEngine:
 if __name__ == "__main__":
     mo = MoScriptEngine()
 
+    log_mostar_moment("Soul Layer", "Mind Layer", "Executed ritual 'seal_covenant' successfully.")
+
     # Example 1 — sealing a Soul intention
     sample_ritual = {
         "operation": "seal",
@@ -112,3 +117,4 @@ if __name__ == "__main__":
         "payload": {"layer": "Mind", "action": "compute_verdict"}
     }
     print(json.dumps(mo.interpret(second_ritual), indent=4))
+
