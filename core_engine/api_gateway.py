@@ -1,72 +1,116 @@
 #!/usr/bin/env python3
 """
-🧠 MoStar Unified API Gateway
------------------------------
-Integrates:
-- Ollama reasoning
-- Neo4j memory persistence
-- gTTS voice synthesis
-- Mostar Moment logging
+🧠 MoStar Grid API Gateway
+--------------------------
+Bridges Ollama reasoning, Neo4j logging, and Voice synthesis into one unified interface.
 """
 
-import os
-from fastapi import FastAPI, Body
-import httpx
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import os, httpx, asyncio
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import JSONResponse, FileResponse
+from dotenv import load_dotenv
 from gtts import gTTS
+from pathlib import Path
 from core_engine.mostar_moments_log import log_mostar_moment
+from core_engine.voice_integration import MostarVoice
+
+# === Load environment variables ===
+load_dotenv()
 
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "akiniobong10/Mostar-remoter_DCX001")
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-TTS_LANG = os.getenv("MOSTAR_TTS_LANG", "en")
+NEO4J_URI = os.getenv("NEO4J_URI", "")
+TTS_LANG = os.getenv("TTS_LANG", "en")
 
-app = FastAPI(title="MoStar Grid API v1")
+# === Core setup ===
+app = FastAPI(title="MoStar Grid API", version="1.0.0")
+mv = MostarVoice(lang=TTS_LANG)
+audio_dir = Path("data/voice_cache")
+audio_dir.mkdir(parents=True, exist_ok=True)
 
-# === Ollama Reasoning ===
-@app.post("/api/v1/reason")
-async def reason(prompt: str = Body(..., embed=True)):
-    async with httpx.AsyncClient(timeout=60) as client:
-        resp = await client.post(
-            f"{OLLAMA_HOST}/api/generate",
-            json={"model": OLLAMA_MODEL, "prompt": prompt}
-        )
-        data = resp.json()
-        reply = data.get("response", "(no response)")
-    log_mostar_moment("User", "REMOSTAR", f"Reasoned: {prompt} → {reply[:100]}")
-    return {"response": reply}
 
-# === Voice Synthesis ===
-@app.post("/api/v1/voice")
-def voice(text: str = Body(..., embed=True)):
-    try:
-        tts = gTTS(text=text, lang=TTS_LANG)
-        output_file = "data/voice_cache/tmp_voice.mp3"
-        tts.save(output_file)
-        log_mostar_moment("REMOSTAR", "VoiceLayer", f"Spoke: {text[:120]}")
-        return {"message": "Voice synthesized", "file": output_file}
-    except Exception as e:
-        return {"error": str(e)}
-
-# === Memory Logging ===
-@app.post("/api/v1/moment")
-def record_moment(payload: dict = Body(...)):
-    try:
-        qid = log_mostar_moment(
-            payload.get("initiator", "system"),
-            payload.get("receiver", "unknown"),
-            payload.get("description", ""),
-            payload.get("trigger_type", "system"),
-            payload.get("resonance_score", 1.0)
-        )
-        return {"status": "recorded", "quantum_id": qid}
-    except Exception as e:
-        return {"error": str(e)}
-
-# === System Health ===
+# === Root status endpoint ===
 @app.get("/api/v1/status")
-def status():
+async def system_status():
+    neo4j_state = "connected" if NEO4J_URI.startswith("neo4j") else "offline"
     return {
         "system": "MoStar Grid API",
         "ollama_model": OLLAMA_MODEL,
         "tts_language": TTS_LANG,
-        "neo4j": "connected" if os.getenv("NEO4J_URI") else "offline"
+        "neo4j": neo4j_state
     }
+
+
+# === Reasoning endpoint ===
+@app.post("/api/v1/reason")
+async def reason(prompt: str = Form(...)):
+    """
+    Passes a prompt to the Ollama model and returns the generated reasoning.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(
+                f"{OLLAMA_HOST}/api/generate",
+                json={"model": OLLAMA_MODEL, "prompt": prompt}
+            )
+
+        if response.status_code == 200:
+            data = response.json()
+            output = data.get("response", "").strip()
+            qid = log_mostar_moment("User", "Ollama", f"Ollama reasoning for: {prompt}", "reason", 0.92)
+            return {"result": output, "quantum_id": qid}
+        else:
+            err = f"Ollama returned {response.status_code}: {response.text}"
+            log_mostar_moment("System", "Ollama", err, "error", 0.4)
+            return JSONResponse(content={"error": err}, status_code=500)
+
+    except Exception as e:
+        err = f"Reasoning failed: {e}"
+        log_mostar_moment("System", "Ollama", err, "error", 0.3)
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+# === Voice synthesis endpoint ===
+@app.post("/api/v1/voice")
+async def speak_text(text: str = Form(...)):
+    """
+    Converts given text to speech and returns path to the generated audio.
+    """
+    try:
+        filename = f"voice_{abs(hash(text))}.mp3"
+        output_path = audio_dir / filename
+        tts = gTTS(text=text, lang=TTS_LANG)
+        tts.save(output_path)
+
+        qid = log_mostar_moment("VoiceLayer", "User", f"Generated speech for: {text[:60]}...", "voice", 0.95)
+        return {"audio_path": str(output_path), "quantum_id": qid}
+
+    except Exception as e:
+        fallback = audio_dir / "remostar_voice.mp3"
+        if fallback.exists():
+            qid = log_mostar_moment("VoiceLayer", "System", "Played fallback voice clip.", "voice", 0.70)
+            return FileResponse(fallback, media_type="audio/mpeg", filename="remostar_voice.mp3")
+        log_mostar_moment("System", "Voice", f"TTS failed: {e}", "error", 0.2)
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+# === Moment logging endpoint ===
+@app.post("/api/v1/moment")
+async def moment_log(request: Request):
+    body = await request.json()
+    initiator = body.get("initiator", "unknown")
+    receiver = body.get("receiver", "unknown")
+    desc = body.get("description", "unspecified event")
+    trig = body.get("trigger_type", "manual")
+    res = float(body.get("resonance_score", 1.0))
+    qid = log_mostar_moment(initiator, receiver, desc, trig, res)
+    return {"quantum_id": qid, "status": "recorded"}
+
+
+# === Root ping ===
+@app.get("/")
+async def root():
+    return {"message": "🧩 MoStar Grid API online — unified reason, voice & memory."}

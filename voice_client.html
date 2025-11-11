@@ -3,81 +3,609 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🧠 MoStar Voice Interface</title>
+  <title>OmniNeural Grid Voice Console</title>
   <style>
+    :root {
+      --bg: #010308;
+      --grid-lines: rgba(100, 255, 225, 0.08);
+      --grid-bright: rgba(100, 255, 225, 0.35);
+      --card-bg: rgba(4, 12, 20, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #64ffe1;
+      --accent-2: #c38bff;
+      --accent-3: #00b5ff;
+      --text: #e6f5ff;
+      --text-dim: #93a8c4;
+      --warning: #ffb347;
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      background: #0d0d0d; color: #e6e6e6; font-family: monospace;
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; height: 100vh;
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 3rem 1.5rem 4rem;
+      position: relative;
+      overflow-x: hidden;
+      letter-spacing: 0.02em;
     }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        linear-gradient(120deg, rgba(19, 34, 63, 0.6), rgba(3, 9, 18, 0.9)),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 22px,
+          var(--grid-lines) 22px,
+          var(--grid-lines) 23px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 22px,
+          var(--grid-lines) 22px,
+          var(--grid-lines) 23px
+        );
+      z-index: 0;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(0, 255, 213, 0.25), transparent 45%),
+        radial-gradient(circle at 80% 10%, rgba(99, 58, 255, 0.35), transparent 35%);
+      mix-blend-mode: screen;
+      opacity: 0.7;
+      z-index: 0;
+      animation: aurora 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes aurora {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-60px); }
+    }
+
+    main {
+      width: min(1200px, 100%);
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .hero {
+      padding: 2.5rem;
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(5, 16, 28, 0.95), rgba(4, 28, 37, 0.9));
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .glyph {
+      width: 140px;
+      height: 140px;
+      border-radius: 32px;
+      display: grid;
+      place-items: center;
+      perspective: 1000px;
+      background: radial-gradient(circle, rgba(80, 255, 227, 0.2), transparent 60%);
+      border: 1px solid rgba(100, 255, 225, 0.2);
+      position: relative;
+    }
+
+    .glyph span {
+      font-size: 4rem;
+      color: var(--accent);
+      text-shadow: 0 0 18px rgba(100, 255, 225, 0.7);
+      transform: rotateX(12deg) rotateY(-18deg);
+      display: inline-block;
+    }
+
+    .glyph::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: 24px;
+      border: 1px dashed rgba(100, 255, 225, 0.3);
+      animation: pulse 6s linear infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.4; }
+      100% { transform: scale(1.1); opacity: 0; }
+    }
+
+    .hero h1 {
+      margin: 0 0 0.75rem;
+      font-size: clamp(2.3rem, 6vw, 3rem);
+      letter-spacing: 0.06em;
+    }
+
+    .hero p {
+      margin: 0.6rem 0 1rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.3em;
+      color: var(--accent);
+    }
+
+    .badge-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .badge {
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 0.85rem;
+      color: var(--accent);
+      background: rgba(7, 25, 32, 0.8);
+    }
+
+    .matrix-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .metric-card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 1.5rem;
+      border: 1px solid var(--card-border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: 16px;
+      border: 1px solid rgba(100, 255, 225, 0.12);
+      pointer-events: none;
+    }
+
+    .metric-value {
+      font-size: 2.4rem;
+      font-weight: 600;
+      display: block;
+      color: var(--accent);
+    }
+
+    .metric-card p {
+      margin: 0.4rem 0 0;
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    .matrix-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .matrix-card {
+      background: var(--card-bg);
+      border-radius: 22px;
+      padding: 1.75rem;
+      border: 1px solid var(--card-border);
+      position: relative;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(4px);
+    }
+
+    .matrix-card.highlight {
+      border-color: rgba(195, 139, 255, 0.3);
+    }
+
+    .matrix-card h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .matrix-card p {
+      margin: 0.8rem 0;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .matrix-card ul {
+      margin: 0;
+      padding-left: 1.2rem;
+      color: var(--text);
+    }
+
+    .matrix-card li {
+      margin-bottom: 0.45rem;
+      line-height: 1.35;
+    }
+
+    .callout {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 14px;
+      border: 1px dashed rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--warning);
+      font-size: 0.9rem;
+    }
+
+    .control-panel {
+      background: rgba(5, 11, 18, 0.9);
+      border-radius: 24px;
+      border: 1px solid rgba(100, 255, 225, 0.2);
+      padding: 2rem;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 25px 55px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .panel-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+
+    .panel-header p {
+      width: 100%;
+      margin: 0;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .status-pill {
+      padding: 0.25rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+
+    .status-pill.online {
+      color: #1fffaa;
+      border-color: rgba(31, 255, 170, 0.5);
+    }
+
+    .status-pill.offline {
+      color: #ff6b6b;
+      border-color: rgba(255, 107, 107, 0.4);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
     button {
-      margin: 10px; padding: 10px 20px; font-size: 1.2em;
-      border: none; border-radius: 6px; cursor: pointer;
-      background: #222; color: #0ff;
+      flex: 1;
+      min-width: 180px;
+      padding: 1rem 1.2rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: linear-gradient(135deg, rgba(34, 78, 112, 0.9), rgba(0, 0, 0, 0.4));
+      color: var(--text);
+      font-size: 1rem;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
     }
-    #log { margin-top: 20px; max-width: 600px; text-align: left; }
+
+    button.primary {
+      background: linear-gradient(135deg, rgba(31, 255, 170, 0.2), rgba(0, 86, 74, 0.8));
+      border-color: rgba(31, 255, 170, 0.5);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    input {
+      width: 100%;
+      padding: 0.95rem 1.2rem;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.35);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: 1px solid var(--accent);
+      box-shadow: 0 0 0 3px rgba(100, 255, 225, 0.15);
+    }
+
+    audio {
+      width: 100%;
+      filter: drop-shadow(0 0 12px rgba(31, 255, 170, 0.25));
+    }
+
+    #log {
+      background: rgba(0, 0, 0, 0.45);
+      border-radius: 16px;
+      padding: 1rem;
+      min-height: 120px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      font-size: 0.85rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .icon-3d {
+      font-size: 1.4rem;
+      text-shadow:
+        1px 1px 0 rgba(0, 0, 0, 0.5),
+        0 0 18px rgba(195, 139, 255, 0.6);
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 2rem 1rem 3rem;
+      }
+      .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .glyph {
+        margin: 0 auto;
+      }
+      .controls {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>🌌 MoStar Voice Portal</h1>
-  <p>Speak, and the Grid shall answer.</p>
-  <button id="mic">🎤 Activate Microphone</button>
-  <button id="send">🗣 Send Message</button>
-  <input id="textInput" placeholder="Say or type a command..." size="50"/>
-  <audio id="output" controls autoplay></audio>
-  <pre id="log"></pre>
+  <main>
+    <header class="hero">
+      <div class="glyph" aria-hidden="true">
+        <span>⧉</span>
+      </div>
+      <div>
+        <p class="eyebrow">OmniNeural • Nexa AI</p>
+        <h1>World's first NPU-aware multimodal model</h1>
+        <p>
+          An Omni-sensory intelligence layer tuned for NPUs. It understands text, images, and audio locally across
+          PC, automotive, mobile, IoT, and robotics hardware without giving up privacy or latency.
+        </p>
+        <div class="badge-line">
+          <span class="badge">NPU-native ops</span>
+          <span class="badge">Static graph</span>
+          <span class="badge">Hardware-aware attention</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="matrix-metrics" aria-label="Performance uplinks">
+      <article class="metric-card">
+        <span class="metric-value">9×</span>
+        <p>Faster audio encoding vs Whisper-class encoders with Nexa Attention.</p>
+      </article>
+      <article class="metric-card">
+        <span class="metric-value">3.5×</span>
+        <p>Faster image encoding throughput vs SigLIP baseline.</p>
+      </article>
+      <article class="metric-card">
+        <span class="metric-value">75%</span>
+        <p>Vision prompts win or tie Gemma-3n-E4B, Apple Foundation, Qwen2.5-Omni-3B.</p>
+      </article>
+      <article class="metric-card">
+        <span class="metric-value">100%</span>
+        <p>Inference stays on-device for privacy-first operation and offline resilience.</p>
+      </article>
+    </section>
+
+    <section class="matrix-cards">
+      <article class="matrix-card highlight">
+        <h3><span class="icon-3d">📱</span> Demos across the Grid</h3>
+        <p>Matrix-ready showcases prove the OmniNeural loop from edge to cockpit.</p>
+        <ul>
+          <li>Samsung S25 Ultra assistant runs fully local on Snapdragon NPU with vision + voice.</li>
+          <li>PC NPU demo handles multi-image reasoning via multi-round dialogue.</li>
+          <li>Image + text → function call: snap poster, send instruction, auto-create calendar events.</li>
+          <li>Multi-audio comparison: highlight differences between two clips offline.</li>
+        </ul>
+      </article>
+
+      <article class="matrix-card">
+        <h3><span class="icon-3d">💠</span> Key feature mesh</h3>
+        <p>Purpose-built architecture that prefers accelerators instead of forcing them.</p>
+        <ul>
+          <li>Hardware-aware attention plus sparse + small tensor multiplies for less memory thrash.</li>
+          <li>ReLU-first ops, convolutional pathways, and static graphs for predictable latency.</li>
+          <li>Unified multimodal encoder for text • image • audio streams.</li>
+          <li>Privacy-first inference: no data leaves the device, keeping cost and exposure at zero.</li>
+        </ul>
+      </article>
+
+      <article class="matrix-card">
+        <h3><span class="icon-3d">🚗</span> Production deployments</h3>
+        <p>Drop OmniNeural where the Grid needs instant perception.</p>
+        <ul>
+          <li>PC + Mobile: summarize slides, craft emails, extract action items from chat locally.</li>
+          <li>Automotive: voice control, cabin safety (pets, seatbelts, loose objects), weather + road context.</li>
+          <li>IoT & Robotics: defect detection, technician AR overlays, hazard spotting mid-flight.</li>
+        </ul>
+      </article>
+
+      <article class="matrix-card">
+        <h3><span class="icon-3d">🛠️</span> How to deploy</h3>
+        <p>Requires Qualcomm-class NPUs today. Apple NPU uplinks land next.</p>
+        <ul>
+          <li>Install Nexa SDK (Windows arm64 deploy kit recommended).</li>
+          <li>Authenticate: <code>nexa config set license "&lt;access_token&gt;"</code></li>
+          <li>Infer locally: <code>nexa infer NexaAI/OmniNeural-4B</code>, then switch to <code>/mic</code> mode.</li>
+          <li>For multimodal runs, drag audio or image files into the terminal session.</li>
+        </ul>
+        <div class="callout">
+          Non-commercial license (CC BY-NC 4.0). Contact dev@nexa.ai for commercial clearance.
+        </div>
+      </article>
+    </section>
+
+    <section class="control-panel" id="voice-console">
+      <div class="panel-header">
+        <h2>Voice uplink console</h2>
+        <span class="status-pill offline" id="connectionState">linking…</span>
+        <p>
+          Speak or type a directive. The Grid routes it through the OmniNeural voice lattice and returns synthesized
+          audio along with contextual logs.
+        </p>
+      </div>
+
+      <div class="controls">
+        <button id="mic" class="primary">🎙️ Activate Microphone</button>
+        <button id="send">📡 Send Text Pulse</button>
+      </div>
+
+      <input id="textInput" placeholder="Describe an intent — e.g., 'Summarize the slide deck for tomorrow's standup.'" />
+      <audio id="output" controls></audio>
+      <pre id="log">◇ Awaiting link handshake…</pre>
+    </section>
+  </main>
 
   <script>
-    const ws = new WebSocket("ws://localhost:8000/ws/voice");
-    const log = (msg) => document.getElementById("log").textContent += msg + "\n";
+    (() => {
+      const ws = new WebSocket("ws://localhost:8000/ws/voice");
+      const logNode = document.getElementById("log");
+      const audio = document.getElementById("output");
+      const micBtn = document.getElementById("mic");
+      const sendBtn = document.getElementById("send");
+      const input = document.getElementById("textInput");
+      const stateBadge = document.getElementById("connectionState");
+      const defaultPrompt = "MoStar AI, speak with Àṣẹ.";
 
-    const audio = document.getElementById("output");
-    const micBtn = document.getElementById("mic");
-    const sendBtn = document.getElementById("send");
-    const input = document.getElementById("textInput");
+      let mediaRecorder;
+      let chunks = [];
 
-    let mediaRecorder, chunks = [];
+      const updateState = (state, label) => {
+        stateBadge.textContent = label;
+        stateBadge.classList.remove("online", "offline");
+        stateBadge.classList.add(state);
+      };
 
-    ws.onopen = () => log("🌀 Connected to MoStar Voice Server");
-    ws.onmessage = (event) => {
-      if (typeof event.data === "string") {
-        log("💬 " + event.data);
-      } else {
+      const log = (message) => {
+        const timestamp = new Date().toLocaleTimeString();
+        logNode.textContent = `[${timestamp}] ${message}\n` + logNode.textContent;
+      };
+
+      const sendPayload = (payload) => {
+        const value = (payload && payload.trim()) || defaultPrompt;
+        if (ws.readyState !== WebSocket.OPEN) {
+          log("⚠️ Link offline — retry after reconnection.");
+          return;
+        }
+        ws.send(value);
+        log(`📡 TX → ${value}`);
+      };
+
+      ws.onopen = () => {
+        updateState("online", "linked");
+        log("🛰️ Voice grid link established.");
+      };
+
+      ws.onmessage = (event) => {
+        if (typeof event.data === "string") {
+          log(`🧠 RX text → ${event.data}`);
+          return;
+        }
         const blob = new Blob([event.data], { type: "audio/mpeg" });
         const url = URL.createObjectURL(blob);
         audio.src = url;
-        audio.play();
-        log("🎧 Played voice response.");
-      }
-    };
-
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-      mediaRecorder = new MediaRecorder(stream);
-      micBtn.onclick = () => {
-        if (mediaRecorder.state === "inactive") {
-          mediaRecorder.start();
-          micBtn.textContent = "🔴 Listening...";
-          log("🎙 Microphone active...");
-        } else {
-          mediaRecorder.stop();
-          micBtn.textContent = "🎤 Activate Microphone";
-        }
+        audio.play().catch(() => {});
+        log("🔊 RX audio payload rendered.");
       };
 
-      mediaRecorder.ondataavailable = e => chunks.push(e.data);
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: "audio/webm" });
-        chunks = [];
-        // Future: send raw mic audio for Whisper transcription
-        ws.send(input.value || "MoStar AI, speak with \u00c0\u015f\u00c9.");
-        log("🗣 Sent text to Grid.");
+      ws.onerror = () => {
+        log("⚠️ Signal anomaly detected on websocket.");
       };
-    });
 
-    sendBtn.onclick = () => {
-      ws.send(input.value);
-      log("🗣 Sent text to Grid.");
-    };
+      ws.onclose = () => {
+        updateState("offline", "offline");
+        log("⛔ Link closed. Restart the server to reconnect.");
+      };
+
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        mediaRecorder = new MediaRecorder(stream);
+
+        micBtn.onclick = () => {
+          if (mediaRecorder.state === "inactive") {
+            mediaRecorder.start();
+            micBtn.textContent = "🎧 Listening…";
+            log("🎧 Microphone buffer armed.");
+          } else {
+            mediaRecorder.stop();
+            micBtn.textContent = "🎙️ Activate Microphone";
+          }
+        };
+
+        mediaRecorder.ondataavailable = e => chunks.push(e.data);
+
+        mediaRecorder.onstop = () => {
+          if (!chunks.length) {
+            log("⚠️ No audio captured — try again.");
+            return;
+          }
+          chunks = [];
+          log("📦 Audio packet cached for future direct streaming (coming soon).");
+          sendPayload(input.value);
+        };
+      }).catch(() => {
+        micBtn.disabled = true;
+        micBtn.textContent = "Microphone unavailable";
+        log("⚠️ Browser denied microphone access.");
+      });
+
+      sendBtn.onclick = () => sendPayload(input.value);
+    })();
   </script>
 </body>
 </html>

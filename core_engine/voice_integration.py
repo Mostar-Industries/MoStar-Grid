@@ -1,17 +1,58 @@
-import json, os, time, platform, subprocess, sys
+import json, os, time, platform, subprocess
 from gtts import gTTS
 from core_engine.moment_integration import log_mostar_moment
 
 class MostarVoice:
-    def __init__(self, lingua="yoruba", lang_code="yo"):
-        self.lingua = lingua.lower()
-        self.lang_code = lang_code
+    _LANG_ALIASES = {
+        "yo": ("yoruba", "yo"),
+        "yoruba": ("yoruba", "yo"),
+        "en": ("english", "en"),
+        "english": ("english", "en"),
+        "sw": ("swahili", "sw"),
+        "swahili": ("swahili", "sw"),
+    }
+
+    def __init__(self, lingua=None, lang_code=None, lang=None):
+        self.lingua, self.lang_code = self._normalize_language_inputs(
+            lingua=lingua,
+            lang_code=lang_code,
+            lang=lang,
+        )
         self.registry = self._load_voice_manifest()
         self.voice_cache_dirs = [
             os.path.join("data", "voice_cache"),
             os.path.join("backend", "data", "voice_cache")
         ]
+        for cache_dir in self.voice_cache_dirs:
+            os.makedirs(cache_dir, exist_ok=True)
         print(f"🔊 MostarVoice initialized :: {self.lingua.upper()} [{self.lang_code}]")
+
+    def _normalize_language_inputs(self, lingua, lang_code, lang):
+        if lang:
+            return self._resolve_alias(lang, fallback_code=lang_code)
+
+        if lingua:
+            return self._resolve_alias(lingua, fallback_code=lang_code)
+
+        if lang_code:
+            return self._resolve_alias(lang_code, fallback_code=lang_code)
+
+        return self._LANG_ALIASES["yoruba"]
+
+    def _resolve_alias(self, key, fallback_code=None):
+        key_lower = key.lower()
+        normalized = self._LANG_ALIASES.get(key_lower)
+
+        if normalized:
+            lingua_value, code_value = normalized
+        else:
+            lingua_value = key_lower
+            code_value = key_lower
+
+        if fallback_code:
+            code_value = fallback_code.lower()
+
+        return lingua_value, code_value
 
     def _load_voice_manifest(self):
         manifest_path = os.path.join("core_engine", "voice_manifest.json")
