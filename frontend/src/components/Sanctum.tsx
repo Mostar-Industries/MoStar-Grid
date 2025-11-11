@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { CSSProperties, useMemo } from "react";
 import { useGridTelemetry, MomentRecord } from "@/hooks/useGridTelemetry";
 import styles from "./Sanctum.module.css";
@@ -162,6 +163,14 @@ export default function Sanctum() {
 
   return (
     <div className={styles.sanctum}>
+      <div className={styles.navRow}>
+        <Link href="/flame-map" className={styles.navButton}>
+          Flame Grid
+        </Link>
+        <Link href="/chat" className={styles.navButton}>
+          Oracle Chat
+        </Link>
+      </div>
       <section className={styles.council}>
         <header>
           <p className={styles.eyebrow}>Stewardship Council</p>
