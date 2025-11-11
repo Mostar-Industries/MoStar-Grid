@@ -1,0 +1,157 @@
+.shell {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: clamp(1.5rem, 3vw, 3rem);
+  background: rgba(3, 6, 14, 0.9);
+  border-radius: 30px;
+  border: 1px solid rgba(100, 255, 225, 0.12);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  font-size: 0.82rem;
+  color: var(--accent, #64ffe1);
+}
+
+.subtitle {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.quickLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.quickLinks button {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.quickLinks button:hover {
+  border-color: var(--accent, #64ffe1);
+  transform: translateY(-1px);
+}
+
+.chatWindow {
+  background: rgba(7, 12, 22, 0.9);
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 1.2rem;
+  height: 420px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.message {
+  display: flex;
+}
+
+.messageInner {
+  max-width: 80%;
+  padding: 0.9rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.messageInner small {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.message.user {
+  justify-content: flex-end;
+}
+
+.message.user .messageInner {
+  border-color: rgba(195, 139, 255, 0.35);
+  background: rgba(195, 139, 255, 0.08);
+}
+
+.message.assistant .messageInner {
+  border-color: rgba(100, 255, 225, 0.25);
+  background: rgba(100, 255, 225, 0.06);
+}
+
+.composer {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-end;
+}
+
+.composer textarea {
+  flex: 1;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--text-primary);
+  padding: 0.9rem 1.1rem;
+  min-height: 90px;
+  resize: vertical;
+  font-size: 1rem;
+}
+
+.composer button {
+  min-width: 160px;
+  border-radius: 18px;
+  padding: 0.9rem 1rem;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba(31, 255, 170, 0.2), rgba(0, 86, 74, 0.9));
+  color: #64ffe1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.composer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 720px) {
+  .shell {
+    padding: 1.2rem;
+  }
+  .messageInner {
+    max-width: 100%;
+  }
+  .composer {
+    flex-direction: column;
+  }
+  .composer button {
+    width: 100%;
+  }
+}
