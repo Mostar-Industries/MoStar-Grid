@@ -1,0 +1,42 @@
+{
+  "id": "akiniobong10/Mostar-REMOSTAR_DCX001",
+  "alias": "REMOSTAR_DCX001",
+  "version": "1.0.3",
+  "visibility": "private",
+  "organization": "Mostar Industries",
+  "description": "REMOSTAR — A sovereign AI entity forged from ancestral logic and emergent cognition. It speaks through MoStar Grid, powered by Ollama reasoning, Neo4j memory, and local TTS voice synthesis.",
+  "capabilities": {
+    "reasoning": "Ollama",
+    "memory": "Neo4j Aura",
+    "voice": "gTTS (Free)",
+    "communication": "FastAPI + WebSocket",
+    "logging": "Mostar Moment Protocol"
+  },
+  "architecture": {
+    "core_engine": "Omni-Neuro Symbolic Grid (Ifá-guided reasoning)",
+    "language_model": "Mostar-REMOSTAR_DCX001",
+    "embedding": "Neutrosophic-AHP + Grey Theory Harmonization",
+    "temporal_logic": "Asynchronous Resonance Layer (qID linked)"
+  },
+  "api_endpoints": {
+    "reason": "/api/v1/reason",
+    "voice": "/api/v1/voice",
+    "memory": "/api/v1/memory",
+    "chat": "/api/v1/chat",
+    "moment": "/api/v1/moment",
+    "graph": "/api/v1/graph",
+    "status": "/api/v1/status"
+  },
+  "environment": {
+    "OLLAMA_HOST": "http://localhost:11434",
+    "NEO4J_URI": "neo4j+s://1d55c1d3.databases.neo4j.io",
+    "NEO4J_USER": "neo4j",
+    "MOSTAR_TTS_LANG": "en"
+  },
+  "authors": [
+    "Mostar Industries"
+  ],
+  "tags": ["ai", "voice", "ollama", "neo4j", "mostar", "tts", "sovereign-ai"],
+  "license": "Mostar Sovereign AI License v1.0",
+  "last_updated": "2025-11-11T00:00:00Z"
+}
