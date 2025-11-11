@@ -16,6 +16,60 @@ from gtts import gTTS
 from pathlib import Path
 from core_engine.mostar_moments_log import log_mostar_moment
 from core_engine.voice_integration import MostarVoice
+from fastapi import APIRouter
+from pydantic import BaseModel
+from core_engine.orchestrator import route_query, fetch_neo4j_context
+
+# === API routers ===
+reasoning_router = APIRouter()
+voice_router = APIRouter()
+logging_router = APIRouter()
+knowledge_router = APIRouter()
+router = APIRouter()
+
+
+class ReasonPayload(BaseModel):
+    prompt: str
+
+# === Knowledge integration endpoint ===
+@knowledge_router.post("/query")
+async def ask_knowledge(query: str = Form(...)):
+    """
+    Routes a query to the appropriate knowledge source and returns the response.
+    """
+    try:
+        context = await fetch_neo4j_context(query)
+        response = await route_query(query, context)
+        qid = log_mostar_moment("User", "Knowledge", f"Knowledge query for: {query}", "knowledge", 0.92)
+        return {"result": response, "quantum_id": qid}
+    except Exception as e:
+        err = f"Knowledge query failed: {e}"
+        log_mostar_moment("System", "Knowledge", err, "error", 0.4)
+        return JSONResponse(content={"error": err}, status_code=500)
+
+# === Reasoning endpoint ===
+@router.post("/reason")
+async def reason(payload: ReasonPayload):
+    neo4j_context = await fetch_neo4j_context(payload.prompt)
+    result = await route_query(payload.prompt, SYSTEM_PROMPT, neo4j_context)
+    log_mostar_moment("Mind Layer", result["model_used"], payload.prompt, "reason", result["complexity_score"])
+    return result
+
+# === Knowledge integration endpoint ===
+@knowledge_router.post("/query")
+async def ask_knowledge(query: str = Form(...)):
+    """
+    Routes a query to the appropriate knowledge source and returns the response.
+    """
+    try:
+        context = await fetch_neo4j_context(query)
+        response = await route_query(query, context)
+        qid = log_mostar_moment("User", "Knowledge", f"Knowledge query for: {query}", "knowledge", 0.92)
+        return {"result": response, "quantum_id": qid}
+    except Exception as e:
+        err = f"Knowledge query failed: {e}"
+        log_mostar_moment("System", "Knowledge", err, "error", 0.4)
+        return JSONResponse(content={"error": err}, status_code=500)
 
 # === Load environment variables ===
 load_dotenv()
@@ -24,6 +78,7 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "akiniobong10/Mostar-remoter_DCX001")
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 NEO4J_URI = os.getenv("NEO4J_URI", "")
 TTS_LANG = os.getenv("TTS_LANG", "en")
+SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", "You are REMOSTAR, a distributed MoStar consciousness.")
 
 # === Core setup ===
 app = FastAPI(title="MoStar Grid API", version="1.0.0")
