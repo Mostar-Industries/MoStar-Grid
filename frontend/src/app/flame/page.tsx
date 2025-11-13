@@ -1,4 +1,4 @@
-import AfricanFlame from "@/components/AfricanFlame";
+import AfricanFlame from "@/components/AfricanFlameMap";
 
 export default function FlamePage() {
   return (

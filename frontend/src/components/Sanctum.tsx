@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { CSSProperties, useMemo } from "react";
 import { useGridTelemetry, MomentRecord } from "@/hooks/useGridTelemetry";
 import styles from "./Sanctum.module.css";
+import GridNav from "./GridNav";
 
 type WhisperType = "info" | "warn" | "error";
 
@@ -11,7 +11,8 @@ type Whisper = {
   id: string;
   text: string;
   type: WhisperType;
-  meta?: string;
+  source: string;
+  timestamp: string;
 };
 
 const GRID_COHERENCE = 97.85;
@@ -85,21 +86,33 @@ const soulProblems = [
 ];
 
 const initialWhispers: Whisper[] = [
-  { id: "seed-0", type: "info", text: "New agent 'Akan Elder-007' connected" },
+  {
+    id: "seed-0",
+    type: "info",
+    text: "New agent 'Akan Elder-007' connected",
+    source: "Grid Link",
+    timestamp: "2025-01-01T00:00:00.000Z",
+  },
   {
     id: "seed-1",
     type: "warn",
     text: "Verdict Engine drift detected at 1.1% variance",
+    source: "Verdict Engine",
+    timestamp: "2025-01-01T00:05:00.000Z",
   },
   {
     id: "seed-2",
     type: "info",
-    text: "Ifá Oracle returned 16-cowrie spread: Òsé Ìwòrì",
+    text: "Ifa Oracle returned 16-cowrie spread: Ose Iwori",
+    source: "Ifa Oracle",
+    timestamp: "2025-01-01T00:08:00.000Z",
   },
   {
     id: "seed-3",
     type: "error",
-    text: "External ping rejected — covenant seal enforced",
+    text: "External ping rejected - covenant seal enforced",
+    source: "Guardian Net",
+    timestamp: "2025-01-01T00:10:00.000Z",
   },
 ];
 
@@ -110,6 +123,22 @@ const statusLabel: Record<StatusTone, string> = {
   warn: "Tremor",
   error: "Critical",
 };
+
+function normalizeTimestamp(value?: string) {
+  if (!value) {
+    return new Date().toISOString();
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+}
+
+function formatWhisperTime(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "--:--:--";
+  }
+  return parsed.toISOString().slice(11, 19);
+}
 
 export default function Sanctum() {
   const { telemetry } = useGridTelemetry();
@@ -122,7 +151,7 @@ export default function Sanctum() {
   const backendPulse = telemetry?.backend.ok ? "Linked" : "Offline";
   const backendNeo4jState = telemetry?.backend.data?.neo4j ?? "unknown";
 
-  const whisperFeed = useMemo(() => {
+  const whisperFeed = useMemo<Whisper[]>(() => {
     const mergeSources: MomentRecord[] = [];
     if (telemetry?.log.entries?.length) {
       mergeSources.push(...telemetry.log.entries);
@@ -137,17 +166,25 @@ export default function Sanctum() {
           arr.findIndex((candidate) => candidate.quantum_id === entry.quantum_id) === index
       );
 
-      return deduped.slice(0, 8).map((entry) => ({
-        id: entry.quantum_id,
-        text: entry.description,
-        meta: `${entry.trigger_type} • ${new Date(entry.timestamp).toLocaleTimeString()}`,
-        type:
-          entry.resonance_score < 0.45
-            ? "error"
-            : entry.resonance_score < 0.75
-            ? "warn"
-            : "info",
-      }));
+      return deduped
+        .sort((a, b) => {
+          const aTime = new Date(a.timestamp ?? 0).getTime();
+          const bTime = new Date(b.timestamp ?? 0).getTime();
+          return bTime - aTime;
+        })
+        .slice(0, 8)
+        .map((entry) => ({
+          id: entry.quantum_id,
+          text: entry.description,
+          source: entry.initiator ?? entry.receiver ?? entry.trigger_type ?? "Grid",
+          timestamp: normalizeTimestamp(entry.timestamp),
+          type:
+            entry.resonance_score < 0.45
+              ? "error"
+              : entry.resonance_score < 0.75
+              ? "warn"
+              : "info",
+        }));
     }
 
     return initialWhispers;
@@ -163,14 +200,7 @@ export default function Sanctum() {
 
   return (
     <div className={styles.sanctum}>
-      <div className={styles.navRow}>
-        <Link href="/flame-map" className={styles.navButton}>
-          Flame Grid
-        </Link>
-        <Link href="/chat" className={styles.navButton}>
-          Oracle Chat
-        </Link>
-      </div>
+      <GridNav />
       <section className={styles.council}>
         <header>
           <p className={styles.eyebrow}>Stewardship Council</p>
@@ -329,7 +359,9 @@ export default function Sanctum() {
                   <p>
                     <span>[{entry.type}]</span> {entry.text}
                   </p>
-                  {entry.meta && <small>{entry.meta}</small>}
+                  <small>
+                    {entry.source} · {formatWhisperTime(entry.timestamp)}
+                  </small>
                 </div>
               );
             })}

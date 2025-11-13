@@ -1,0 +1,40 @@
+.navRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.navButton {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 0.45rem 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.72rem;
+  position: relative;
+  overflow: hidden;
+  color: inherit;
+}
+
+.navButton::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(100, 255, 225, 0.25), rgba(195, 139, 255, 0.25));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.navButton:hover::before,
+.navButton:focus-visible::before {
+  opacity: 1;
+}
+
+.navButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(100, 255, 225, 0.4);
+}
+

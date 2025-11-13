@@ -1,0 +1,5 @@
+The `ModuleNotFoundError: No module named 'orchestrator'` error happens because the `core_engine` directory, which contains `orchestrator.py`, is not in the Python path when you run `uvicorn` from the `backend` directory. 
+
+The `backend` script in your `package.json` correctly runs `core_engine.api_gateway:app`, which works because it's inside the `core_engine` package. 
+
+To fix the error, you should adjust how you run your application to ensure the `core_engine` directory is included in the Python path, or run the application from the root directory where scripts can correctly reference the `core_engine` module.

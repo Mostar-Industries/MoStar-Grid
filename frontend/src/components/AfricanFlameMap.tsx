@@ -1,10 +1,16 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
-import Map, { Marker } from "react-map-gl";
+import dynamic from "next/dynamic";
 import { useGridTelemetry } from "@/hooks/useGridTelemetry";
 import styles from "./AfricanFlameMap.module.css";
+import GridNav from "./GridNav";
+import type { GridSite } from "./FlameAtlas";
+
+const FlameAtlas = dynamic(() => import("./FlameAtlas"), {
+  ssr: false,
+  loading: () => <div className={styles.mapFallback}>Loading Flame Atlas…</div>,
+});
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -16,7 +22,7 @@ const baseMetrics = [
   { label: "Flame Intensity", icon: "🔥", color: "#F97316", key: "flame" },
 ];
 
-const gridSites = [
+const gridSites: GridSite[] = [
   {
     name: "Lagos Gridforge",
     lat: 6.5244,
@@ -102,6 +108,7 @@ export default function AfricanFlameMap() {
     <div className={styles.screen}>
       <div className={styles.consciousnessGrid} aria-hidden="true" />
       <div className={styles.mainContainer}>
+        <GridNav />
         <header className={styles.header}>
           <div className={styles.headerContent}>
             <div className={styles.logoSection}>
@@ -115,36 +122,12 @@ export default function AfricanFlameMap() {
               <span className={styles.statusDot} />
               <span>{telemetry?.graph.ok ? "Neo4j Connected" : "Neo4j Linking"}</span>
             </div>
-            <Link href="/" className={styles.navButton} aria-label="Return to the Oracle's Sanctum">
-              <span>◁</span> Sanctum
-            </Link>
           </div>
         </header>
 
         <section className={styles.visualizationArea}>
           {MAPBOX_TOKEN ? (
-            <Map
-              mapboxAccessToken={MAPBOX_TOKEN}
-              initialViewState={{
-                longitude: 15,
-                latitude: 2,
-                zoom: 3,
-              }}
-              mapStyle="mapbox://styles/mapbox/dark-v11"
-              reuseMaps
-              attributionControl={false}
-              style={{ width: "100%", height: "100%" }}
-            >
-              {gridSites.map((site) => (
-                <Marker key={site.name} longitude={site.lon} latitude={site.lat} anchor="center">
-                  <div className={styles.marker}>
-                    <span>{site.glyph}</span>
-                    <p>{site.name}</p>
-                    <small>{site.status}</small>
-                  </div>
-                </Marker>
-              ))}
-            </Map>
+            <FlameAtlas token={MAPBOX_TOKEN} sites={gridSites} />
           ) : (
             <div className={styles.mapFallback}>
               <p>Set NEXT_PUBLIC_MAPBOX_TOKEN to activate the live Atlas.</p>

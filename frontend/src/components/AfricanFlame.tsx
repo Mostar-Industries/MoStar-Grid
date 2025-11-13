@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useGridTelemetry } from "@/hooks/useGridTelemetry";
+import GridNav from "./GridNav";
 import styles from "./AfricanFlame.module.css";
 
 const baseMetrics = [
@@ -63,6 +64,7 @@ export default function AfricanFlame() {
     <div className={styles.screen}>
       <div className={styles.gridOverlay} aria-hidden />
       <div className={styles.container}>
+        <GridNav />
         <header className={styles.header}>
           <div className={styles.logoCluster}>
             <div className={styles.flameIcon}>🔥</div>
