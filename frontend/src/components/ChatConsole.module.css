@@ -1,3 +1,10 @@
+.page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .shell {
   width: min(1100px, 100%);
   margin: 0 auto;
@@ -9,6 +16,7 @@
   border-radius: 30px;
   border: 1px solid rgba(100, 255, 225, 0.12);
   box-shadow: 0 40px 80px rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 
@@ -49,6 +57,35 @@
 .quickLinks button:hover {
   border-color: var(--accent, #64ffe1);
   transform: translateY(-1px);
+}
+
+.modelControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.modelControls label {
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.modelControls select {
+  border-radius: 999px;
+  padding: 0.4rem 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.modelControls select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .chatWindow {

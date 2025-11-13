@@ -25,7 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${jetBrains.variable}`}>
+      <body
+        className={`${spaceGrotesk.variable} ${jetBrains.variable}`}
+        suppressHydrationWarning
+        >
         {children}
       </body>
     </html>

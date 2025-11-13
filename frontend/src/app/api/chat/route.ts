@@ -9,14 +9,21 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const message: string = body?.message;
+    const model: string | undefined = body?.model;
+    const language: string = body?.language ?? "en";
     if (!message) {
       return NextResponse.json({ error: "Missing chat message." }, { status: 400 });
+    }
+
+    const params = new URLSearchParams({ prompt: message, language });
+    if (model) {
+      params.append("model", model);
     }
 
     const response = await fetch(`${GRID_API_BASE}/api/v1/reason`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ prompt: message }),
+      body: params,
     });
 
     if (!response.ok) {

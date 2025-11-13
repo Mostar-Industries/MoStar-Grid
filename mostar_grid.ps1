@@ -48,3 +48,69 @@ foreach ($file in $files) {
 }
 
 Write-Host "`n✅ MoStar-Grid base structure initialized successfully." -ForegroundColor Green
+function Get-MostarPythonPath {
+    if ($env:VIRTUAL_ENV) {
+        $venvPython = Join-Path $env:VIRTUAL_ENV "Scripts\python.exe"
+        if (Test-Path $venvPython) {
+            return $venvPython
+        }
+    }
+    $localVenvPython = Join-Path $rootPath ".venv\Scripts\python.exe"
+    if (Test-Path $localVenvPython) {
+        return $localVenvPython
+    }
+    return "python"
+}
+
+function Start-MostarBackend {
+    param(
+        [int]$Port = 8001
+    )
+    $python = Get-MostarPythonPath
+    $escapedPython = $python -replace "'", "''"
+    $cmd = @"
+Set-Location '$rootPath'
+& '$escapedPython' -m uvicorn core_engine.api_gateway:app --reload --host 0.0.0.0 --port $Port
+"@
+    Write-Host "Starting backend on port $Port..." -ForegroundColor Cyan
+    Start-Process pwsh -ArgumentList "-NoExit", "-Command", $cmd -WorkingDirectory $rootPath
+}
+
+function Start-MostarFrontend {
+    param(
+        [int]$Port = 3000
+    )
+    $frontendPath = Join-Path $rootPath "frontend"
+    if ($Port -eq 3000) {
+        $cmd = @"
+Set-Location '$frontendPath'
+npm run dev
+"@
+    }
+    else {
+        $cmd = @"
+Set-Location '$frontendPath'
+npx next dev -p $Port
+"@
+    }
+    Write-Host "Starting frontend on port $Port..." -ForegroundColor Cyan
+    Start-Process pwsh -ArgumentList "-NoExit", "-Command", $cmd -WorkingDirectory $frontendPath
+}
+
+function Start-MostarGrid {
+    param(
+        [int]$ApiPort = 8001,
+        [int]$WebPort = 3000
+    )
+    Start-MostarBackend -Port $ApiPort
+    Start-MostarFrontend -Port $WebPort
+    Write-Host "Backend and frontend launched. Close the spawned windows to stop the services." -ForegroundColor Green
+}
+
+function Start-Grid {
+    param(
+        [int]$ApiPort = 8001,
+        [int]$WebPort = 3000
+    )
+    Start-MostarGrid -ApiPort $ApiPort -WebPort $WebPort
+}
