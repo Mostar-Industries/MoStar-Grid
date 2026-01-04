@@ -190,7 +190,7 @@ export default function AfricanFlame() {
           </article>
 
           <article className={styles.panel}>
-            <h3>?? Decision Matrix</h3>
+            <h3>📈 Decision Matrix</h3>
             <div className={styles.decisionBox}>
               <p className={styles.decisionLabel}>Current Decision</p>
               <h4>Partnership Sovereignty Evaluation</h4>
@@ -205,14 +205,14 @@ export default function AfricanFlame() {
                 </div>
                 <div>
                   <span>Status</span>
-                  <strong className={styles.success}>� Decided</strong>
+                  <strong className={styles.success}>✅ Decided</strong>
                 </div>
               </div>
             </div>
           </article>
 
           <article className={styles.panel}>
-            <h3>?? Activity Stream</h3>
+            <h3>📜 Activity Stream</h3>
             <div className={styles.activityStream}>
               {activity.map((item) => (
                 <div key={`${item.time}-${item.message}`} className={styles.activityItem}>
@@ -225,9 +225,9 @@ export default function AfricanFlame() {
         </section>
 
         <div className={styles.controlDeck}>
-          <button className={styles.active}>?? Flame View</button>
-          <button>?? Network View</button>
-          <button>?? Matrix View</button>
+          <button className={styles.active}>🔥 Flame View</button>
+          <button>🕸️ Network View</button>
+          <button>📈 Matrix View</button>
         </div>
       </div>
     </div>
