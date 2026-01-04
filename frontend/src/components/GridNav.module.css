@@ -1,16 +1,18 @@
 .navRow {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  gap: 0.50rem;
+  top: 10%;
+  flex-wrap: no-wrap;
   width: 100%;
   margin-bottom: 1.25rem;
 }
 
 .navButton {
   border: 1px solid rgba(255, 255, 255, 0.18);
+  top: -18px;
   border-radius: 999px;
-  padding: 0.45rem 1.2rem;
+  padding: 0.45rem 1rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   font-size: 0.72rem;

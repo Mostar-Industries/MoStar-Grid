@@ -1,4 +1,4 @@
-// MoStar REMOSTAR Training Controller
+﻿// MoStar REMOSTAR Training Controller
 // -----------------------------------
 // Entry point that orchestrates model training, evaluation, and inference.
 
@@ -12,7 +12,7 @@ const OLLAMA_MODEL =
 const OLLAMA_HOST = process.env.REMOSTAR_OLLAMA_HOST;
 
 // === REMOSTAR Trainer ===
-class RemostarTrainer {
+export class RemostarTrainer {
   private engine: MoScriptEngine;
   private modelId = "REMOSTAR_DCX001";
   private version = "1.0.1";

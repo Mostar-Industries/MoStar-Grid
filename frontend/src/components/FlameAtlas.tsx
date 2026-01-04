@@ -1,19 +1,19 @@
 "use client";
 import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 import styles from "./AfricanFlameMap.module.css";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 /**
  * Represents a grid site with geographical coordinates and status information.
  */
 export type GridSite = {
-  name:string;
+  name: string;
   lat: number;
   lon: number;
   glyph: string;
   status: string;
 };
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ""; // fallback safety
 
 type FlameAtlasProps = {
   token: string;
@@ -29,54 +29,112 @@ const INITIAL_VIEW = {
 export default function FlameAtlas({ token, gridsites }: FlameAtlasProps) {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
-  if (!token) return <div>⚠️ Missing Mapbox token</div>;
-  if (!gridsites?.length) return <div>📭 No sites to map</div>;
-
+  // Initialize map
   useEffect(() => {
-    if (map.current) return; // initialize map only once
-    if (!mapContainer.current) return;
+    if (!token || !mapContainer.current || map.current) return;
 
+    mapboxgl.accessToken = token;
+    
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v9",
+      style: "mapbox://styles/mapbox/dark-v11",
       center: [INITIAL_VIEW.longitude, INITIAL_VIEW.latitude],
       zoom: INITIAL_VIEW.zoom,
-      accessToken: token,
     });
+
+    map.current.on("load", () => {
+      setMapLoaded(true);
+    });
+
+    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+    return () => {
+      map.current?.remove();
+      map.current = null;
+    };
   }, [token]);
 
+  // Add markers when map is loaded and gridsites change
   useEffect(() => {
-    if (!map.current) return; // wait for map to initialize
+    if (!map.current || !mapLoaded || !gridsites?.length) return;
 
     // Clear existing markers
-    const markers = document.querySelectorAll('.mapboxgl-marker');
-    markers.forEach(marker => marker.remove());
+    const markers = document.querySelectorAll(".mapboxgl-marker");
+    markers.forEach((marker) => marker.remove());
 
     gridsites.forEach((site) => {
-      const el = document.createElement('div');
-      el.className = styles.marker;
+      const el = document.createElement("div");
+      el.className = styles.marker || "flame-marker";
+      el.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        transform: translate(-50%, -100%);
+      `;
 
-      const span = document.createElement('span');
-      span.innerText = site.glyph;
-      el.appendChild(span);
+      const glyph = document.createElement("span");
+      glyph.style.cssText = "font-size: 24px; filter: drop-shadow(0 0 8px rgba(255,165,0,0.8));";
+      glyph.innerText = site.glyph;
+      el.appendChild(glyph);
 
-      const p = document.createElement('p');
-      p.innerText = site.name;
-      el.appendChild(p);
+      const name = document.createElement("p");
+      name.style.cssText = `
+        margin: 4px 0 0 0;
+        font-size: 10px;
+        font-weight: bold;
+        color: #fff;
+        text-shadow: 0 0 4px #000;
+        white-space: nowrap;
+      `;
+      name.innerText = site.name;
+      el.appendChild(name);
 
-      const small = document.createElement('small');
-      small.innerText = site.status;
-      el.appendChild(small);
+      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+        <div style="padding: 8px; background: rgba(0,0,0,0.9); color: #fff; border-radius: 8px;">
+          <h4 style="margin: 0 0 4px 0; color: #ff9800;">${site.glyph} ${site.name}</h4>
+          <p style="margin: 0; font-size: 12px; color: #aaa;">${site.status}</p>
+          <p style="margin: 4px 0 0 0; font-size: 10px; color: #666;">
+            ${site.lat.toFixed(4)}, ${site.lon.toFixed(4)}
+          </p>
+        </div>
+      `);
 
       new mapboxgl.Marker(el)
         .setLngLat([site.lon, site.lat])
+        .setPopup(popup)
         .addTo(map.current!);
     });
-  }, [gridsites]);
+  }, [gridsites, mapLoaded]);
 
+  if (!token) {
+    return (
+      <div className={styles.mapFallback} style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", background: "rgba(0,0,0,0.8)", color: "#ff9800" }}>
+        ⚠️ Missing Mapbox token
+      </div>
+    );
+  }
+
+  if (!gridsites?.length) {
+    return (
+      <div className={styles.mapFallback} style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", background: "rgba(0,0,0,0.8)", color: "#aaa" }}>
+        📭 No sites to map
+      </div>
+    );
+  }
 
   return (
-    <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />
+    <div 
+      ref={mapContainer} 
+      style={{ 
+        width: "100%", 
+        height: "100%", 
+        minHeight: "400px",
+        borderRadius: "12px",
+        overflow: "hidden"
+      }} 
+    />
   );
 };

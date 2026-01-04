@@ -166,7 +166,16 @@ export default function Sanctum() {
   const graphAgents = telemetry?.graph.agents;
   const agentWarning = telemetry?.graph.agentWarning;
   const agentRoster = useMemo<AgentTelemetry[]>(() => {
-    return (graphAgents ?? []) as AgentTelemetry[];
+    const agents = (graphAgents ?? []) as AgentTelemetry[];
+    // Deduplicate agents by id to prevent React key warnings
+    const seen = new Set<string>();
+    return agents.filter((agent) => {
+      if (seen.has(agent.id)) {
+        return false;
+      }
+      seen.add(agent.id);
+      return true;
+    });
   }, [graphAgents]);
 
   const agentSummary = useMemo<AgentSummary>(() => {
@@ -189,7 +198,8 @@ export default function Sanctum() {
 
     const capabilityFrequency = new Map<string, number>();
     agentRoster.forEach((agent) => {
-      (agent.capabilities ?? []).forEach((capability) => {
+      const capabilities = Array.isArray(agent.capabilities) ? agent.capabilities : [];
+      capabilities.forEach((capability) => {
         if (!capability) {
           return;
         }
@@ -452,7 +462,7 @@ export default function Sanctum() {
               agentRoster.map((agent) => {
                 const strength = toStrengthPercent(agent.manifestationStrength);
                 const tone = resolveAgentTone(agent.status);
-                const capabilities = agent.capabilities?.filter(Boolean) ?? [];
+                const capabilities = Array.isArray(agent.capabilities) ? agent.capabilities.filter(Boolean) : [];
                 return (
                   <div key={agent.id} className={styles.agentRow}>
                     <div className={styles.agentIdentity}>

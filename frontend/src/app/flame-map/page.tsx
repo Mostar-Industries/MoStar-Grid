@@ -1,9 +1,6 @@
-import AfricanFlameMap from "@/components/AfricanFlameMap";
+import { redirect } from "next/navigation";
 
 export default function FlameMapPage() {
-  return (
-    <main>
-      <AfricanFlameMap />
-    </main>
-  );
+  // Consolidated: redirect Flame Map to the main Flame view
+  redirect("/flame");
 }

@@ -8,6 +8,8 @@
     "start": "cd frontend && npm run start",
     "backend": "python -m uvicorn core_engine.api_gateway:app --reload --port 8001",
     "grid": "concurrently \"npm:backend\" \"npm:dev\"",
+    "start-all": "powershell -File ./start-services.ps1",
+    "start-backend": "powershell -File ./start-backend.ps1",
     "health-check": "powershell -File scripts/health-check.ps1"
   },
   "workspaces": [

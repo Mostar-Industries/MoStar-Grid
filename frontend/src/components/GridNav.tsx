@@ -6,7 +6,6 @@ import styles from "./GridNav.module.css";
 const NAV_LINKS = [
   { href: "/", label: "Sanctum" },
   { href: "/flame", label: "Flame View" },
-  { href: "/flame-map", label: "Flame Map" },
   { href: "/chat", label: "Oracle Chat" },
 ];
 

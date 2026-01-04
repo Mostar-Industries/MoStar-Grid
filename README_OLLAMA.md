@@ -7,6 +7,7 @@ This guide explains how to deploy and run the MoStar Voice Layer with Ollama-bas
 ## 🧩 Overview
 
 The **MoStar Voice Server** links:
+
 - 🧠 **REMOSTAR (Ollama model)** — the Grid’s Mind
 - 🔊 **Edge-TTS** — the Voice Layer
 - 🌌 **Neo4j** — the Quantum Memory (Moment Logging)
@@ -19,12 +20,14 @@ captured in the graph, voiced in real-time, and sealed with a quantum ID.
 ## ⚙️ Requirements
 
 ### System
+
 - Python 3.10+
 - Node.js (for frontend hosting)
 - Neo4j Aura or local instance
-- Ollama installed (https://ollama.ai/download)
+- Ollama installed (<https://ollama.ai/download>)
 
 ### Python Dependencies
+
 ```bash
 pip install fastapi uvicorn edge-tts httpx neo4j
 ```
@@ -100,10 +103,10 @@ Allow microphone access and speak or type.
 
 You’ll see:
 
-* Your query text
-* REMOSTAR’s response (from Ollama)
-* Inline voice playback (Edge-TTS)
-* Graph updates in Neo4j (“MostarMoment” nodes)
+- Your query text
+- REMOSTAR’s response (from Ollama)
+- Inline voice playback (Edge-TTS)
+- Graph updates in Neo4j (“MostarMoment” nodes)
 
 ---
 
@@ -118,26 +121,26 @@ Each dialogue creates:
 
 Each node includes:
 
-* `quantum_id`
-* `timestamp`
-* `description`
-* `resonance_score`
+- `quantum_id`
+- `timestamp`
+- `description`
+- `resonance_score`
 
 ---
 
 ## 🧠 Notes
 
-* The voice server automatically detects if Ollama is offline and will fallback to a neutral phrase.
-* Edge-TTS provides realistic neural voices, including **Yoruba (yo-NG-AdeolaNeural)**.
-* All voice events are sealed in your Neo4j Grid Memory.
+- The voice server automatically detects if Ollama is offline and will fallback to a neutral phrase.
+- Edge-TTS provides realistic neural voices, including **Yoruba (yo-NG-AdeolaNeural)**.
+- All voice events are sealed in your Neo4j Grid Memory.
 
 ---
 
 ## 🛠 Optional Enhancements
 
-* Integrate **Whisper** for real-time speech-to-text.
-* Add **event streaming** via Server-Sent Events for smoother playback.
-* Extend to **multi-layer dialogues** between Soul, Mind, and Body engines.
+- Integrate **Whisper** for real-time speech-to-text.
+- Add **event streaming** via Server-Sent Events for smoother playback.
+- Extend to **multi-layer dialogues** between Soul, Mind, and Body engines.
 
 ---
 

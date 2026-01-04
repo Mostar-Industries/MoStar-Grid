@@ -43,6 +43,13 @@ audio_dir.mkdir(parents=True, exist_ok=True)
 # === Root status endpoint ===
 @app.get("/api/v1/status")
 async def system_status():
+    from datetime import datetime
+    import httpx
+    
+    neo4j_state = "offline"
+    ollama_state = "offline"
+    
+    # Check Neo4j connectivity
     try:
         from neo4j import GraphDatabase
         driver = GraphDatabase.driver(
@@ -50,15 +57,56 @@ async def system_status():
             auth=(os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASSWORD", ""))
         )
         driver.verify_connectivity()
-        neo4j_state = "connected"
+        neo4j_state = "online"
         driver.close()
     except:
         neo4j_state = "offline"
+    
+    # Check Ollama connectivity
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            resp = await client.get(f"{OLLAMA_HOST}/api/tags")
+            if resp.status_code == 200:
+                ollama_state = "online"
+    except:
+        ollama_state = "offline"
+    
+    now = datetime.now().isoformat()
+    
+    # DCX0 (Mind) - requires Ollama for reasoning
+    # DCX1 (Soul) - requires Neo4j for spiritual knowledge
+    # DCX2 (Body) - requires both for action execution
+    dcx0_status = "online" if ollama_state == "online" else "offline"
+    dcx1_status = "online" if neo4j_state == "online" else "offline"
+    dcx2_status = "online" if (ollama_state == "online" and neo4j_state == "online") else "degraded" if (ollama_state == "online" or neo4j_state == "online") else "offline"
+    
     return {
         "system": "MoStar Grid API",
+        "status": "operational" if neo4j_state == "online" else "degraded",
         "ollama_model": OLLAMA_MODEL,
         "tts_language": TTS_LANG,
-        "neo4j": neo4j_state
+        "neo4j": neo4j_state,
+        "ollama": ollama_state,
+        "layers": {
+            "dcx0": {
+                "name": "Mind (DCX0)",
+                "status": dcx0_status,
+                "load": 45 if dcx0_status == "online" else 0,
+                "lastPing": now if dcx0_status != "offline" else None
+            },
+            "dcx1": {
+                "name": "Soul (DCX1)",
+                "status": dcx1_status,
+                "load": 30 if dcx1_status == "online" else 0,
+                "lastPing": now if dcx1_status != "offline" else None
+            },
+            "dcx2": {
+                "name": "Body (DCX2)",
+                "status": dcx2_status,
+                "load": 60 if dcx2_status == "online" else 20 if dcx2_status == "degraded" else 0,
+                "lastPing": now if dcx2_status != "offline" else None
+            }
+        }
     }
 
 

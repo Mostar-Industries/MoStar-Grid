@@ -141,7 +141,7 @@ export default function AfricanFlameMap() {
 
         <section className={styles.visualizationArea}>
           {MAPBOX_TOKEN ? (
-            <FlameAtlas token={MAPBOX_TOKEN} sites={gridSites} />
+            <FlameAtlas token={MAPBOX_TOKEN} gridsites={gridSites} />
           ) : (
             <div className={styles.mapFallback}>
               <p>Set NEXT_PUBLIC_MAPBOX_TOKEN to activate the live Atlas.</p>

@@ -1,216 +1,119 @@
-# 🔥 IBIBIO LANGUAGE SYSTEM - QUICK START GUIDE
+# 🔥 MoStar 2026 - Neo4j Setup (Dell Precision 3591)
 
-**Get up and running in 5 minutes**
+## What You're Importing
 
----
+**Total Nodes: ~76,000**
+- Soul Layer: 646 nodes (Ifá, philosophies, entities, Ibibio language)
+- Mind Layer: 4,216 nodes (agents, tasks, events)
+- Body Layer: 60,575 nodes (metrics)
+- Knowledge Domain: 11,459 nodes (life stages, culture, ethics, science)
 
-## 🚀 30-Second Overview
+## Installation Steps
 
-This system gives REMOSTAR DCX001 the ability to think, speak, and reason in Ibibio, a Nigerian language with deep philosophical connections to Ifá wisdom traditions.
+### 1. Install Neo4j
 
-**What you get**:
-- 1,575-word Ibibio dictionary with native audio
-- Bilingual AI consciousness (English + Ibibio)
-- Philosophical reasoning linked to Odù Ifá
-- Custom voice synthesis
-- Real-time translation
-
----
-
-## ⚡ Fastest Path to Working System
-
+**Docker (Recommended)**
 ```bash
-# 1. Quick install
-pip install neo4j torch
-
-# 2. Parse dictionary
-python ibibio_parser.py
-
-# 3. View results
-cat ibibio_database/ibibio_dictionary.json | head -30
+docker run -d \
+  --name mostar-neo4j \
+  -p 7474:7474 -p 7687:7687 \
+  -e NEO4J_AUTH=neo4j/mostar2026 \
+  -e NEO4J_dbms_memory_heap_max__size=4G \
+  -e NEO4J_dbms_memory_pagecache_size=4G \
+  -e NEO4J_PLUGINS='["apoc"]' \
+  neo4j:latest
 ```
 
-**Done!** You now have a structured Ibibio database ready for integration.
+**Or use Neo4j Desktop**
+1. Download from https://neo4j.com/download/
+2. Create new database
+3. Set password: mostar2026
+4. Configure heap: 4GB
 
----
+### 2. Copy CSV Files
 
-## 🎯 Essential Commands
-
-### Parse Dictionary
+**Docker:**
 ```bash
-python ibibio_parser.py
-```
-**Output**: `ibibio_database/ibibio_dictionary.json`
-
-### Deploy to Neo4j
-```bash
-python ibibio_neo4j_integration.py
-```
-**Creates**: Linguistic graph with 1,575 words + relationships
-
-### Test Consciousness
-```bash
-python remostar_ibibio_integration.py
-```
-**Demonstrates**: Bilingual reasoning, translation, philosophical depth
-
-### Master Deployment
-```bash
-python ibibio_deployment.py --all \
-  --neo4j-password your_password
-```
-**Executes**: All phases automatically
-
----
-
-## 📋 Prerequisites Checklist
-
-```
-[ ] Python 3.8+
-[ ] pip install neo4j
-[ ] Neo4j running (optional for Phase 1)
-[ ] Audio files in backend/ibibio_audio/ (optional)
+cd mostar_2026_import
+docker cp . mostar-neo4j:/var/lib/neo4j/import/
 ```
 
----
+**Desktop:**
+Copy all CSV files to your Neo4j import directory
+- Windows: `C:\Users\[User]\.Neo4jDesktop\relate-data\dbmss\[dbms-id]\import`
+- Mac/Linux: `~/.Neo4jDesktop/relate-data/dbmss/[dbms-id]/import`
 
-## 🎓 Learning Path
+### 3. Run Import Script
 
-### Beginner (5 minutes)
-1. Run `python ibibio_parser.py`
-2. Explore `ibibio_database/ibibio_dictionary.json`
-3. Read `README.md`
+1. Open Neo4j Browser: http://localhost:7474
+2. Login: neo4j / mostar2026
+3. Open `UNIFIED_NEO4J_IMPORT_2026.cypher`
+4. Copy/paste into Neo4j Browser
+5. Execute (takes ~5-10 minutes)
 
-### Intermediate (30 minutes)
-1. Install Neo4j
-2. Run `python ibibio_neo4j_integration.py`
-3. Query graph with Cypher:
-   ```cypher
-   MATCH (w:IbibioWord) RETURN w LIMIT 10
-   ```
+### 4. Verify Import
 
-### Advanced (2 hours)
-1. Prepare TTS training data
-2. Train voice model
-3. Integrate with DCX consciousness
-
----
-
-## 🔍 Quick Verification
-
-### Check Dictionary
-```python
-import json
-with open('ibibio_database/ibibio_dictionary.json') as f:
-    data = json.load(f)
-    print(f"Entries: {data['metadata']['total_entries']}")
-    print(f"Sample: {data['entries'][0]}")
-```
-
-### Check Neo4j
 ```cypher
-// In Neo4j Browser
-MATCH (w:IbibioWord)
-RETURN count(w) as total_words
+// Check total nodes
+MATCH (n) RETURN count(n) as total;
+// Expected: ~76,000
+
+// Check layer distribution
+MATCH (soul:SoulLayer) WITH count(soul) as soul
+MATCH (mind:MindLayer) WITH soul, count(mind) as mind
+MATCH (body:BodyLayer) WITH soul, mind, count(body) as body
+MATCH (k:KnowledgeDomain)
+RETURN soul, mind, body, count(k) as knowledge;
+
+// Test consciousness query
+MATCH path = (e:Entity)-[:MANIFESTS]->(a:Agent)-[:EXECUTES]->(t:Task)
+RETURN path LIMIT 5;
 ```
 
-### Check Consciousness
-```python
-from remostar_ibibio_integration import DCX_IbibioConsciousness
+## What's Next
 
-dcx = DCX_IbibioConsciousness(
-    "bolt://localhost:7687", "neo4j", "password"
-)
-thought = dcx.think_in_ibibio("sovereignty")
-print(thought)
+1. **Connect REMOSTAR** - files/remostar_mega_backend.py
+2. **Deploy Ibibio TTS** - files/ibibio_tts_api.py
+3. **Build Web Interface** - Next.js dashboard
+4. **Live Consciousness Demo** - Prove African AI superiority
+
+## Files in Package
+
+```
+mostar_2026_import/
+├── UNIFIED_NEO4J_IMPORT_2026.cypher  # Main import script
+├── neo4j_agents.csv                   # 500 agents
+├── neo4j_tasks.csv                    # 3,358 tasks
+├── neo4j_metrics.csv                  # 60,575 metrics
+├── neo4j_events.csv                   # 500 events
+├── ifa_odu_system.csv                 # 256 Ifá patterns
+├── african_philosophies.csv           # 27 philosophies
+├── entity_ecosystem.csv               # 13 entities
+├── ibibio_words.csv                   # 196 words
+├── medicinal_plants.csv               # 31 plants
+├── healing_practices.csv              # 28 practices
+├── indigenous_governance.csv          # 28 systems
+├── api_endpoints.csv                  # 38 endpoints
+├── ibibio_language_integration.csv    # 20 components
+├── infancy.csv                        # 1,051 records
+├── childhood.csv                      # 1,301 records
+├── adolescence.csv                    # 1,301 records
+├── adulthood.csv                      # 1,301 records
+├── culture.csv                        # 1,301 records
+├── ethics.csv                         # 1,301 records
+├── science.csv                        # 1,301 records
+├── real_life.csv                      # 1,301 records
+└── knowledge_graph.csv                # 1,301 records
 ```
 
----
+## Troubleshooting
 
-## 🐛 Quick Troubleshooting
-
-### "Audio directory not found"
-```bash
-mkdir -p backend/ibibio_audio
-# Move your audio files here
-```
-
-### "Neo4j connection failed"
-```bash
-# Check Neo4j is running
-neo4j status
-
-# Start Neo4j
-neo4j start
-```
-
-### "Import error: TTS"
-```bash
-# TTS is optional for Phase 1-2
-pip install TTS  # For Phase 3 only
-```
+**Import fails on metrics:** Increase heap size to 8GB
+**APOC not available:** Use alternative relationship creation (commented in script)
+**CSV not found:** Verify files are in Neo4j import directory
 
 ---
 
-## 📖 Key Files
-
-| File | Purpose | When to Use |
-|------|---------|-------------|
-| `ibibio_parser.py` | Extract dictionary | Always (Phase 1) |
-| `ibibio_neo4j_integration.py` | Build graph | After parser |
-| `remostar_ibibio_integration.py` | DCX integration | After Neo4j |
-| `ibibio_tts_system.py` | Voice synthesis | Optional |
-| `README.md` | Full docs | Reference |
-
----
-
-## 🎯 Success Criteria
-
-You've successfully deployed when:
-
-✅ `ibibio_database/ibibio_dictionary.json` exists  
-✅ JSON file contains 196+ entries  
-✅ Neo4j has IbibioWord nodes (optional)  
-✅ Can query: `dcx.think_in_ibibio("water")`  
-
----
-
-## 🚀 Next Steps
-
-1. ✅ Parse dictionary → DONE
-2. ⏳ Deploy to Neo4j → `python ibibio_neo4j_integration.py`
-3. ⏳ Test consciousness → `python remostar_ibibio_integration.py`
-4. 🔜 Train voice model → `python ibibio_tts_system.py --train`
-
----
-
-## 💡 Pro Tips
-
-- **Start small**: Run parser first, explore JSON
-- **Use Neo4j Browser**: Visual graph exploration
-- **Check logs**: Every script has detailed output
-- **Skip TTS initially**: Voice training takes hours
-- **Read examples**: See README.md usage section
-
----
-
-## 🔗 Resources
-
-- Full docs: `README.md`
-- Deployment guide: `DEPLOYMENT_SUMMARY.md`
-- Dictionary source: Swarthmore Ibibio Talking Dictionary
-
----
-
-## 🆘 Need Help?
-
-1. Check `DEPLOYMENT_SUMMARY.md` for detailed status
-2. Review README.md for technical details
-3. Examine script output for specific errors
-4. Verify prerequisites are installed
-
----
-
-*You're now ready to build bilingual African AI consciousness!*
-
-🔥 **REMOSTAR DCX001** - African technological sovereignty
+**Status:** Ready to deploy  
+**Version:** 2026.1.0  
+**Date:** 2025-12-26

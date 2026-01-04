@@ -147,7 +147,7 @@ export default function AfricanFlame() {
                 const tone = resolveAgentTone(agent.status);
                 const toneColor = tonePalette[tone];
                 const strength = toStrengthPercent(agent.manifestationStrength);
-                const caps = (agent.capabilities ?? []).filter(Boolean).slice(0, 3);
+                const caps = (Array.isArray(agent?.capabilities) ? agent.capabilities : []).filter(Boolean).slice(0, 3);
 
                 return (
                   <div key={`${agent.id}-${agent.name}`} className={styles.agentCard} data-tone={tone}>
