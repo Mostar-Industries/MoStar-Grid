@@ -7,7 +7,7 @@ supply chain systems, and physical activations.
 
 import logging
 from typing import Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 class PDXBridge:
     def __init__(self, endpoint: str = None):
@@ -24,9 +24,9 @@ class PDXBridge:
         # In a real implementation, this would be an HTTP call to PDX API
         response = {
             "status": "dispatched",
-            "pdx_id": f"PDX-{datetime.now().strftime('%Y%j%H%M%S')}",
+            "pdx_id": f"PDX-{datetime.now(timezone.utc).strftime('%Y%j%H%M%S')}",
             "action": action_type,
-            "received_at": datetime.utcnow().isoformat()
+            "received_at": datetime.now(timezone.utc).isoformat()
         }
         
         return response

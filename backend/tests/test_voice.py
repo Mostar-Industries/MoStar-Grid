@@ -11,7 +11,7 @@ def test_hash_text():
     assert h1 == h2
     assert len(h1) == 32 # md5 hexdigest
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_speak_async_caching():
     text = "This is a test of the MoStar voice caching system."
     # Use a specific cache dir for test if possible, but for now use default

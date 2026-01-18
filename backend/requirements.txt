@@ -1,0 +1,22 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# MOSTAR GRID - DEPENDENCIES
+# "First African AI Homeworld"
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Core API
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+
+# Database - Neon PostgreSQL
+asyncpg>=0.29.0
+
+# Neo4j (optional - for graph consciousness)
+neo4j>=5.14.0
+
+# Utilities
+python-dotenv>=1.0.0
+httpx>=0.25.0
+
+# For production
+gunicorn>=21.2.0

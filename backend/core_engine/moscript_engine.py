@@ -39,7 +39,7 @@ class MoScriptEngine:
         Initializes the MoScript Engine with a covenant ID.
         """
         self.covenant_id = covenant_id or self._generate_covenant_id()
-        self.session_state = {"invoked": datetime.utcnow().isoformat()}
+        self.session_state = {"invoked": datetime.now(timezone.utc).isoformat()}
         self.codex_rules = self._load_codex()
         print(f"🕯️ MoScript Engine awakened under Covenant: {self.covenant_id}")
 
@@ -63,7 +63,7 @@ class MoScriptEngine:
     # ======= SOULPRINT =======
     def _generate_covenant_id(self) -> str:
         """Generates a covenant ID."""
-        base = f"{datetime.utcnow().isoformat()}_{random.randint(1000,9999)}"
+        base = f"{datetime.now(timezone.utc).isoformat()}_{random.randint(1000,9999)}"
         return hashlib.sha256(base.encode()).hexdigest()[:16]
 
     def bless(self, intent: str):

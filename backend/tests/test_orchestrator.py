@@ -4,7 +4,7 @@ from core_engine.orchestrator import complexity_score, determine_route, route_qu
 
 @pytest.mark.parametrize("text,expected_min_score", [
     ("Hello, how are you?", 0.0),
-    ("Please analyze this complex ritual with more than one hundred and fifty words to ensure that the token count exceeds the threshold for high complexity routing in the MoStar Grid system. We need to verify every single detail of this implementation to ensure it aligns with the FlameCODEX and ancestral laws.", 0.8),
+    ("analyze " * 160 + " verify", 0.8),
     ("explain the ifa odu patterns", 0.3),
     ("simulate the soul layer sync", 0.3),
 ])
@@ -15,7 +15,7 @@ def test_complexity_score(text, expected_min_score):
 
 def test_determine_route():
     # Mind route (high score)
-    complex_text = "analyze " * 20
+    complex_text = "analyze " * 160
     assert determine_route(complex_text, {}) == 'Mind'
     
     # Soul route (context)
@@ -24,7 +24,7 @@ def test_determine_route():
     # Body route (simple)
     assert determine_route("hi", {}) == 'Body'
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_route_query_mock():
     # This might need mocking of httpx/ollama depending on environment
     # But we can at least check if it handles some basic flows

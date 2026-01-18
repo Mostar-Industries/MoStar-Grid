@@ -45,6 +45,8 @@ class TriggerType(Enum):
     SECURITY = "security anomaly"
     PRECISION = "precision"
     VISIONARY = "visionary"
+    PDX = "pdx activation"
+    LOGISTICS = "logistics dispatch"
 
 
 @dataclass

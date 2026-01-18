@@ -16,6 +16,7 @@
     "frontend"
   ],
   "devDependencies": {
+    "@types/node": "^25.0.9",
     "concurrently": "^9.2.1"
   },
   "dependencies": {

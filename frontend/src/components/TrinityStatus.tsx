@@ -28,10 +28,12 @@ export function TrinityStatus() {
           setStatus((prev) => ({
             ...prev,
             ...Object.entries(data.layers).reduce((acc, [key, value]) => {
+              // Ensure value is an object before spreading
+              const layerData = typeof value === 'object' && value !== null ? value : {};
               acc[key] = {
                 ...prev[key],
-                ...value,
-                status: (value as any).status || "offline",
+                ...(layerData as Partial<LayerStatus>),
+                status: (layerData as any).status || "offline",
               } as LayerStatus;
               return acc;
             }, {} as Record<string, LayerStatus>),

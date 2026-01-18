@@ -2,7 +2,7 @@
 """
 🧠 MoStar Grid API Gateway
 --------------------------
-Bridges Ollama reasoning, Neo4j logging, and Voice synthesis into one unified interface.
+Bridges Ollama reasoning, Neo4j logging, Voice synthesis, and Grid Vitals into one unified interface.
 """
 
 import sys, os
@@ -11,6 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import os
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import JSONResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from gtts import gTTS
 from pathlib import Path
@@ -35,6 +36,16 @@ SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", "You are REMOSTAR, a distributed MoSt
 
 # === Core setup ===
 app = FastAPI(title="MoStar Grid API", version="1.0.0")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 mv = MostarVoice(lang=TTS_LANG)
 audio_dir = Path("data/voice_cache")
 audio_dir.mkdir(parents=True, exist_ok=True)
@@ -132,6 +143,29 @@ async def system_status():
             }
         }
     }
+
+
+# === Grid Vitals endpoint ===
+@app.get("/api/v1/vitals")
+async def grid_vitals():
+    """
+    Run comprehensive Grid Vitals check.
+    Returns detailed health status of all Grid components.
+    """
+    try:
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
+        from grid_vitals import GridVitals
+        
+        vitals = GridVitals()
+        report = await vitals.run_all_checks()
+        return report
+    except Exception as e:
+        # Fallback to basic status if grid_vitals not available
+        return {
+            "grid_status": "DEGRADED",
+            "error": f"Grid Vitals module not available: {str(e)}",
+            "fallback_status": await system_status()
+        }
 
 
 def _extract_prompt(content_type: str, body: dict | None, form_data: dict | None) -> str | None:

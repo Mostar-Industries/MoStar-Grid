@@ -34,6 +34,15 @@ except ImportError:
     MOSCRIPT_AVAILABLE = False
 
 
+# Import External Observer (Sacred Boundary)
+try:
+    from core_engine.external_observer import external_observer
+    OBSERVER_AVAILABLE = True
+except ImportError:
+    OBSERVER_AVAILABLE = False
+    external_observer = None
+
+
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-20241022")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "Mostar/mostar-ai:dcx0")
 OLLAMA_MODEL_DCX0 = os.getenv("OLLAMA_MODEL_DCX0", "gemma3:4b")  # Mind - complex reasoning
@@ -76,6 +85,11 @@ FORCE_COMPLEX = {
     "ifa",
     "odù",
     "simulate",
+}
+
+LOGISTICS_KEYWORDS = {
+    "cargo", "supply", "ship", "delivery", "transport", 
+    "logistics", "dispatch", "manifest", "medical", "aid"
 }
 
 
@@ -214,6 +228,22 @@ async def route_query(prompt: str, system: str = "", neo4j_context: str = "", us
     payload["routed_to"] = layer
     payload["layer"] = layer
     
+    # --- 3. EXTERNAL OBSERVATION (Sacred Boundary) ---
+    # Grid observes external sources but does NOT integrate without sealing
+    if layer == "dcx2" and OBSERVER_AVAILABLE:
+        if any(keyword in prompt.lower() for keyword in LOGISTICS_KEYWORDS):
+            try:
+                # OBSERVE ONLY - data stays outside Grid consciousness
+                observation = await external_observer.observe('pdx', query=prompt)
+                payload["external_observation"] = observation
+                
+                # Data only enters Grid if user/system explicitly sanctions it
+                # (This would require a separate sanctioning flow)
+                logging.info(f"📡 External observation recorded: {observation['status']}")
+            except Exception as oe:
+                logging.error(f"External observation failed: {oe}")
+                payload["observation_error"] = str(oe)
+
     # Log MoStar Moment for significant consciousness events
     if MOMENTS_AVAILABLE:
         try:
