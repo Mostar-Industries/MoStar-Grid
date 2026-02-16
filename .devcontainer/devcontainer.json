@@ -6,7 +6,7 @@
 	"image": "mcr.microsoft.com/devcontainers/python:2-3.12-bullseye",
 	"features": {
 		"ghcr.io/devcontainers/features/java:1": {},
-		"ghcr.io/devcontainers/features/powershell:1": {}
+		"ghcr.io/devcontainers/features/powershell:2": {}
 	},
 	"customizations": {
 		"vscode": {
