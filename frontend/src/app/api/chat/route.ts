@@ -1,133 +1,91 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+const BACKEND = process.env.GRID_API_BASE ?? "http://localhost:7001";
 
-
-const GRID_API_BASE =
-
-  process.env.GRID_API_BASE ??
-
-  process.env.NEXT_PUBLIC_GRID_API_BASE ??
-
-  "http://localhost:8001";
-
-
-
-export async function POST(request: Request) {
-
+export async function POST(req: NextRequest) {
   try {
-
-    const body = await request.json();
-
-    const message: string = body?.message;
-
-    const model: string | undefined = body?.model;
-
-    const language: string = body?.language ?? "en";
+    const body = await req.json();
+    const { message, model } = body;
 
     if (!message) {
-
-      return NextResponse.json({ error: "Missing chat message." }, { status: 400 });
-
+      return NextResponse.json({ error: "No message provided" }, { status: 400 });
     }
 
+    // Try endpoints in order until one works
+    const endpoints = [
+      { url: `${BACKEND}/api/v1/reason`, payload: { prompt: message, model } },
+      { url: `${BACKEND}/api/v1/chat`, payload: { message, model } },
+      { url: `${BACKEND}/chat`, payload: { message, model } },
+      { url: `${BACKEND}/reason`, payload: { query: message, model } },
+      { url: `${BACKEND}/remostar/query`, payload: { query: message, language: "en" } },
+    ];
 
+    let lastError = "";
 
-    const response = await fetch(`${GRID_API_BASE}/api/v1/reason`, {
+    for (const endpoint of endpoints) {
+      try {
+        const res = await fetch(endpoint.url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(endpoint.payload),
+          signal: AbortSignal.timeout(30000),
+        });
 
-      method: "POST",
-
-      headers: { "Content-Type": "application/json" },
-
-      body: JSON.stringify({ 
-
-        prompt: message,
-
-        ...(model && { model })
-
-      }),
-
-    });
-
-
-
-    if (!response.ok) {
-
-      const text = await response.text();
-
-      throw new Error(`Grid API responded with ${response.status}: ${text}`);
-
+        if (res.ok) {
+          const data = await res.json();
+          return NextResponse.json({
+            response: data.response ?? data.result ?? data.reply ?? data.answer ?? JSON.stringify(data),
+            model_used: data.model_used ?? model ?? "mostar-ai",
+            complexity_score: data.complexity_score ?? data.resonance ?? 0.85,
+            endpoint_used: endpoint.url,
+          });
+        }
+        lastError = `${endpoint.url} → ${res.status}`;
+      } catch (e) {
+        lastError = `${endpoint.url} → ${e instanceof Error ? e.message : "unreachable"}`;
+        continue;
+      }
     }
 
+    // Fallback — Ollama direct
+    try {
+      const ollamaRes = await fetch("http://localhost:11434/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: model ?? "Mostar/mostar-ai:latest",
+          prompt: message,
+          stream: false,
+        }),
+        signal: AbortSignal.timeout(60000),
+      });
 
-
-    const payload = await response.json();
-
-    return NextResponse.json(payload);
-
-  } catch (error) {
+      if (ollamaRes.ok) {
+        const data = await ollamaRes.json();
+        return NextResponse.json({
+          response: data.response,
+          model_used: data.model ?? "mostar-ai-direct",
+          complexity_score: 0.85,
+          endpoint_used: "ollama-direct",
+        });
+      }
+    } catch {
+      // Ollama also unreachable
+    }
 
     return NextResponse.json(
-
-      { error: error instanceof Error ? error.message : "Chat relay failed" },
-
-      { status: 500 }
-
+      {
+        error: "All endpoints unreachable",
+        tried: lastError,
+        suggestion: "Ensure backend is running on port 7001 and Ollama on 11434",
+      },
+      { status: 503 }
     );
 
-  }
-
-}
-
-
-
-
-
-=======
-=======
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
-const GRID_API_BASE =
-  process.env.GRID_API_BASE ??
-  process.env.NEXT_PUBLIC_GRID_API_BASE ??
-  "http://localhost:8001";
-
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const message: string = body?.message;
-    const model: string | undefined = body?.model;
-    const language: string = body?.language ?? "en";
-    if (!message) {
-      return NextResponse.json({ error: "Missing chat message." }, { status: 400 });
-    }
-
-    const params = new URLSearchParams({ prompt: message, language });
-    if (model) {
-      params.append("model", model);
-    }
-
-    const response = await fetch(`${GRID_API_BASE}/api/v1/reason`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params,
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Grid API responded with ${response.status}: ${text}`);
-    }
-
-    const payload = await response.json();
-    return NextResponse.json(payload);
-  } catch (error) {
+  } catch (err) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Chat relay failed" },
+      { error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 }
     );
   }
 }
-<<<<<<< HEAD
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
-=======
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
