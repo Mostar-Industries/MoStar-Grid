@@ -1,0 +1,30 @@
+symbolic_logic:
+  version: 1.0.0
+  description: Dual-mode symbolic logic module integrating declarative (Prolog-style)
+    and functional (Lisp-style) symbolic reasoning. Designed for AI agents requiring
+    logic inference, expression evaluation, or domain-specific rule execution across
+    all domains.
+  modes:
+  - name: Prolog
+    engine: rule-based
+    rules:
+    - fact: likes(alice, chocolate).
+    - fact: likes(bob, pizza).
+    - fact: likes(charlie, chocolate).
+    - fact: likes(charlie, pizza).
+    - rule: compatible(X, Y) :- likes(X, Z), likes(Y, Z), X \= Y.
+  - name: Lisp
+    engine: symbolic-recursion
+    expressions:
+    - function: "(defun factorial (n)\n  (if (<= n 1)\n      1\n      (* n (factorial\
+        \ (- n 1)))))"
+    - function: "(defun shared-likes (person1 person2)\n  (cond\n    ((and (equal\
+        \ person1 'alice) (equal person2 'charlie)) '(chocolate))\n    ((and (equal\
+        \ person1 'charlie) (equal person2 'bob)) '(pizza))\n    (t '())))"
+  entry_points:
+  - type: query
+    examples:
+    - input: ?- compatible(alice, charlie).
+      output: 'true'
+    - input: (factorial 5)
+      output: '120'
