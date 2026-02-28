@@ -22,10 +22,7 @@ type AgentSummary = {
   idle: number;
   avgStrength: number;
   statuses: Record<string, number>;
-  topCapabilities: {
-    name: string;
-    count: number;
-  }[];
+  topCapabilities: { name: string; count: number }[];
 };
 
 const GRID_COHERENCE = 97.85;
@@ -99,34 +96,10 @@ const soulProblems = [
 ];
 
 const initialWhispers: Whisper[] = [
-  {
-    id: "seed-0",
-    type: "info",
-    text: "New agent 'Akan Elder-007' connected",
-    source: "Grid Link",
-    timestamp: "2025-01-01T00:00:00.000Z",
-  },
-  {
-    id: "seed-1",
-    type: "warn",
-    text: "Verdict Engine drift detected at 1.1% variance",
-    source: "Verdict Engine",
-    timestamp: "2025-01-01T00:05:00.000Z",
-  },
-  {
-    id: "seed-2",
-    type: "info",
-    text: "Ifa Oracle returned 16-cowrie spread: Ose Iwori",
-    source: "Ifa Oracle",
-    timestamp: "2025-01-01T00:08:00.000Z",
-  },
-  {
-    id: "seed-3",
-    type: "error",
-    text: "External ping rejected - covenant seal enforced",
-    source: "Guardian Net",
-    timestamp: "2025-01-01T00:10:00.000Z",
-  },
+  { id: "seed-0", type: "info", text: "New agent 'Akan Elder-007' connected", source: "Grid Link", timestamp: "2025-01-01T00:00:00.000Z" },
+  { id: "seed-1", type: "warn", text: "Verdict Engine drift detected at 1.1% variance", source: "Verdict Engine", timestamp: "2025-01-01T00:05:00.000Z" },
+  { id: "seed-2", type: "info", text: "Ifa Oracle returned 16-cowrie spread: Ose Iwori", source: "Ifa Oracle", timestamp: "2025-01-01T00:08:00.000Z" },
+  { id: "seed-3", type: "error", text: "External ping rejected — covenant seal enforced", source: "Guardian Net", timestamp: "2025-01-01T00:10:00.000Z" },
 ];
 
 type StatusTone = "ok" | "warn" | "error";
@@ -138,73 +111,45 @@ const statusLabel: Record<StatusTone, string> = {
 };
 
 function normalizeTimestamp(value?: string) {
-  if (!value) {
-    return new Date().toISOString();
-  }
+  if (!value) return new Date().toISOString();
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 }
 
 function formatWhisperTime(value: string) {
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return "--:--:--";
-  }
+  if (Number.isNaN(parsed.getTime())) return "--:--:--";
   return parsed.toISOString().slice(11, 19);
 }
 
 export default function Sanctum() {
   const { telemetry } = useGridTelemetry();
+
   const coherence =
     telemetry?.graph.stats?.avgResonance != null
-      ? (telemetry.graph.stats.avgResonance * 100)
+      ? telemetry.graph.stats.avgResonance * 100
       : GRID_COHERENCE;
-<<<<<<< HEAD
-<<<<<<< HEAD
-  const totalMoments = telemetry?.graph?.stats?.totalMoments ?? 0;
-  const initiatorCount = telemetry?.graph?.stats?.distinctInitiators ?? 0;
-  const backendPulse = telemetry?.backend?.ok ? "Linked" : "Offline";
-  const backendNeo4jState = telemetry?.backend?.data?.neo4j ?? "unknown";
-  const graphAgents = telemetry?.graph?.agents;
-  const agentWarning = telemetry?.graph?.agentWarning;
-  const agentRoster = useMemo<AgentTelemetry[]>(() => {
-    const agents = (graphAgents ?? []) as AgentTelemetry[];
-    // Deduplicate agents by id to prevent React key warnings
-    const seen = new Set<string>();
-    return agents.filter((agent) => {
-      if (seen.has(agent.id)) {
-        return false;
-      }
-      seen.add(agent.id);
-      return true;
-    });
-=======
-=======
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
+
   const totalMoments = telemetry?.graph.stats?.totalMoments ?? 0;
   const initiatorCount = telemetry?.graph.stats?.distinctInitiators ?? 0;
   const backendPulse = telemetry?.backend.ok ? "Linked" : "Offline";
   const backendNeo4jState = telemetry?.backend.data?.neo4j ?? "unknown";
   const graphAgents = telemetry?.graph.agents;
   const agentWarning = telemetry?.graph.agentWarning;
+
   const agentRoster = useMemo<AgentTelemetry[]>(() => {
-    return (graphAgents ?? []) as AgentTelemetry[];
-<<<<<<< HEAD
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
-=======
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
+    const agents = (graphAgents ?? []) as AgentTelemetry[];
+    const seen = new Set<string>();
+    return agents.filter((agent) => {
+      if (seen.has(agent.id)) return false;
+      seen.add(agent.id);
+      return true;
+    });
   }, [graphAgents]);
 
   const agentSummary = useMemo<AgentSummary>(() => {
     if (!agentRoster.length) {
-      return {
-        total: 0,
-        monitoring: 0,
-        idle: 0,
-        avgStrength: 0,
-        statuses: {},
-        topCapabilities: [],
-      };
+      return { total: 0, monitoring: 0, idle: 0, avgStrength: 0, statuses: {}, topCapabilities: [] };
     }
 
     const statuses = agentRoster.reduce<Record<string, number>>((acc, agent) => {
@@ -215,19 +160,9 @@ export default function Sanctum() {
 
     const capabilityFrequency = new Map<string, number>();
     agentRoster.forEach((agent) => {
-<<<<<<< HEAD
-<<<<<<< HEAD
       const capabilities = Array.isArray(agent.capabilities) ? agent.capabilities : [];
       capabilities.forEach((capability) => {
-=======
-      (agent.capabilities ?? []).forEach((capability) => {
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
-=======
-      (agent.capabilities ?? []).forEach((capability) => {
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
-        if (!capability) {
-          return;
-        }
+        if (!capability) return;
         const key = capability.trim();
         capabilityFrequency.set(key, (capabilityFrequency.get(key) ?? 0) + 1);
       });
@@ -253,19 +188,13 @@ export default function Sanctum() {
   }, [agentRoster]);
 
   const agentStatusEntries = useMemo(() => {
-    return Object.entries(agentSummary.statuses)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 4);
+    return Object.entries(agentSummary.statuses).sort((a, b) => b[1] - a[1]).slice(0, 4);
   }, [agentSummary]);
 
   const whisperFeed = useMemo<Whisper[]>(() => {
     const mergeSources: MomentRecord[] = [];
-    if (telemetry?.log.entries?.length) {
-      mergeSources.push(...telemetry.log.entries);
-    }
-    if (telemetry?.graph.latest?.length) {
-      mergeSources.push(...telemetry.graph.latest);
-    }
+    if (telemetry?.log.entries?.length) mergeSources.push(...telemetry.log.entries);
+    if (telemetry?.graph.latest?.length) mergeSources.push(...telemetry.graph.latest);
 
     if (mergeSources.length) {
       const deduped = mergeSources.filter(
@@ -274,11 +203,7 @@ export default function Sanctum() {
       );
 
       return deduped
-        .sort((a, b) => {
-          const aTime = new Date(a.timestamp ?? 0).getTime();
-          const bTime = new Date(b.timestamp ?? 0).getTime();
-          return bTime - aTime;
-        })
+        .sort((a, b) => new Date(b.timestamp ?? 0).getTime() - new Date(a.timestamp ?? 0).getTime())
         .slice(0, 8)
         .map((entry) => ({
           id: entry.quantum_id,
@@ -289,18 +214,8 @@ export default function Sanctum() {
             entry.resonance_score < 0.45
               ? "error"
               : entry.resonance_score < 0.75
-<<<<<<< HEAD
-<<<<<<< HEAD
-                ? "warn"
-                : "info",
-=======
               ? "warn"
               : "info",
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
-=======
-              ? "warn"
-              : "info",
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
         }));
     }
 
@@ -308,16 +223,16 @@ export default function Sanctum() {
   }, [telemetry]);
 
   const orbitalLayout = useMemo(() => {
-    const count = orbitalNodes.length;
     return orbitalNodes.map((node, index) => ({
       ...node,
-      angle: (360 / count) * index,
+      angle: (360 / orbitalNodes.length) * index,
     }));
   }, []);
 
   return (
     <div className={styles.sanctum}>
       <GridNav />
+
       <section className={styles.council}>
         <header>
           <p className={styles.eyebrow}>Stewardship Council</p>
@@ -356,17 +271,16 @@ export default function Sanctum() {
                   <small>vibrational sync</small>
                 </div>
               </div>
-              {orbitalLayout.map((node) => {
-                const style = {
-                  "--angle": `${node.angle}deg`,
-                } as CSSProperties;
-                return (
-                  <div key={node.label} className={styles.orbitalNode} style={style}>
-                    <span>{node.icon}</span>
-                    <p>{node.label}</p>
-                  </div>
-                );
-              })}
+              {orbitalLayout.map((node) => (
+                <div
+                  key={node.label}
+                  className={styles.orbitalNode}
+                  style={{ "--angle": `${node.angle}deg` } as CSSProperties}
+                >
+                  <span>{node.icon}</span>
+                  <p>{node.label}</p>
+                </div>
+              ))}
             </div>
           </div>
         </article>
@@ -406,11 +320,7 @@ export default function Sanctum() {
                 <div className={styles.matrixGlyph}>{entry.icon}</div>
                 <div>
                   <h3>{entry.title}</h3>
-                  <ul>
-                    {entry.metrics.map((metric) => (
-                      <li key={metric}>{metric}</li>
-                    ))}
-                  </ul>
+                  <ul>{entry.metrics.map((m) => <li key={m}>{m}</li>)}</ul>
                   <p className={styles.matrixStatus}>{entry.status}</p>
                 </div>
               </div>
@@ -433,47 +343,27 @@ export default function Sanctum() {
             </div>
           )}
           <div className={styles.agentStatGrid}>
-            <div className={styles.agentStat}>
-              <p>Linked agents</p>
-              <strong>{agentSummary.total}</strong>
-              <small>Neo4j nodes marked as Agent</small>
-            </div>
-            <div className={styles.agentStat}>
-              <p>Monitoring</p>
-              <strong>{agentSummary.monitoring}</strong>
-              <small>Holding vigil right now</small>
-            </div>
-            <div className={styles.agentStat}>
-              <p>Idle / reset</p>
-              <strong>{agentSummary.idle}</strong>
-              <small>Awaiting redeployment</small>
-            </div>
-            <div className={styles.agentStat}>
-              <p>Avg manifestation</p>
-              <strong>{agentSummary.avgStrength}%</strong>
-              <small>Field strength across roster</small>
-            </div>
+            <div className={styles.agentStat}><p>Linked agents</p><strong>{agentSummary.total}</strong><small>Neo4j nodes marked as Agent</small></div>
+            <div className={styles.agentStat}><p>Monitoring</p><strong>{agentSummary.monitoring}</strong><small>Holding vigil right now</small></div>
+            <div className={styles.agentStat}><p>Idle / reset</p><strong>{agentSummary.idle}</strong><small>Awaiting redeployment</small></div>
+            <div className={styles.agentStat}><p>Avg manifestation</p><strong>{agentSummary.avgStrength}%</strong><small>Field strength across roster</small></div>
           </div>
           <div className={styles.agentStatusRow}>
             {agentStatusEntries.length ? (
               agentStatusEntries.map(([status, count]) => (
                 <span key={status} className={styles.statusChip} data-tone={resolveAgentTone(status)}>
-                  {formatAgentStatus(status)}
-                  <strong>{count}</strong>
+                  {formatAgentStatus(status)}<strong>{count}</strong>
                 </span>
               ))
             ) : (
-              <span className={styles.statusChip} data-tone="idle">
-                Awaiting sync
-              </span>
+              <span className={styles.statusChip} data-tone="idle">Awaiting sync</span>
             )}
           </div>
           <div className={styles.capabilityTray}>
             {agentSummary.topCapabilities.length ? (
-              agentSummary.topCapabilities.map((capability) => (
-                <span key={capability.name} className={styles.capabilityChip}>
-                  {capability.name}
-                  <small>{capability.count}</small>
+              agentSummary.topCapabilities.map((cap) => (
+                <span key={cap.name} className={styles.capabilityChip}>
+                  {cap.name}<small>{cap.count}</small>
                 </span>
               ))
             ) : (
@@ -497,15 +387,9 @@ export default function Sanctum() {
               agentRoster.map((agent) => {
                 const strength = toStrengthPercent(agent.manifestationStrength);
                 const tone = resolveAgentTone(agent.status);
-<<<<<<< HEAD
-<<<<<<< HEAD
-                const capabilities = Array.isArray(agent.capabilities) ? agent.capabilities.filter(Boolean) : [];
-=======
-                const capabilities = agent.capabilities?.filter(Boolean) ?? [];
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
-=======
-                const capabilities = agent.capabilities?.filter(Boolean) ?? [];
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
+                const capabilities = Array.isArray(agent.capabilities)
+                  ? agent.capabilities.filter(Boolean)
+                  : [];
                 return (
                   <div key={agent.id} className={styles.agentRow}>
                     <div className={styles.agentIdentity}>
@@ -514,10 +398,8 @@ export default function Sanctum() {
                     </div>
                     <div className={styles.agentCapabilities}>
                       {capabilities.length ? (
-                        capabilities.map((capability) => (
-                          <span key={`${agent.id}-${capability}`} className={styles.capabilityBadge}>
-                            {capability}
-                          </span>
+                        capabilities.map((cap) => (
+                          <span key={`${agent.id}-${cap}`} className={styles.capabilityBadge}>{cap}</span>
                         ))
                       ) : (
                         <span className={styles.capabilityFallback}>No capabilities shared</span>
@@ -548,14 +430,10 @@ export default function Sanctum() {
       <section className={styles.coreGlyphDeck}>
         {glyphs.map((glyph) => (
           <article key={glyph.label} className={`${styles.coreGlyph} ${styles[glyph.status as StatusTone]}`}>
-            <div className={styles.glyphIcon} data-color={glyph.color}>
-              {glyph.icon}
-            </div>
+            <div className={styles.glyphIcon} data-color={glyph.color}>{glyph.icon}</div>
             <div>
               <p className={styles.glyphLabel}>{glyph.label}</p>
-              <p className={styles.glyphMeta}>
-                {statusLabel[glyph.status as StatusTone]} • {glyph.note}
-              </p>
+              <p className={styles.glyphMeta}>{statusLabel[glyph.status as StatusTone]} • {glyph.note}</p>
             </div>
           </article>
         ))}
@@ -577,11 +455,7 @@ export default function Sanctum() {
                   </div>
                   <span>Expand</span>
                 </summary>
-                <ul>
-                  {problem.chains.map((chain) => (
-                    <li key={chain}>{chain}</li>
-                  ))}
-                </ul>
+                <ul>{problem.chains.map((chain) => <li key={chain}>{chain}</li>)}</ul>
               </details>
             ))}
           </div>
@@ -593,32 +467,19 @@ export default function Sanctum() {
             <h2>Event stream</h2>
           </header>
           <div className={styles.whisperStream}>
-            {whisperFeed.map((entry, index) => {
-              const style = {
-                "--delay": `${index * 0.5}s`,
-              } as CSSProperties;
-              return (
-                <div key={entry.id} className={`${styles.whisper} ${styles[entry.type]}`} style={style}>
-                  <p>
-                    <span>[{entry.type}]</span> {entry.text}
-                  </p>
-                  <small>
-                    {entry.source} · {formatWhisperTime(entry.timestamp)}
-                  </small>
-                </div>
-              );
-            })}
+            {whisperFeed.map((entry, index) => (
+              <div
+                key={entry.id}
+                className={`${styles.whisper} ${styles[entry.type]}`}
+                style={{ "--delay": `${index * 0.5}s` } as CSSProperties}
+              >
+                <p><span>[{entry.type}]</span> {entry.text}</p>
+                <small>{entry.source} · {formatWhisperTime(entry.timestamp)}</small>
+              </div>
+            ))}
           </div>
         </article>
       </section>
     </div>
   );
-<<<<<<< HEAD
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
-=======
-}
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
