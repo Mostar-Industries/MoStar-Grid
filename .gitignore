@@ -1,25 +1,12 @@
-# Python
-__pycache__/
-*.py[cod]
-*.class
-.venv/
-env/
-venv/
-.env
-.env.local
-*.log
-node_modules
+node_modules/
+.env*
 .tools/
-
-# Neo4j runtime data (do not commit database files)
-backend/neo4j-mostar-industries/data/
-backend/neo4j-mostar-industries/run/
-backend/neo4j-mostar-industries/logs/
-
-# JDK binaries (too large, use C:\Tools)
 jdk-*/
-jdk*.zip
 *.zip
-
-# Env dumps
-all_env.txt
+backend/neo4j-mostar-industries/data/
+backend/neo4j-mostar-industries/logs/
+__pycache__/
+*.pyc
+.next/
+dist/
+build/

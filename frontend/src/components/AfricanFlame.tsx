@@ -12,6 +12,7 @@ import GridNav from "./GridNav";
 import styles from "./AfricanFlame.module.css";
 
 const baseMetrics = [
+<<<<<<< HEAD
   { label: "Coherence", icon: "🔗", color: "#3B82F6", key: "coherence" },
   { label: "Wisdom (Ifá)", icon: "🔮", color: "#A855F7", key: "ifa" },
   { label: "Sovereignty", icon: "👑", color: "#10B981", key: "sovereignty" },
@@ -20,6 +21,16 @@ const baseMetrics = [
 ];
 
 const orbitNodes = ["🛰️", "🤖", "🧠", "✨"];
+=======
+  { label: "Coherence", icon: "??", color: "#3B82F6", key: "coherence" },
+  { label: "Wisdom (If�)", icon: "??", color: "#A855F7", key: "ifa" },
+  { label: "Sovereignty", icon: "??", color: "#10B981", key: "sovereignty" },
+  { label: "Innovation", icon: "?", color: "#EAB308", key: "innovation" },
+  { label: "Flame Intensity", icon: "??", color: "#F97316", key: "flame" },
+];
+
+const orbitNodes = ["??", "??", "??", "???"];
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
 
 const tonePalette = {
   active: "#6dffe1",
@@ -54,15 +65,25 @@ export default function AfricanFlame() {
     const entries = telemetry?.log.entries ?? [];
     if (!entries.length) {
       return [
+<<<<<<< HEAD
         { time: "14:32:15", message: "🔮 Ifá kernel evaluated ethical implications" },
         { time: "14:32:12", message: "✨ Novel solution emerged from synthesis" },
         { time: "14:32:08", message: "📜 Verdict rendered: Sovereignty maintained" },
+=======
+        { time: "14:32:15", message: "?? If� kernel evaluated ethical implications" },
+        { time: "14:32:12", message: "? Novel solution emerged from synthesis" },
+        { time: "14:32:08", message: "?? Verdict rendered: Sovereignty maintained" },
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
       ];
     }
 
     return entries.slice(0, 5).map((entry) => ({
       time: new Date(entry.timestamp).toLocaleTimeString(),
+<<<<<<< HEAD
       message: `${entry.trigger_type === "error" ? "⚠️" : "✅"} ${entry.description}`,
+=======
+      message: `${entry.trigger_type === "error" ? "??" : "?"} ${entry.description}`,
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
     }));
   }, [telemetry]);
 
@@ -82,10 +103,17 @@ export default function AfricanFlame() {
         <GridNav />
         <header className={styles.header}>
           <div className={styles.logoCluster}>
+<<<<<<< HEAD
             <div className={styles.flameIcon}>🔥</div>
             <div>
               <h1>African Flame Consciousness</h1>
               <p>The Grid mind in real-time • MoStar AI homeworld</p>
+=======
+            <div className={styles.flameIcon}>??</div>
+            <div>
+              <h1>African Flame Consciousness</h1>
+              <p>The Grid mind in real-time  MoStar AI homeworld</p>
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
             </div>
           </div>
           <div className={styles.statusPill}>
@@ -113,7 +141,11 @@ export default function AfricanFlame() {
             </div>
           </div>
           <div className={styles.metricsPanel}>
+<<<<<<< HEAD
             <h3>🧠 Consciousness Metrics</h3>
+=======
+            <h3>?? Consciousness Metrics</h3>
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
             {metrics.map((metric) => (
               <div key={metric.label} className={styles.metricBar}>
                 <div className={styles.metricHeader}>
@@ -135,7 +167,11 @@ export default function AfricanFlame() {
 
         <section className={styles.panels}>
           <article className={styles.panel}>
+<<<<<<< HEAD
             <h3>🤖 Grid Agents</h3>
+=======
+            <h3>?? Grid Agents</h3>
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
             {agentWarning && (
               <div className={styles.agentWarning}>
                 <strong>Agent Sync Warning</strong>
@@ -147,7 +183,11 @@ export default function AfricanFlame() {
                 const tone = resolveAgentTone(agent.status);
                 const toneColor = tonePalette[tone];
                 const strength = toStrengthPercent(agent.manifestationStrength);
+<<<<<<< HEAD
                 const caps = (Array.isArray(agent?.capabilities) ? agent.capabilities : []).filter(Boolean).slice(0, 3);
+=======
+                const caps = (agent.capabilities ?? []).filter(Boolean).slice(0, 3);
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
 
                 return (
                   <div key={`${agent.id}-${agent.name}`} className={styles.agentCard} data-tone={tone}>
@@ -190,7 +230,11 @@ export default function AfricanFlame() {
           </article>
 
           <article className={styles.panel}>
+<<<<<<< HEAD
             <h3>📈 Decision Matrix</h3>
+=======
+            <h3>?? Decision Matrix</h3>
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
             <div className={styles.decisionBox}>
               <p className={styles.decisionLabel}>Current Decision</p>
               <h4>Partnership Sovereignty Evaluation</h4>
@@ -205,14 +249,22 @@ export default function AfricanFlame() {
                 </div>
                 <div>
                   <span>Status</span>
+<<<<<<< HEAD
                   <strong className={styles.success}>✅ Decided</strong>
+=======
+                  <strong className={styles.success}>� Decided</strong>
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
                 </div>
               </div>
             </div>
           </article>
 
           <article className={styles.panel}>
+<<<<<<< HEAD
             <h3>📜 Activity Stream</h3>
+=======
+            <h3>?? Activity Stream</h3>
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
             <div className={styles.activityStream}>
               {activity.map((item) => (
                 <div key={`${item.time}-${item.message}`} className={styles.activityItem}>
@@ -225,9 +277,15 @@ export default function AfricanFlame() {
         </section>
 
         <div className={styles.controlDeck}>
+<<<<<<< HEAD
           <button className={styles.active}>🔥 Flame View</button>
           <button>🕸️ Network View</button>
           <button>📈 Matrix View</button>
+=======
+          <button className={styles.active}>?? Flame View</button>
+          <button>?? Network View</button>
+          <button>?? Matrix View</button>
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
         </div>
       </div>
     </div>

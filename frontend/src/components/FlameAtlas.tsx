@@ -1,19 +1,32 @@
 "use client";
 import mapboxgl from "mapbox-gl";
+<<<<<<< HEAD
 import "mapbox-gl/dist/mapbox-gl.css";
 import styles from "./AfricanFlameMap.module.css";
 import { useRef, useEffect, useState } from "react";
+=======
+import styles from "./AfricanFlameMap.module.css";
+import { useRef, useEffect } from "react";
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
 
 /**
  * Represents a grid site with geographical coordinates and status information.
  */
 export type GridSite = {
+<<<<<<< HEAD
   name: string;
+=======
+  name:string;
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
   lat: number;
   lon: number;
   glyph: string;
   status: string;
 };
+<<<<<<< HEAD
+=======
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ""; // fallback safety
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
 
 type FlameAtlasProps = {
   token: string;
@@ -29,6 +42,7 @@ const INITIAL_VIEW = {
 export default function FlameAtlas({ token, gridsites }: FlameAtlasProps) {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+<<<<<<< HEAD
   const [mapLoaded, setMapLoaded] = useState(false);
 
   // Initialize map
@@ -136,5 +150,56 @@ export default function FlameAtlas({ token, gridsites }: FlameAtlasProps) {
         overflow: "hidden"
       }} 
     />
+=======
+
+  if (!token) return <div>⚠️ Missing Mapbox token</div>;
+  if (!gridsites?.length) return <div>📭 No sites to map</div>;
+
+  useEffect(() => {
+    if (map.current) return; // initialize map only once
+    if (!mapContainer.current) return;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: "mapbox://styles/mapbox/streets-v9",
+      center: [INITIAL_VIEW.longitude, INITIAL_VIEW.latitude],
+      zoom: INITIAL_VIEW.zoom,
+      accessToken: token,
+    });
+  }, [token]);
+
+  useEffect(() => {
+    if (!map.current) return; // wait for map to initialize
+
+    // Clear existing markers
+    const markers = document.querySelectorAll('.mapboxgl-marker');
+    markers.forEach(marker => marker.remove());
+
+    gridsites.forEach((site) => {
+      const el = document.createElement('div');
+      el.className = styles.marker;
+
+      const span = document.createElement('span');
+      span.innerText = site.glyph;
+      el.appendChild(span);
+
+      const p = document.createElement('p');
+      p.innerText = site.name;
+      el.appendChild(p);
+
+      const small = document.createElement('small');
+      small.innerText = site.status;
+      el.appendChild(small);
+
+      new mapboxgl.Marker(el)
+        .setLngLat([site.lon, site.lat])
+        .addTo(map.current!);
+    });
+  }, [gridsites]);
+
+
+  return (
+    <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
   );
 };

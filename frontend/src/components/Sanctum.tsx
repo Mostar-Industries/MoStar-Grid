@@ -159,6 +159,7 @@ export default function Sanctum() {
     telemetry?.graph.stats?.avgResonance != null
       ? (telemetry.graph.stats.avgResonance * 100)
       : GRID_COHERENCE;
+<<<<<<< HEAD
   const totalMoments = telemetry?.graph?.stats?.totalMoments ?? 0;
   const initiatorCount = telemetry?.graph?.stats?.distinctInitiators ?? 0;
   const backendPulse = telemetry?.backend?.ok ? "Linked" : "Offline";
@@ -176,6 +177,16 @@ export default function Sanctum() {
       seen.add(agent.id);
       return true;
     });
+=======
+  const totalMoments = telemetry?.graph.stats?.totalMoments ?? 0;
+  const initiatorCount = telemetry?.graph.stats?.distinctInitiators ?? 0;
+  const backendPulse = telemetry?.backend.ok ? "Linked" : "Offline";
+  const backendNeo4jState = telemetry?.backend.data?.neo4j ?? "unknown";
+  const graphAgents = telemetry?.graph.agents;
+  const agentWarning = telemetry?.graph.agentWarning;
+  const agentRoster = useMemo<AgentTelemetry[]>(() => {
+    return (graphAgents ?? []) as AgentTelemetry[];
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
   }, [graphAgents]);
 
   const agentSummary = useMemo<AgentSummary>(() => {
@@ -198,8 +209,12 @@ export default function Sanctum() {
 
     const capabilityFrequency = new Map<string, number>();
     agentRoster.forEach((agent) => {
+<<<<<<< HEAD
       const capabilities = Array.isArray(agent.capabilities) ? agent.capabilities : [];
       capabilities.forEach((capability) => {
+=======
+      (agent.capabilities ?? []).forEach((capability) => {
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
         if (!capability) {
           return;
         }
@@ -264,8 +279,13 @@ export default function Sanctum() {
             entry.resonance_score < 0.45
               ? "error"
               : entry.resonance_score < 0.75
+<<<<<<< HEAD
                 ? "warn"
                 : "info",
+=======
+              ? "warn"
+              : "info",
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
         }));
     }
 
@@ -462,7 +482,11 @@ export default function Sanctum() {
               agentRoster.map((agent) => {
                 const strength = toStrengthPercent(agent.manifestationStrength);
                 const tone = resolveAgentTone(agent.status);
+<<<<<<< HEAD
                 const capabilities = Array.isArray(agent.capabilities) ? agent.capabilities.filter(Boolean) : [];
+=======
+                const capabilities = agent.capabilities?.filter(Boolean) ?? [];
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
                 return (
                   <div key={agent.id} className={styles.agentRow}>
                     <div className={styles.agentIdentity}>
@@ -570,4 +594,8 @@ export default function Sanctum() {
       </section>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
