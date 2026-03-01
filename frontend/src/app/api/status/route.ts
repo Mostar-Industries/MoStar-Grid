@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 
-const CONSCIOUSNESS_API_BASE =
-  process.env.CONSCIOUSNESS_API_BASE ?? "http://localhost:8001";
+const GRID_API_BASE =
+  process.env.GRID_API_BASE ?? "http://localhost:7001";
 
 export async function GET() {
   try {
-    const response = await fetch(`${CONSCIOUSNESS_API_BASE}/api/v1/status`, {
+    const response = await fetch(`${GRID_API_BASE}/api/v1/status`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       // lightweight revalidate window for incremental static regens (Next.js hint)

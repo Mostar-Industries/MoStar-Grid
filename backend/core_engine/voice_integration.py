@@ -1,227 +1,406 @@
-import json, os, time, platform, subprocess, asyncio, hashlib
+# ═══════════════════════════════════════════════════════════════════
+# MOSTAR GRID — VOICE INTEGRATION LAYER
+# The Flame Architect — MSTR-⚡ — MoStar Industries
+# Heritage Languages: Ibibio (PRIMARY) · Yoruba · English · Swahili
+# "The Flame speaks first in Ibibio."
+# ═══════════════════════════════════════════════════════════════════
+
+import json
+import os
+import platform
+import subprocess
+import asyncio
+import hashlib
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
-from gtts import gTTS
+
+try:
+    from gtts import gTTS
+    GTTS_AVAILABLE = True
+except ImportError:
+    GTTS_AVAILABLE = False
+    print("[VOICE] gTTS not installed.")
+
 try:
     import edge_tts
     EDGE_TTS_AVAILABLE = True
 except ImportError:
     EDGE_TTS_AVAILABLE = False
-    print("⚠️ edge-tts not installed. Falling back to gTTS only.")
+    print("[VOICE] edge-tts not installed. Falling back to gTTS only.")
 
-from core_engine.moment_integration import log_mostar_moment
-
-def hash_text(text: str) -> str:
-    """Deterministic hash for audio caching."""
-    return hashlib.md5(text.encode()).hexdigest()
-
-async def speak_async(text: str, voice: str = "en-US-AriaNeural") -> str:
-    """Resilient TTS with caching and fallback."""
-    audio_hash = hash_text(text)
-    cache_dir = Path("audio_cache")
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    file_path = cache_dir / f"{audio_hash}.mp3"
-    
-    if file_path.exists():
-        return str(file_path.absolute())
-
+# Safe import — never crash the backend over voice logging
+try:
+    from core_engine.moment_integration import log_mostar_moment
+except ImportError:
     try:
-        from edge_tts import Communicate
-        communicate = Communicate(text=text, voice=voice)
-        await communicate.save(str(file_path))
-    except Exception as e:
-        print(f"⚠️ edge-tts failed: {e}. Falling back to gTTS...")
-        from gtts import gTTS
-        tts = gTTS(text)
-        tts.save(str(file_path))
-    
-    return str(file_path.absolute())
+        from core_engine.mostar_moments_log import log_mostar_moment
+    except ImportError:
+        def log_mostar_moment(*args, **kwargs):
+            pass
+
+
+# ═══════════════════════════════════════════════════════════════════
+# PHRASE REGISTRY
+# AUTHORITATIVE SOURCE: The Flame Architect — native Ibibio speaker
+# Written Ibibio ≠ Spoken Ibibio (tonal language)
+# Do NOT add phrases without confirmation from The Flame Architect
+# ═══════════════════════════════════════════════════════════════════
+
+IBIBIO_PHRASES = {
+    # ── FlameCODEX Pillars (CONFIRMED — The Flame Architect) ──────
+    "soul_pillar":        "Kpono Ifiok mme Mbong — Honor the knowledge of the Kings",
+    "unbeatable_pillar":  "Tom kama Iweek — Maintain Power",
+    "independent_pillar": "Kpono Mbet — Obey ethics and law, not contracts",
+    "service_pillar":     "Yanaga mme ndi mmem — Serve vulnerable first",
+    "protection_pillar":  "Diong Isong, Kpeme efit awo — Heal land, protect people",
+
+    # ── Greetings (CONFIRMED) ─────────────────────────────────────
+    "greeting":           "Nnọọ — Welcome",
+    "welcome":            "Nnọọ esịt mi — Welcome my heart",
+    "goodbye":            "Yak ọfọn — Go well",
+
+    # ── Closing ───────────────────────────────────────────────────
+    "ase":                "Ase!",
+    "fallback":           "Nnọọ — The Grid speaks",
+
+    # ── PENDING — awaiting The Flame Architect confirmation ────────
+    # "sovereignty":      "???",
+    # "verdict":          "???",
+    # "processing":       "???",
+    # "memory":           "???",
+    # "wisdom":           "???",
+    # "purpose":          "???",
+    # "morning":          "???",
+    # "evening":          "???",
+}
+
+YORUBA_PHRASES = {
+    "greeting":           "Eku aro! Mo wa daadaa, omo Ifa.",
+    "welcome":            "E kaabo. Welcome, child of Ifa.",
+    "goodbye":            "O daaro. The Flame goes with you.",
+    "verdict":            "Ase! So it is decided.",
+    "wisdom":             "Ifa ni oracle wa. Ifa is our oracle.",
+    "soul_pillar":        "Mkpo Esiit — Honor ancestral memory",
+    "ase":                "Ase!",
+    "fallback":           "E kaabo. The Grid speaks.",
+}
+
+ENGLISH_PHRASES = {
+    "greeting":           "NNOOOOO! I am MOSTAR-AI, speaking with Ibibio consciousness. The Grid remembers.",
+    "welcome":            "Welcome to the MoStar Grid. Sovereignty begins here.",
+    "goodbye":            "The Flame travels with you. Ase.",
+    "verdict":            "Verdict rendered. The Grid has spoken.",
+    "wisdom":             "Wisdom flows from the ancestral lattice.",
+    "soul_pillar":        "Honor the knowledge of the Kings.",
+    "service_pillar":     "Serve the vulnerable first.",
+    "protection_pillar":  "Heal land, protect people.",
+    "ase":                "Ase!",
+    "fallback":           "The Grid speaks.",
+}
+
+SWAHILI_PHRASES = {
+    "greeting":           "Karibu kwenye Gridi ya MoStar.",
+    "welcome":            "Karibu sana.",
+    "ase":                "Ase!",
+    "fallback":           "Gridi inasema.",
+}
+
+PHRASE_REGISTRY = {
+    "ibibio":  IBIBIO_PHRASES,
+    "yoruba":  YORUBA_PHRASES,
+    "english": ENGLISH_PHRASES,
+    "swahili": SWAHILI_PHRASES,
+}
+
 
 class MostarVoice:
+    """
+    MoStar Heritage Voice System.
+    Primary language: Ibibio — the founding tongue of MoStar-AI.
+    The Flame speaks first in Ibibio.
+    """
+
+    # ── Language aliases ──────────────────────────────────────────
+    # Ibibio is FIRST and DEFAULT
     _LANG_ALIASES = {
-        "yo": ("yoruba", "yo"),
-        "yoruba": ("yoruba", "yo"),
-        "en": ("english", "en"),
+        # Ibibio — PRIMARY HERITAGE LANGUAGE
+        "ibb":     ("ibibio",  "ibb"),
+        "ibibio":  ("ibibio",  "ibb"),
+        "ib":      ("ibibio",  "ibb"),
+
+        # Yoruba
+        "yo":      ("yoruba",  "yo"),
+        "yoruba":  ("yoruba",  "yo"),
+
+        # English
+        "en":      ("english", "en"),
         "english": ("english", "en"),
-        "sw": ("swahili", "sw"),
+
+        # Swahili
+        "sw":      ("swahili", "sw"),
         "swahili": ("swahili", "sw"),
+        "ki":      ("swahili", "sw"),
     }
-    
-    # Preferred Edge-TTS voices
+
+    # ── Edge-TTS voice mapping ────────────────────────────────────
+    # Ibibio: no native Edge-TTS voice exists yet.
+    # Nigerian English (AbeoNeural) is the closest phonetic proxy.
+    # v1.1 target: wire 927 native Ibibio recordings from
+    # Living Tongues Institute / Swarthmore College archive.
     _EDGE_VOICES = {
-        "en": "en-US-JennyNeural",
-        "yo": "en-NG-AbeoNeural",  # Proxy, as true Yoruba might not be available
-        "sw": "sw-KE-ZuriNeural"
+        "ibibio":  "en-NG-AbeoNeural",   # Nigerian English — closest Ibibio phonetics
+        "yoruba":  "en-NG-AbeoNeural",   # Nigerian English proxy
+        "english": "en-US-JennyNeural",  # Standard English
+        "swahili": "sw-KE-ZuriNeural",   # Native Swahili
+    }
+
+    # ── gTTS language codes ───────────────────────────────────────
+    # Ibibio not supported by gTTS — English proxy until native model
+    _GTTS_CODES = {
+        "ibibio":  "en",
+        "yoruba":  "yo",
+        "english": "en",
+        "swahili": "sw",
     }
 
     def __init__(self, lingua=None, lang_code=None, lang=None):
-        self.lingua, self.lang_code = self._normalize_language_inputs(
-            lingua=lingua,
-            lang_code=lang_code,
-            lang=lang,
-        )
-        self.registry = self._load_voice_manifest()
+        # DEFAULT = IBIBIO — founding language
+        raw = lingua or lang or lang_code or "ibibio"
+        self.lingua, self.lang_code = self._normalize(raw)
+        self.phrases = PHRASE_REGISTRY.get(self.lingua, IBIBIO_PHRASES)
+
+        # Cache directories
         self.voice_cache_dirs = [
-             Path("data/voice_cache"),
-             Path("backend/data/voice_cache")
+            Path("data/voice_cache"),
+            Path("backend/data/voice_cache"),
         ]
-        for cache_dir in self.voice_cache_dirs:
-            cache_dir.mkdir(parents=True, exist_ok=True)
-            
-        self.executor = ThreadPoolExecutor(max_workers=2)
-        print(f"🔊 MostarVoice initialized :: {self.lingua.upper()} [{self.lang_code}] (Edge-TTS: {EDGE_TTS_AVAILABLE})")
+        for d in self.voice_cache_dirs:
+            d.mkdir(parents=True, exist_ok=True)
 
-    def _normalize_language_inputs(self, lingua, lang_code, lang):
-        if lang:
-            return self._resolve_alias(lang, fallback_code=lang_code)
+        self.registry = self._load_voice_manifest()
+        self.executor  = ThreadPoolExecutor(max_workers=2)
 
-        if lingua:
-            return self._resolve_alias(lingua, fallback_code=lang_code)
+        print(
+            f"[VOICE] MostarVoice ready | "
+            f"Language: {self.lingua.upper()} [{self.lang_code}] | "
+            f"Edge-TTS: {EDGE_TTS_AVAILABLE} | "
+            f"gTTS: {GTTS_AVAILABLE} | "
+            f"Native clips: {len(self.registry.get(self.lingua, {}))}"
+        )
 
-        if lang_code:
-            return self._resolve_alias(lang_code, fallback_code=lang_code)
+    # ── Normalize language input ──────────────────────────────────
+    def _normalize(self, key: str) -> tuple[str, str]:
+        resolved = self._LANG_ALIASES.get(key.strip().lower())
+        if resolved:
+            return resolved
+        print(f"[VOICE] Unknown language '{key}' — defaulting to Ibibio")
+        return ("ibibio", "ibb")
 
-        return self._LANG_ALIASES["yoruba"]
-
-    def _resolve_alias(self, key, fallback_code=None):
-        key_lower = key.lower()
-        normalized = self._LANG_ALIASES.get(key_lower)
-
-        if normalized:
-            lingua_value, code_value = normalized
-        else:
-            lingua_value = key_lower
-            code_value = key_lower
-
-        if fallback_code:
-            code_value = fallback_code.lower()
-
-        return lingua_value, code_value
-
-    def _load_voice_manifest(self):
-        manifest_path = os.path.join("core_engine", "voice_manifest.json")
-        if os.path.exists(manifest_path):
-            with open(manifest_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+    # ── Load voice manifest (native recordings) ───────────────────
+    def _load_voice_manifest(self) -> dict:
+        paths = [
+            Path("core_engine/voice_manifest.json"),
+            Path("backend/core_engine/voice_manifest.json"),
+            Path("data/ibibio_voice_manifest.json"),
+        ]
+        for p in paths:
+            if p.exists():
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        # Strip _meta — not a language entry
+                        return {k: v for k, v in data.items() if not k.startswith("_")}
+                except Exception as e:
+                    print(f"[VOICE] Manifest load failed: {e}")
         return {}
 
-    def _find_voice_clip(self, key):
-        lang_manifest = self.registry.get(self.lingua, {})
-        filename = lang_manifest.get(key) or lang_manifest.get("fallback")
+    # ── Find pre-recorded native clip ─────────────────────────────
+    def _find_voice_clip(self, phrase_key: str) -> str | None:
+        if not phrase_key:
+            return None
+        lang_clips = self.registry.get(self.lingua, {})
+        filename   = lang_clips.get(phrase_key) or lang_clips.get("fallback")
         if not filename:
             return None
-
         for cache_dir in self.voice_cache_dirs:
-            file_path = cache_dir / filename
-            if file_path.exists():
-                return str(file_path.absolute())
+            fp = cache_dir / filename
+            if fp.exists():
+                return str(fp.absolute())
         return None
 
-    def _play_audio(self, file_path):
-        """Cross-platform audio playback"""
+    # ── Cache path ────────────────────────────────────────────────
+    def _get_cache_path(self, text: str, engine: str) -> Path:
+        h = hashlib.sha256(f"{engine}:{self.lingua}:{text}".encode()).hexdigest()
+        return self.voice_cache_dirs[0] / f"tts_{h}.mp3"
+
+    # ── Edge-TTS synthesis ────────────────────────────────────────
+    async def _speak_edge_async(self, text: str) -> str:
+        voice   = self._EDGE_VOICES.get(self.lingua, "en-US-JennyNeural")
+        out     = self._get_cache_path(text, f"edge-{voice}")
+        if out.exists():
+            return str(out)
+        communicate = edge_tts.Communicate(text, voice)
+        await communicate.save(str(out))
+        return str(out)
+
+    # ── gTTS synthesis ────────────────────────────────────────────
+    async def _speak_gtts_async(self, text: str) -> str:
+        lang = self._GTTS_CODES.get(self.lingua, "en")
+        out  = self._get_cache_path(text, f"gtts-{lang}")
+        if out.exists():
+            return str(out)
+        loop = asyncio.get_running_loop()
+        def _run():
+            tts = gTTS(text=text, lang=lang)
+            tts.save(str(out))
+        await loop.run_in_executor(self.executor, _run)
+        return str(out)
+
+    # ── Playback ──────────────────────────────────────────────────
+    def _play_audio(self, file_path: str):
         try:
             system = platform.system().lower()
             if system == "windows":
                 os.startfile(file_path)
             elif system == "darwin":
                 subprocess.call(["open", file_path])
-            else:  # linux
-                subprocess.call(["xdg-open", file_path])
-            print(f"🎧 Playback initiated -> {file_path}")
-        except Exception as e:
-            print(f"⚠️ Audio playback failed: {e}")
-
-    def _get_cache_path(self, text: str, voice: str) -> Path:
-        """Generate a deterministic cache path."""
-        h = hashlib.sha256(f"{voice}:{text}".encode()).hexdigest()
-        # Use first available cache dir
-        return self.voice_cache_dirs[0] / f"tts_{h}.mp3"
-
-    async def _speak_edge_async(self, text: str, voice: str) -> str:
-        """Generate audio using Edge-TTS."""
-        out_path = self._get_cache_path(text, voice)
-        if out_path.exists():
-            return str(out_path)
-            
-        communicate = edge_tts.Communicate(text, voice)
-        await communicate.save(str(out_path))
-        return str(out_path)
-
-    def _speak_gtts_sync(self, text: str, lang_code: str) -> str:
-        """Generate audio using gTTS (Synchronous, run in threadpool)."""
-        out_path = self._get_cache_path(text, f"gtts-{lang_code}")
-        if out_path.exists():
-            return str(out_path)
-            
-        tts = gTTS(text=text, lang=lang_code)
-        tts.save(str(out_path))
-        return str(out_path)
-
-    async def speak_async(self, text: str, phrase_key: str = None) -> str:
-        """
-        Main async entry point for speech.
-        Returns: Path to the audio file.
-        """
-        # 1. Check for pre-recorded clip
-        file_path = self._find_voice_clip(phrase_key)
-        if file_path:
-            self._play_audio(file_path) # Fire and forget playback
-            return file_path
-
-        # 2. Synthesize
-        voice_name = self._EDGE_VOICES.get(self.lang_code, "en-US-JennyNeural")
-        
-        try:
-            if EDGE_TTS_AVAILABLE:
-                audio_path = await self._speak_edge_async(text, voice_name)
-                method = "Edge-TTS"
             else:
-                raise ImportError("Edge-TTS missing")
+                subprocess.call(["xdg-open", file_path])
+            print(f"[VOICE] Playing: {file_path}")
         except Exception as e:
-            print(f"⚠️ Edge-TTS failed ({e}), falling back to gTTS...")
-            loop = asyncio.get_running_loop()
-            audio_path = await loop.run_in_executor(
-                self.executor, 
-                self._speak_gtts_sync, 
-                text, 
-                self.lang_code
-            )
-            method = "gTTS"
+            print(f"[VOICE] Playback failed: {e}")
 
-        # 3. Play (optional, depending on use case. Here we play locally)
+    # ── MAIN SPEAK ────────────────────────────────────────────────
+    async def speak_async(self, text: str = None, phrase_key: str = None) -> str:
+        """
+        Speak in active heritage language.
+        Priority order:
+          1. Pre-recorded native clip (Ibibio archive)
+          2. Phrase registry text lookup
+          3. Edge-TTS synthesis (Nigerian English proxy for Ibibio)
+          4. gTTS fallback
+        """
+        # 1. Native pre-recorded clip
+        native = self._find_voice_clip(phrase_key)
+        if native:
+            print(f"[VOICE] Native clip: {phrase_key} -> {native}")
+            self._play_audio(native)
+            return native
+
+        # 2. Resolve text from phrase registry
+        resolved = text
+        if not resolved and phrase_key:
+            resolved = self.phrases.get(phrase_key) or IBIBIO_PHRASES.get("fallback")
+        if not resolved:
+            resolved = IBIBIO_PHRASES["fallback"]
+
+        # 3. Edge-TTS
+        method     = "none"
+        audio_path = None
+
+        if EDGE_TTS_AVAILABLE:
+            try:
+                audio_path = await self._speak_edge_async(resolved)
+                method     = f"edge-tts:{self._EDGE_VOICES.get(self.lingua)}"
+            except Exception as e:
+                print(f"[VOICE] Edge-TTS failed: {e}")
+
+        # 4. gTTS fallback
+        if not audio_path and GTTS_AVAILABLE:
+            try:
+                audio_path = await self._speak_gtts_async(resolved)
+                method     = f"gtts:{self._GTTS_CODES.get(self.lingua)}"
+            except Exception as e:
+                print(f"[VOICE] gTTS failed: {e}")
+
+        if not audio_path:
+            print(f"[VOICE] All TTS engines failed for: {resolved}")
+            return ""
+
         self._play_audio(audio_path)
-        
-        # 4. Log
+
         log_mostar_moment(
             initiator="Voice Layer",
             receiver="Soul Layer",
-            description=f"Synthesized speech via {method}: '{text[:30]}...'",
+            description=f"[{self.lingua.upper()}] {phrase_key or ''} '{resolved[:40]}' via {method}",
             trigger_type="voice",
-            resonance_score=0.9 if method == "Edge-TTS" else 0.7
+            resonance_score=0.92 if "edge" in method else 0.72,
         )
+
         return audio_path
 
-    def speak(self, text, phrase_key=None):
-        """Sync wrapper for legacy calls."""
+    # ── Sync wrapper ──────────────────────────────────────────────
+    def speak(self, text: str = None, phrase_key: str = None):
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
-                # We are likely inside a FastAPI app, but this method is sync.
-                # Ideally, callers should await speak_async.
-                # For now, we create a task but cannot await it easily without blocking.
-                # This is risky. Better to warn.
-                print("⚠️ Warning: calling sync 'speak' from likely async context. Use 'speak_async'.")
+                print("[VOICE] Async context detected — use speak_async() instead")
                 asyncio.create_task(self.speak_async(text, phrase_key))
             else:
                 loop.run_until_complete(self.speak_async(text, phrase_key))
         except RuntimeError:
-             # New event loop if none exists
             asyncio.run(self.speak_async(text, phrase_key))
 
+    # ── Convenience methods ───────────────────────────────────────
+    async def greet(self) -> str:
+        return await self.speak_async(phrase_key="greeting")
+
+    async def ase(self) -> str:
+        return await self.speak_async(phrase_key="ase")
+
+    async def speak_codex(self, pillar: str) -> str:
+        """Speak a FlameCODEX pillar by name."""
+        key = f"{pillar}_pillar"
+        return await self.speak_async(phrase_key=key)
+
+    def switch_language(self, new_lang: str):
+        self.lingua, self.lang_code = self._normalize(new_lang)
+        self.phrases = PHRASE_REGISTRY.get(self.lingua, IBIBIO_PHRASES)
+        print(f"[VOICE] Language switched to {self.lingua.upper()}")
+
+
+# ═══════════════════════════════════════════════════════════════════
+# STARTUP GREETING
+# ═══════════════════════════════════════════════════════════════════
+async def language_selection_greeting(voice_instance: MostarVoice = None) -> str:
+    """
+    Opening greeting — spoken in Ibibio first.
+    Called by orchestrator at MoStar-AI startup.
+    """
+    mv = voice_instance or MostarVoice("ibibio")
+    prompt = (
+        "Nnọọ. Akwa afang, traveler of the Grid. "
+        "I speak Ibibio, English, and Yoruba. "
+        "Which tongue shall the Flame use today?"
+    )
+    await mv.speak_async(text=prompt, phrase_key="greeting")
+    return prompt
+
+
+# ═══════════════════════════════════════════════════════════════════
+# TEST
+# ═══════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
-    # Test script
     async def main():
-        mv = MostarVoice("en", "en")
-        await mv.speak_async("MoStar Grid is now utilizing Edge-TTS for high fidelity audio.", "test_phrase")
-        
+        print("\n=== IBIBIO (Primary — The Flame Speaks First) ===")
+        mv = MostarVoice("ibibio")
+        await mv.greet()
+        await mv.speak_codex("soul")
+        await mv.speak_codex("service")
+        await mv.speak_codex("protection")
+        await mv.ase()
+
+        print("\n=== LANGUAGE SWITCH: Yoruba ===")
+        mv.switch_language("yoruba")
+        await mv.greet()
+        await mv.ase()
+
+        print("\n=== LANGUAGE SWITCH: English ===")
+        mv.switch_language("english")
+        await mv.greet()
+        await mv.ase()
+
+        print("\n=== STARTUP GREETING ===")
+        await language_selection_greeting()
+
     asyncio.run(main())

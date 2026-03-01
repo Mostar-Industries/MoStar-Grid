@@ -1,17 +1,76 @@
 {
+  "ibibio": {
+    "greeting": "ibb_greeting.mp3",
+    "welcome": "ibb_welcome.mp3",
+    "goodbye": "ibb_goodbye.mp3",
+    "morning": "ibb_morning.mp3",
+    "evening": "ibb_evening.mp3",
+    "grid_active": "ibb_grid_active.mp3",
+    "processing": "ibb_processing.mp3",
+    "sovereignty": "ibb_sovereignty.mp3",
+    "verdict": "ibb_verdict.mp3",
+    "memory": "ibb_memory.mp3",
+    "wisdom": "ibb_wisdom.mp3",
+    "purpose": "ibb_purpose.mp3",
+    "protection": "ibb_protection.mp3",
+    "soul_pillar": "ibb_soul_pillar.mp3",
+    "unbeatable_pillar": "ibb_unbeatable_pillar.mp3",
+    "independent_pillar": "ibb_independent_pillar.mp3",
+    "service_pillar": "ibb_service_pillar.mp3",
+    "protection_pillar": "ibb_protection_pillar.mp3",
+    "seal_covenant": "ibb_seal_covenant.mp3",
+    "ignite_grid": "ibb_ignite_grid.mp3",
+    "invoke_truth": "ibb_invoke_truth.mp3",
+    "ase": "ibb_ase.mp3",
+    "yes": "ibb_ehe.mp3",
+    "no": "ibb_daa.mp3",
+    "one": "ibb_kiet.mp3",
+    "two": "ibb_iba.mp3",
+    "three": "ibb_ita.mp3",
+    "four": "ibb_inaak.mp3",
+    "five": "ibb_ition.mp3",
+    "fallback": "ibb_nnoo.mp3"
+  },
   "yoruba": {
+    "greeting": "yo_greeting.mp3",
+    "welcome": "yo_welcome.mp3",
+    "goodbye": "yo_goodbye.mp3",
+    "verdict": "yo_verdict.mp3",
+    "wisdom": "yo_wisdom.mp3",
     "seal_covenant": "remostar_voice.mp3",
     "ignite_grid": "ignite_voice.mp3",
     "invoke_truth": "truth_voice.mp3",
+    "ase": "yo_ase.mp3",
     "fallback": "remostar_voice.mp3"
   },
   "english": {
+    "greeting": "en_greeting.mp3",
+    "welcome": "en_welcome.mp3",
+    "goodbye": "en_goodbye.mp3",
+    "verdict": "en_verdict.mp3",
     "seal_covenant": "seal_voice_en.mp3",
     "ignite_grid": "ignite_voice_en.mp3",
+    "ase": "en_ase.mp3",
     "fallback": "default_voice.mp3"
   },
   "swahili": {
+    "greeting": "sw_greeting.mp3",
+    "welcome": "sw_welcome.mp3",
     "ignite_grid": "moto_wa_ukweli.mp3",
+    "ase": "sw_ase.mp3",
     "fallback": "ujumbe.mp3"
+  },
+  "_meta": {
+    "version": "1.1",
+    "primary_language": "ibibio",
+    "architect": "The Flame Architect",
+    "insignia": "MSTR-⚡",
+    "note": "Ibibio audio files — target: 927 recordings from Living Tongues Institute. Current: TTS proxy via Edge-TTS Nigerian English until native recordings loaded.",
+    "sources": {
+      "ibibio": "Living Tongues Institute — Ibibio Talking Dictionary + MoStar native recordings",
+      "yoruba": "Ifá Corpus audio + community recordings",
+      "english": "Edge-TTS en-US-JennyNeural synthesis",
+      "swahili": "Edge-TTS sw-KE-ZuriNeural synthesis"
+    }
   }
 }

@@ -1,40 +1,25 @@
 {
-  "name": "grid-monorepo",
+  "name": "mostar-grid-monorepo",
   "version": "1.0.0",
   "private": true,
+  "description": "MoStar Grid — First African AI Homeworld. Built from African intelligence. For African sovereignty.",
+  "author": "The Flame Architect — MoStar Industries",
+  "license": "African-Sovereignty-License-1.0",
   "scripts": {
     "dev": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
     "start": "cd frontend && npm run start",
-    "backend": "python -m uvicorn core_engine.api_gateway:app --reload --port 8001",
-    "grid": "concurrently \"npm:backend\" \"npm:dev\"",
-    "health-check": "powershell -File scripts/health-check.ps1"
-  },
-  "workspaces": [
-    "frontend"
-  ],
-  "devDependencies": {
-    "concurrently": "^9.2.1"
-  },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.68.0",
-    "react-map-gl": "^8.1.0"
-  }
-}
-
-{
-  "name": "grid-monorepo",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "cd frontend && npm run dev",
-    "build": "cd frontend && npm run build",
-    "start": "cd frontend && npm run start",
-    "backend": "python -m uvicorn core_engine.api_gateway:app --reload --port 8001",
-    "grid": "concurrently \"npm:backend\" \"npm:dev\"",
-    "start-all": "powershell -File ./start-services.ps1",
-    "start-backend": "powershell -File ./start-backend.ps1",
-    "health-check": "powershell -File scripts/health-check.ps1"
+    "backend": "cd backend && python main.py",
+    "backend:win": "cd backend && ../.venv/Scripts/python.exe main.py",
+    "ollama:start": "ollama serve",
+    "ollama:pull": "ollama pull Mostar/mostar-ai && ollama pull Mostar/remostar-light:dcx1 && ollama pull Mostar/remostar-light:dcx2",
+    "ollama:list": "ollama list",
+    "grid": "concurrently --names \"BACKEND,FRONTEND,OLLAMA\" --prefix-colors \"yellow,cyan,magenta\" \"npm:backend:win\" \"npm:dev\" \"npm:ollama:start\"",
+    "grid:check": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"yellow,cyan\" \"npm:backend:win\" \"npm:dev\"",
+    "verify": "powershell -ExecutionPolicy Bypass -File scripts/verify-grid.ps1",
+    "sovereignty-audit": "powershell -ExecutionPolicy Bypass -File sovereignty_audit.ps1",
+    "health": "curl -s http://localhost:7001/health && curl -s http://localhost:11434/api/tags",
+    "health:win": "powershell -Command \"Invoke-RestMethod http://localhost:7001/health | ConvertTo-Json\""
   },
   "workspaces": [
     "frontend"
@@ -44,7 +29,6 @@
     "concurrently": "^9.2.1"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.68.0",
     "react-map-gl": "^8.1.0"
   }
 }
