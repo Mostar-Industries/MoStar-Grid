@@ -1,0 +1,26 @@
+# Large folders
+backend/neo4j-mostar-industries/data/
+backend/neo4j-mostar-industries/import/
+backend/.venv/
+.venv/
+node_modules/
+.next/
+jdk*/
+.tools/
+
+# Sub-folder node_modules (Vercel will handle its own build)
+frontend/node_modules/
+frontend/.next/
+
+# Large files
+*.mp3
+*.zip
+*.json
+*.csv
+*.bat
+*.ps1
+*.sh
+
+# Environment
+.env.local
+.env.*.local

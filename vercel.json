@@ -1,10 +1,10 @@
 {
-  "version": 2,
-  "framework": "nextjs",
-  "rootDirectory": "frontend",
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "env": {
-    "NEXT_PUBLIC_MAPBOX_TOKEN": ""
-  }
+    "version": 2,
+    "public": true,
+    "buildCommand": "npm run build",
+    "installCommand": "npm install",
+    "framework": null,
+    "env": {
+        "NEXT_PUBLIC_MAPBOX_TOKEN": ""
+    }
 }
