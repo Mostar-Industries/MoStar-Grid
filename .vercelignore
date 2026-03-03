@@ -1,22 +1,33 @@
-# Large folders
-backend/neo4j-mostar-industries/data/
-backend/neo4j-mostar-industries/import/
-backend/.venv/
-.venv/
-node_modules/
-.next/
+# Non-frontend folders to ignore completely
+backend/
+data/
 jdk*/
 .tools/
+.venv/
+node_modules/
 
-# Sub-folder node_modules (Vercel will handle its own build)
-frontend/node_modules/
+# Ignore large data dumps inside those folders specifically if needed
+# but better to ignore the whole folders above.
+
+# Ignore build artifacts
+.next/
 frontend/.next/
+frontend/node_modules/
 
-# Large files
+# Large non-code files
 *.mp3
 *.zip
-*.json
 *.csv
+*neo4j-mostar-industries/data/**
+
+# Keep essential configuration
+!package.json
+!package-lock.json
+!vercel.json
+!.vercelignore
+!frontend/package.json
+
+# Tooling scripts
 *.bat
 *.ps1
 *.sh
