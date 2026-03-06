@@ -23,7 +23,7 @@ export default function BackendPage() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const response = await fetch("http://localhost:7001/api/v1/telemetry");
+        const response = await fetch("http://localhost:8001/api/v1/telemetry");
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

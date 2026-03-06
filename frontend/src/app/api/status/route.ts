@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const GRID_API_BASE =
-  process.env.GRID_API_BASE ?? "http://localhost:7001";
+  process.env.GRID_API_BASE ?? "http://localhost:8001";
 
 export async function GET() {
   try {

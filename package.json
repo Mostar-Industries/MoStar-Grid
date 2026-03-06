@@ -30,7 +30,6 @@
   },
   "dependencies": {
     "next": "16.1.6",
-    "react-map-gl": "^8.1.0",
-    "vercel": "^41.0.2"
+    "react-map-gl": "^8.1.0"
   }
 }

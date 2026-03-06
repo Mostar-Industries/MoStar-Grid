@@ -3,8 +3,6 @@
     "public": true,
     "buildCommand": "npm run build",
     "installCommand": "npm install",
-    "framework": null,
-    "env": {
-        "NEXT_PUBLIC_MAPBOX_TOKEN": ""
-    }
+    "outputDirectory": "frontend/.next",
+    "framework": "nextjs"
 }

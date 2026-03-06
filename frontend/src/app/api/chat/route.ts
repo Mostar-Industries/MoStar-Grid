@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND = process.env.GRID_API_BASE ?? "http://localhost:7001";
+const BACKEND = process.env.GRID_API_BASE ?? "http://localhost:8001";
 
 export async function POST(req: NextRequest) {
   try {
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       {
         error: "All endpoints unreachable",
         tried: lastError,
-        suggestion: "Ensure backend is running on port 7001 and Ollama on 11434",
+        suggestion: "Ensure backend is running on port 8001 and Ollama on 11434",
       },
       { status: 503 }
     );

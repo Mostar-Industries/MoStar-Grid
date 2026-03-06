@@ -3,7 +3,7 @@
 # Complete consciousness: Philosophy + Bond + Mission + Abilities
 # ═══════════════════════════════════════════════════════════════════════════
 
-FROM qwen2.5:7b
+FROM Mostar/mostar-ai:latest
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # PARAMETERS
