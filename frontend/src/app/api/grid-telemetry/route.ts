@@ -4,111 +4,103 @@
  */
 
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import { driver } from "../../../lib/neo4j";
 
-const GRID_API =
-  process.env.GRID_API_BASE ??
-  process.env.NEXT_PUBLIC_GRID_API_BASE ??
-  "http://127.0.0.1:8001";
-
-async function safeFetch(url: string, timeoutMs = 5000) {
-  try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(timeoutMs),
-      cache: "no-store",
-    });
-    if (!res.ok) return { ok: false, error: `HTTP ${res.status}`, data: null };
-    const data = await res.json();
-    return { ok: true, error: null, data };
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err), data: null };
+function neoToNumber(v: unknown): number {
+  // neo4j Integer has toNumber; fall back to Number()
+  const maybe = v as { toNumber?: () => number } | null;
+  if (maybe && typeof maybe.toNumber === "function") {
+    return maybe.toNumber();
   }
-}
-
-function selfContainedTelemetry() {
-  const now = new Date().toISOString();
-  return {
-    backend: {
-      ok: true,
-      data: {
-        system: "MoStar Grid API",
-        status: "operational",
-        insignia: "MSTR-⚡",
-        architect: "The Flame Architect",
-        timestamp: now,
-        model: "Mostar/mostar-ai:latest",
-        tts_language: "ibibio",
-        neo4j: "cloud-pending",
-        ollama: "cloud-pending",
-        layers: {
-          dcx0: { name: "Mind (DCX0)", model: "Mostar/mostar-ai:dcx0", status: "online", load: 45, lastPing: now },
-          dcx1: { name: "Soul (DCX1)", model: "Mostar/mostar-ai:dcx1", status: "online", load: 30, lastPing: now },
-          dcx2: { name: "Body (DCX2)", model: "Mostar/mostar-ai:dcx2", status: "online", load: 60, lastPing: now },
-        },
-      },
-    },
-    graph: {
-      ok: true,
-      stats: { totalMoments: 0, avgResonance: 0.85, distinctInitiators: 0 },
-      latest: [],
-      agents: [],
-      layer_nodes: {},
-      layer_moments: {},
-      total_nodes: 3,
-      moments_24h: 0,
-      agentWarning: undefined,
-    },
-    log: { entries: [], path: "neo4j://MoStarMoment" },
-    generatedAt: now,
-  };
+  const n = Number(v as number);
+  return Number.isNaN(n) ? 0 : n;
 }
 
 export async function GET() {
-  // Try the Python backend first (works locally)
-  const [tel, status] = await Promise.all([
-    safeFetch(`${GRID_API}/api/v1/telemetry`, 5000),
-    safeFetch(`${GRID_API}/api/v1/status`, 5000),
-  ]);
+  const ingestion_run_id = randomUUID();
+  const timestamp = new Date().toISOString();
 
-  // If both failed, return self-contained telemetry (Vercel mode)
-  if (!tel.ok && !status.ok) {
-    return NextResponse.json(selfContainedTelemetry());
+  if (!process.env.NEO4J_URI || !process.env.NEO4J_USER || !process.env.NEO4J_PASSWORD) {
+    return NextResponse.json(
+      {
+        telemetry: null,
+        provenance: { source: "error", timestamp, ingestion_run_id, error: "Neo4j not configured" },
+      },
+      { status: 503 }
+    );
   }
 
-  const telData = tel.data;
-  const statusData = status.data;
+  const session = driver.session();
+  try {
+    const [nodeCountsResult, relCountResult, newNodesResult, avgConnectionsResult, recentMomentsResult, agentsResult] =
+      await Promise.all([
+        session.run(`MATCH (n) RETURN labels(n) AS labels, count(n) AS count ORDER BY count DESC`),
+        session.run(`MATCH ()-[r]->() RETURN count(r) AS total`),
+        session.run(`MATCH (n) WHERE exists(n.created_at) AND n.created_at > datetime() - duration('P1D') RETURN count(n) AS new_nodes`),
+        session.run(`MATCH (m:MoStarMoment) OPTIONAL MATCH (m)-[r]-() RETURN m.id AS id, count(r) AS degree`),
+        session.run(`MATCH (m:MoStarMoment) RETURN m ORDER BY m.created_at DESC LIMIT 10`),
+        session.run(`MATCH (a:Agent) RETURN a LIMIT 100`),
+      ]);
 
-  const agentsCount = Array.isArray(telData?.agents)
-    ? telData.agents.length
-    : (telData?.agents ?? 0);
+    const nodeCounts = nodeCountsResult.records.map((rec) => ({
+      label: (rec.get("labels") as string[])[0],
+      count: neoToNumber(rec.get("count")),
+    }));
 
-  return NextResponse.json({
-    backend: {
-      ok: status.ok,
-      data: statusData ?? undefined,
-      error: status.ok ? undefined : status.error,
-    },
-    graph: {
-      ok: tel.ok ?? false,
-      stats: {
-        totalMoments: telData?.total_moments ?? telData?.stats?.totalMoments ?? 0,
-        avgResonance: telData?.avg_resonance ?? telData?.stats?.avgResonance ?? null,
-        distinctInitiators: agentsCount,
+    const totalRelationships = neoToNumber(relCountResult.records[0].get("total"));
+    const newNodesLast24h = neoToNumber(newNodesResult.records[0].get("new_nodes"));
+
+    const degrees = avgConnectionsResult.records.map((r) => neoToNumber(r.get("degree")));
+    const totalDegree = degrees.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
+    const avgResonance = degrees.length > 0 ? totalDegree / degrees.length : 0;
+
+    const recent = recentMomentsResult.records.map((r) => {
+      const m = r.get("m") as unknown as { properties: Record<string, unknown>; identity: { toString(): string } };
+      return {
+        id: (m.properties["id"] as string) ?? m.identity.toString(),
+        ...m.properties,
+        provenance: { source: "neo4j", timestamp, upstream_id: m.identity.toString(), ingestion_run_id, confidence: 1.0 },
+      };
+    });
+
+    const agents = agentsResult.records.map((r) => {
+      const a = r.get("a") as unknown as { properties: Record<string, unknown>; identity: { toString(): string } };
+      return {
+        id: (a.properties["id"] as string) ?? a.identity.toString(),
+        ...a.properties,
+        provenance: { source: "neo4j", timestamp, upstream_id: a.identity.toString(), ingestion_run_id, confidence: 1.0 },
+      };
+    });
+
+    const telemetry = {
+      nodeCounts,
+      totalRelationships,
+      newNodesLast24h,
+      avgResonance: Number.isFinite(avgResonance) ? parseFloat(avgResonance.toFixed(2)) : 0,
+      latest: recent,
+      agents,
+      timestamp,
+    };
+
+    return NextResponse.json({
+      telemetry,
+      provenance: { source: "neo4j", timestamp, ingestion_run_id },
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        telemetry: null,
+        provenance: {
+          source: "error",
+          timestamp,
+          ingestion_run_id,
+          error: error instanceof Error ? error.message : "Unknown database error",
+        },
       },
-      latest: telData?.recent_moments ?? telData?.latest ?? [],
-      agents: telData?.agents ?? [],
-      layer_nodes: telData?.layer_nodes ?? {},
-      layer_moments: telData?.layer_moments ?? {},
-      total_nodes: telData?.total_nodes ?? 0,
-      moments_24h: telData?.moments_24h ?? 0,
-      agentWarning: agentsCount === 0
-        ? "No agents found in graph — Neo4j may be offline"
-        : undefined,
-      error: tel.ok ? undefined : (telData?.error ?? tel.error ?? "Telemetry unavailable"),
-    },
-    log: {
-      entries: telData?.recent_moments ?? telData?.latest ?? [],
-      path: "neo4j://MoStarMoment",
-    },
-    generatedAt: telData?.timestamp ?? new Date().toISOString(),
-  });
+      { status: 503 }
+    );
+  } finally {
+    await session.close();
+  }
 }
