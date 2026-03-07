@@ -35,7 +35,7 @@ export default function GridVitalsPage() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:8001/api/v1/vitals');
+            const response = await fetch('/api/status');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }

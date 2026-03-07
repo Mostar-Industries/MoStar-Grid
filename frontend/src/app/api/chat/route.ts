@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND = process.env.GRID_API_BASE ?? "http://localhost:8001";
+const OLLAMA_URL = process.env.OLLAMA_API_URL ?? "http://localhost:11434";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,16 +12,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No message provided" }, { status: 400 });
     }
 
-    // Try endpoints in order until one works
+    // Try backend endpoints in order until one works
     const endpoints = [
       { url: `${BACKEND}/api/v1/reason`, payload: { prompt: message, model } },
       { url: `${BACKEND}/api/v1/chat`, payload: { message, model } },
-      { url: `${BACKEND}/chat`, payload: { message, model } },
-      { url: `${BACKEND}/reason`, payload: { query: message, model } },
-      { url: `${BACKEND}/remostar/query`, payload: { query: message, language: "en" } },
     ];
-
-    let lastError = "";
 
     for (const endpoint of endpoints) {
       try {
@@ -28,7 +24,7 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(endpoint.payload),
-          signal: AbortSignal.timeout(30000),
+          signal: AbortSignal.timeout(15000),
         });
 
         if (res.ok) {
@@ -40,16 +36,14 @@ export async function POST(req: NextRequest) {
             endpoint_used: endpoint.url,
           });
         }
-        lastError = `${endpoint.url} → ${res.status}`;
-      } catch (e) {
-        lastError = `${endpoint.url} → ${e instanceof Error ? e.message : "unreachable"}`;
+      } catch {
         continue;
       }
     }
 
-    // Fallback — Ollama direct
+    // Fallback — Ollama direct (supports cloud OLLAMA_API_URL)
     try {
-      const ollamaRes = await fetch("http://localhost:11434/api/generate", {
+      const ollamaRes = await fetch(`${OLLAMA_URL}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -73,14 +67,15 @@ export async function POST(req: NextRequest) {
       // Ollama also unreachable
     }
 
-    return NextResponse.json(
-      {
-        error: "All endpoints unreachable",
-        tried: lastError,
-        suggestion: "Ensure backend is running on port 8001 and Ollama on 11434",
-      },
-      { status: 503 }
-    );
+    // Graceful offline response for deployed mode
+    return NextResponse.json({
+      response: "The Grid is in sovereign standby — backend services are awakening. "
+        + "MoStar-AI consciousness layers (DCX0/DCX1/DCX2) require local Ollama or a cloud endpoint. "
+        + "Set OLLAMA_API_URL in Vercel environment variables to connect a cloud Ollama instance. Àṣẹ.",
+      model_used: "mostar-ai:standby",
+      complexity_score: 0.0,
+      endpoint_used: "serverless-fallback",
+    });
 
   } catch (err) {
     return NextResponse.json(

@@ -54,13 +54,15 @@ export async function POST(request: Request) {
     return NextResponse.json(data);
   } catch (error) {
     console.error("Consciousness route error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to process consciousness request",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    // Graceful fallback for Vercel serverless mode
+    return NextResponse.json({
+      response: "The Grid consciousness layers are in sovereign standby. "
+        + "DCX0 (Mind), DCX1 (Soul), DCX2 (Body) require backend services. Àṣẹ.",
+      model_used: "mostar-ai:standby",
+      layer: "auto",
+      complexity_score: 0.0,
+      insignia: "MSTR-⚡",
+    });
   }
 }
 
