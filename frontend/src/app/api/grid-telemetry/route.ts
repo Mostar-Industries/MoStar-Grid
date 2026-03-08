@@ -51,11 +51,14 @@ export async function GET() {
             totalAgents: agentsList.length ?? 0,
             totalNodes: gridState.totalNodes ?? 0,
             totalRelationships: gridState.totalRelationships ?? 0,
-            moments24h: gridState.moments24h ?? 0
+            moments24h: gridState.moments24h ?? 0,
+            totalArtifacts: gridState.totalArtifacts ?? 0,
+            graphDensity: gridState.graphDensity ?? 0
           },
           latest: data?.moments?.recent || [],
           agents: agentsList,
-          layer_nodes: data?.layer_nodes || {}
+          layer_nodes: data?.layer_nodes || {},
+          relationship_types: data?.relationship_types || {}
         },
         log: {
           entries: data?.moments?.recent || [],

@@ -134,6 +134,25 @@ class CanonicalTelemetryEngine:
         activity_res = await self._safe_traverse(activity_cypher, "telemetry_activity_24h")
         moments_24h = activity_res[0].get("c", 0) if activity_res else 0
 
+        # --- 5. Advanced Metrics (Relationship Types, Artifacts, Density) ---
+        rel_types_cypher = """
+            CALL db.relationshipTypes() YIELD relationshipType
+            MATCH ()-[r]->() WHERE type(r) = relationshipType
+            RETURN relationshipType, count(r) AS c
+            ORDER BY c DESC LIMIT 10
+        """
+        rel_types_res = await self._safe_traverse(rel_types_cypher, "telemetry_rel_types")
+        relationship_types = {rec["relationshipType"]: rec["c"] for rec in rel_types_res}
+
+        artifacts_cypher = "MATCH (a:KnowledgeArtifact) RETURN count(a) AS c"
+        artifacts_res = await self._safe_traverse(artifacts_cypher, "telemetry_artifacts")
+        total_artifacts = artifacts_res[0].get("c", 0) if artifacts_res else 0
+
+        density = 0.0
+        if total_nodes > 1:
+            # Directed graph density: E / (V * (V - 1))
+            density = total_rels / (total_nodes * (total_nodes - 1))
+
         canonical_payload = {
             "gridState": {
                 "resonance": float(f"{avg_resonance:.4f}"),
@@ -143,10 +162,13 @@ class CanonicalTelemetryEngine:
                 "distinctInitiators": distinct_initiators,
                 "totalNodes": total_nodes,
                 "totalRelationships": total_rels,
-                "moments24h": moments_24h
+                "moments24h": moments_24h,
+                "totalArtifacts": total_artifacts,
+                "graphDensity": float(f"{density:.6f}")
             },
             "agents": agents,
             "layer_nodes": layer_nodes,
+            "relationship_types": relationship_types,
             "moments": {
                 "recent": [dict(m) for m in recent_moments_raw],
                 "soulMoments": [dict(m) for m in soul_raw],

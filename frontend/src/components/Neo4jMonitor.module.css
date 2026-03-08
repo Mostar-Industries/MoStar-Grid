@@ -1,48 +1,71 @@
-.monitorPanel {
-    background: var(--surface-2);
-    border: 1px solid var(--border-color);
+.observatoryContainer {
+    background: linear-gradient(135deg, #020617 0%, #081033 100%);
+    border: 1px solid rgba(6, 182, 212, 0.3);
     border-radius: 12px;
     padding: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    color: var(--text-base);
-    height: 100%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(0, 0, 0, 0.4);
+    color: #e2e8f0;
     display: flex;
     flex-direction: column;
+    gap: 1.5rem;
+    font-family: 'Inter', system-ui, sans-serif;
+    overflow: hidden;
+    position: relative;
 }
 
-.header {
+.observatoryContainer::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 70%),
+        linear-gradient(rgba(6, 182, 212, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(6, 182, 212, 0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 20px 20px, 20px 20px;
+    pointer-events: none;
+}
+
+.observatoryHeader {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 1.5rem;
+    z-index: 1;
 }
 
-.eyebrow {
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    font-weight: 600;
+.titleGroup .eyebrow {
+    color: #fbbf24;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.2rem;
     margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    font-family: 'Orbitron', 'Space Grotesk', sans-serif;
 }
 
-.title {
-    font-size: 1.25rem;
+.titleGroup .title {
+    color: #fff;
+    font-size: 1.5rem;
     font-weight: 600;
-    color: var(--text-bright);
+    letter-spacing: -0.01em;
+    font-family: 'Orbitron', sans-serif;
 }
 
 .statusBadge {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.25rem 0.5rem;
+    gap: 0.75rem;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1rem;
     border-radius: 9999px;
-    background: var(--surface-1);
-    border: 1px solid var(--border-color);
     font-size: 0.75rem;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    backdrop-filter: blur(8px);
 }
 
 .online {
@@ -51,30 +74,30 @@
 }
 
 .offline {
-    border-color: rgba(239, 68, 68, 0.5);
-    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
 }
 
-.dot {
-    width: 6px;
-    height: 6px;
+.pulseDot {
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: currentColor;
 }
 
-.dot.pulsing {
-    animation: pulseLight 0.8s ease-out;
+.activePulse {
+    animation: pulseCore 0.8s ease-out;
 }
 
-@keyframes pulseLight {
+@keyframes pulseCore {
     0% {
         transform: scale(1);
         box-shadow: 0 0 0 0 currentColor;
     }
 
     50% {
-        transform: scale(1.5);
-        box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.2);
+        transform: scale(1.8);
+        box-shadow: 0 0 0 8px rgba(6, 182, 212, 0.3);
     }
 
     100% {
@@ -83,92 +106,217 @@
     }
 }
 
-.metricsGrid {
+.obsGrid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    margin-bottom: 2rem;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: 2rem;
+    z-index: 1;
 }
 
-.metricCard {
+.specHeader {
     display: flex;
-    flex-direction: column;
-    padding: 1rem;
-    background: var(--surface-1);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-}
-
-.metricLabel {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
-}
-
-.metricValue {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text-bright);
-    font-family: var(--font-mono);
-}
-
-.distTitle {
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
+    align-items: center;
+    gap: 0.75rem;
     margin-bottom: 1rem;
+    color: #fbbf24;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
 }
 
-.bars {
-    display: flex;
-    flex-direction: column;
+.specHeader span {
+    font-size: 1.25rem;
+}
+
+.specHeader h3 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.specMetricGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
 }
 
-.barRow {
+.specCard {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
 }
 
-.barLabelGroup {
+.specCard label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 0.25rem;
+}
+
+.specCard strong {
+    font-size: 1.15rem;
+    color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+.labelConstellation {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.constellationNode {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(6, 182, 212, 0.1);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.constellationNode:hover {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(6, 182, 212, 0.4);
+    transform: translateX(4px);
+}
+
+.nodeGlyph {
+    color: #06b6d4;
+    font-size: 1.5rem;
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+.nodeInfo .nodeLabel {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.nodeInfo .nodeCount {
+    font-size: 1.1rem;
+    color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+.flowList {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.flowRow {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.flowBase {
     display: flex;
     justify-content: space-between;
-    font-size: 0.75rem;
-    color: var(--text-base);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
 }
 
-.barLabel {
-    font-weight: 500;
+.flowName {
+    color: #94a3b8;
 }
 
-.barCount {
-    color: var(--text-muted);
-    font-family: var(--font-mono);
+.flowCount {
+    color: #06b6d4;
+    font-family: 'IBM Plex Mono', monospace;
 }
 
-.barTrack {
-    height: 6px;
-    background: var(--surface-1);
-    border-radius: 9999px;
+.flowTrack {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 999px;
     overflow: hidden;
 }
 
-.barFill {
+.flowFill {
     height: 100%;
-    background: linear-gradient(90deg, #0284c7, #06b6d4);
-    border-radius: 9999px;
-    transition: width 0.5s ease-out;
+    width: var(--width, 0%);
+    background: linear-gradient(90deg, #06b6d4, #fbbf24);
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.empty {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    font-style: italic;
-    padding: 1rem 0;
+.observatoryFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 1.5rem;
+    z-index: 1;
+}
+
+.footerMetric {
+    display: flex;
+    flex-direction: column;
+}
+
+.footerMetric label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+
+.footerMetric strong {
+    font-size: 1.25rem;
+    color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+.heartbeatBlock {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.heartbeatLabel {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #fbbf24;
+    letter-spacing: 0.1em;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.heartbeatIcon {
+    color: #fbbf24;
+    font-size: 1.25rem;
+    animation: buzz 2s infinite linear;
+}
+
+@keyframes buzz {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 0.5;
+    }
+}
+
+@media (max-width: 1200px) {
+    .obsGrid {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
 }

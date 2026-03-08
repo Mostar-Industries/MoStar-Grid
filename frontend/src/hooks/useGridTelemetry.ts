@@ -46,10 +46,13 @@ export type GraphSummary = {
     totalNodes?: number;
     totalRelationships?: number;
     moments24h?: number;
+    totalArtifacts?: number;
+    graphDensity?: number;
   };
   latest?: MomentRecord[];
   agents?: AgentTelemetry[] | number;
   layer_nodes?: Record<string, number>;
+  relationship_types?: Record<string, number>;
   layer_moments?: Record<string, { count: number; avg_resonance: number }>;
   total_nodes?: number;
   moments_24h?: number;
