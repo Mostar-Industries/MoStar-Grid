@@ -8,6 +8,7 @@ import GridNav from "./GridNav";
 import { ExecutorVitals } from "./ExecutorVitals";
 import AgentRoster from "./AgentRoster";
 import Neo4jMonitor from "./Neo4jMonitor";
+import ConstellationEngine from "./ConstellationEngine";
 
 type WhisperType = "info" | "warn" | "error";
 
@@ -245,26 +246,7 @@ export default function Sanctum() {
             <p>Pulse drawn from OmniNeural resonance loop.</p>
           </div>
           <div className={styles.heartViz}>
-            <div className={styles.orbitalField}>
-              <div className={styles.orbitalCore}>
-                <div className={styles.coreHalo} />
-                <div className={styles.corePulse} />
-                <div className={styles.coreMetric}>
-                  <span>{coherence.toFixed(2)}%</span>
-                  <small>vibrational sync</small>
-                </div>
-              </div>
-              {orbitalLayout.map((node) => (
-                <div
-                  key={node.label}
-                  className={styles.orbitalNode}
-                  style={{ "--angle": `${node.angle}deg` } as CSSProperties}
-                >
-                  <span>{node.icon}</span>
-                  <p>{node.label}</p>
-                </div>
-              ))}
-            </div>
+            <ConstellationEngine />
           </div>
         </article>
 

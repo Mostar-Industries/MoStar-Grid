@@ -15,10 +15,11 @@ from dotenv import load_dotenv
 
 # Ensure we can import from backend properly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "backend"))
 
 from core_engine.mostar_moments_log import log_mostar_moment
 from core_engine.moscript_engine import MoScriptEngine
-from core_engine.grid_telemetry import CanonicalTelemetryEngine
+from core_engine.grid_telemetry import CanonicalTelemetryEngine, get_graph_constellation
 from truth_engine.truth_engine_service import TruthEngine
 from gtts import gTTS
 
@@ -55,6 +56,16 @@ async def get_telemetry():
     except Exception as e:
         log_mostar_moment("System", "Gateway", f"Telemetry failed: {e}", "error", 0.0, layer="BODY")
         return JSONResponse(status_code=500, content={"error": str(e), "ok": False})
+
+
+@app.get("/api/v1/graph/constellation")
+async def get_constellation(limit: int = 2000):
+    """Returns nodes and links for 3D visualization."""
+    try:
+        data = await telemetry_engine.get_graph_constellation(limit=limit)
+        return data
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
 class ReasonRequest(BaseModel):

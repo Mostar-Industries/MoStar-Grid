@@ -14,13 +14,16 @@
     "next": "^16.1.6",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "react-map-gl": "^8.1.0"
+    "react-force-graph-3d": "^1.29.1",
+    "react-map-gl": "^8.1.0",
+    "three": "^0.183.2"
   },
   "devDependencies": {
     "@types/mapbox-gl": "^3.4.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.183.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
     "typescript": "^5"

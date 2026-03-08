@@ -175,21 +175,26 @@ def _extract_prompt(body: dict) -> Optional[str]:
 # ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════
 
-from core_engine.grid_telemetry import get_grid_telemetry, get_node_detail
+from core_engine.grid_telemetry import get_grid_telemetry, get_graph_constellation
 
 @app.get("/api/v1/telemetry")
 async def grid_telemetry():
     """Live Grid telemetry for Hyper-Spine Dashboard."""
     import asyncio
-    data = await asyncio.to_thread(get_grid_telemetry)
+    data = await get_grid_telemetry()
+    return data
+
+
+@app.get("/api/v1/graph/constellation")
+async def get_constellation(limit: int = 1500):
+    """Returns nodes and links for 3D visualization."""
+    data = await get_graph_constellation(limit=limit)
     return data
 
 @app.get("/api/v1/telemetry/node/{node_id}")
 async def node_telemetry(node_id: str):
-    """Live data for a specific dashboard node."""
-    import asyncio
-    data = await asyncio.to_thread(get_node_detail, node_id)
-    return data
+    """Placeholder for specialized node telemetry."""
+    return {"id": node_id, "status": "legacy", "message": "Transitioning to constellation engine"}
 
 @app.get("/api/v1/telemetry/moments")
 async def live_moments(limit: int = 20):
