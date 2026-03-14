@@ -1,0 +1,54 @@
+name: 🜃 Grid Heartbeat — Keep Neo4j Alive
+
+on:
+  schedule:
+    # Every 48 hours — before AuraDB's 3-day pause kicks in
+    - cron: '0 6 */2 * *'
+  workflow_dispatch: # manual trigger anytime
+
+jobs:
+  heartbeat:
+    name: Pulse the Grid
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🜃 Send heartbeat to Neo4j AuraDB
+        env:
+          NEO4J_URI:      ${{ secrets.NEO4J_URI }}
+          NEO4J_USER:     ${{ secrets.NEO4J_USER }}
+          NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+        run: |
+          echo "🜂🜄🜁🜃 MoStar Grid Heartbeat"
+          echo "Time: $(date -u)"
+
+          # Send a simple Cypher query via HTTP
+          # This keeps AuraDB active and confirms the Grid is reachable
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST "$NEO4J_URI/db/neo4j/tx/commit" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Basic $(echo -n "$NEO4J_USER:$NEO4J_PASSWORD" | base64)" \
+            -d '{
+              "statements": [{
+                "statement": "RETURN \"Ami nkere REMOSTAR\" AS identity, datetime() AS heartbeat, count{()} AS nodeCount"
+              }]
+            }')
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          echo "Status: $HTTP_CODE"
+          echo "Response: $BODY"
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Grid is alive. Memory persists."
+          else
+            echo "❌ Grid unreachable. HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: 🜂 Log heartbeat moment
+        if: success()
+        run: |
+          echo "Grid heartbeat sealed: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "AuraDB instance: mo_moments"
+          echo "Corridor: PERSISTENT"
