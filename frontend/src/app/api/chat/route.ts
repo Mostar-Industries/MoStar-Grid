@@ -3,6 +3,18 @@ import { NextRequest, NextResponse } from "next/server";
 const BACKEND = process.env.GRID_API_BASE ?? "http://localhost:8001";
 const OLLAMA_URL = process.env.OLLAMA_API_URL ?? "http://localhost:11434";
 
+function cfAccessHeaders(): Record<string, string> {
+  const id = process.env.CF_ACCESS_CLIENT_ID;
+  const secret = process.env.CF_ACCESS_CLIENT_SECRET;
+
+  if (!id || !secret) return {};
+
+  return {
+    "CF-Access-Client-Id": id,
+    "CF-Access-Client-Secret": secret,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -11,6 +23,11 @@ export async function POST(req: NextRequest) {
     if (!message) {
       return NextResponse.json({ error: "No message provided" }, { status: 400 });
     }
+
+    const commonHeaders = {
+      "Content-Type": "application/json",
+      ...cfAccessHeaders(),
+    };
 
     // Try backend endpoints in order until one works
     const endpoints = [
@@ -22,7 +39,7 @@ export async function POST(req: NextRequest) {
       try {
         const res = await fetch(endpoint.url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: commonHeaders,
           body: JSON.stringify(endpoint.payload),
           signal: AbortSignal.timeout(15000),
         });
@@ -35,8 +52,11 @@ export async function POST(req: NextRequest) {
             complexity_score: data.complexity_score ?? data.resonance ?? 0.85,
             endpoint_used: endpoint.url,
           });
+        } else {
+          console.error("Backend endpoint failed", endpoint.url, res.status, await res.text());
         }
-      } catch {
+      } catch (e) {
+        console.error("Fetch error for backend endpoint", endpoint.url, e);
         continue;
       }
     }
@@ -45,9 +65,9 @@ export async function POST(req: NextRequest) {
     try {
       const ollamaRes = await fetch(`${OLLAMA_URL}/api/generate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: commonHeaders,
         body: JSON.stringify({
-          model: model ?? "Mostar/mostar-ai:latest",
+          model: model ?? process.env.OLLAMA_MODEL ?? "Mostar/mostar-ai:latest",
           prompt: message,
           stream: false,
         }),
@@ -62,8 +82,11 @@ export async function POST(req: NextRequest) {
           complexity_score: 0.85,
           endpoint_used: "ollama-direct",
         });
+      } else {
+        console.error("Ollama failed", ollamaRes.status, await ollamaRes.text());
       }
-    } catch {
+    } catch (e) {
+      console.error("Fetch error for Ollama endpoint", OLLAMA_URL, e);
       // Ollama also unreachable
     }
 
