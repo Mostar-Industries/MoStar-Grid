@@ -5,11 +5,9 @@
  */
 
 import { NextResponse } from "next/server";
+import { GRID_API_BASE } from "@/lib/apiConfig";
 
-const GRID_API =
-  process.env.GRID_API_BASE ??
-  process.env.NEXT_PUBLIC_GRID_API_BASE ??
-  "http://127.0.0.1:7001";
+const GRID_API = GRID_API_BASE;
 
 console.log("[TELEMETRY_ROUTE] Using GRID_API:", GRID_API);
 

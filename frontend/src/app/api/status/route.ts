@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
+import { GRID_API_BASE } from "@/lib/apiConfig";
 
-const GRID_API_BASE =
-  process.env.GRID_API_BASE ?? "http://localhost:7001";
+const GRID_API_BASE_URL = GRID_API_BASE;
 
 export async function GET() {
   try {
-    const response = await fetch(`${GRID_API_BASE}/api/v1/status`, {
+    const response = await fetch(`${GRID_API_BASE_URL}/api/v1/status`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       // lightweight revalidate window for incremental static regens (Next.js hint)

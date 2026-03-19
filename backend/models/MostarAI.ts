@@ -5,59 +5,10 @@
 // ------------------------------------------------------------------
 
 import { execSync } from "child_process";
-import crypto from "crypto";
+import { MoScriptEngine, MoScriptResult } from "../lib/moScript";
 
-// === Shared MoSeal & MoScript Engine ===
-export type MoSeal = {
-  payload: any;
-  blessing: string;
-  sealed_at: string;
-  signature: string;
-};
-
-export type MoScriptResult = {
-  status: "aligned" | "disrupted";
-  operation: string;
-  result?: any;
-  error?: string;
-};
-
-export class MoScriptEngine {
-  private static readonly SEAL_PREFIX = "qseal:";
-  private static readonly TRUTH_SALT = "MÒṢE_TRUTH_BINDING";
-
-  interpret(op: string, payload: any): MoScriptResult {
-    try {
-      const result =
-        op === "seal"
-          ? this._sealPayload(payload)
-          : op === "echo"
-          ? payload
-          : `Unknown op: ${op}`;
-
-      return { status: "aligned", operation: op, result };
-    } catch (err: any) {
-      return { status: "disrupted", operation: op, error: err.message };
-    }
-  }
-
-  private _sealPayload(payload: any): MoSeal {
-    const data = JSON.stringify(payload);
-    const blessing = crypto
-      .createHash("sha256")
-      .update(`${data}-${MoScriptEngine.TRUTH_SALT}`)
-      .digest("hex")
-      .slice(0, 12);
-    const now = new Date().toISOString();
-
-    return {
-      payload,
-      blessing,
-      sealed_at: now,
-      signature: `${MoScriptEngine.SEAL_PREFIX}${blessing}`,
-    };
-  }
-}
+export type { MoSeal, MoScriptResult } from "../lib/moScript";
+export { MoScriptEngine };
 
 // === Proxy Interface to DCX0 / DCX1 / DCX2 ===
 const runOllama = (modelTag: string, prompt: string): string => {

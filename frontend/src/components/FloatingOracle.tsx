@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MoStarIcon } from "./Icons";
+import { extractApiResponse } from "@/lib/apiUtils";
 
 interface Message {
   role: "user" | "assistant";
@@ -61,7 +62,7 @@ export default function FloatingOracle() {
         ...prev,
         {
           role: "assistant",
-          content: data.response ?? data.result ?? data.reply ?? ".",
+          content: extractApiResponse(data),
           meta,
         },
       ]);

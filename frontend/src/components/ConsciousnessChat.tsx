@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { extractApiResponse } from "@/lib/apiUtils";
 
 type Sender = "user" | "dcx";
 type Status = "sending" | "delivered" | "error";
@@ -76,7 +77,7 @@ export function ConsciousnessChat({
 
       const botMessage: Message = {
         id: `dcx-${Date.now()}`,
-        text: data.response ?? data.result ?? "No response received.",
+        text: extractApiResponse(data, "No response received."),
         sender: "dcx",
         layer: data.routed_to ?? data.layer ?? "auto",
         timestamp: new Date(),
