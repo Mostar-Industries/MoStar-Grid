@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -43,11 +43,11 @@ function BrainModel() {
                 const mat = new THREE.MeshPhongMaterial({
                     color: 0x76f2ff,
                     transparent: true,
-                    opacity: 0.22,
+                    opacity: 0.2,
                     wireframe: true,
                     side: THREE.DoubleSide,
                     emissive: 0x0a3a4f,
-                    emissiveIntensity: 0.8,
+                    emissiveIntensity: 0.2,
                     shininess: 100,
                 });
                 child.material = mat;
@@ -84,7 +84,7 @@ export default function ConstellationEngine() {
     const [isClient, setIsClient] = useState(false);
     const [showGraph, setShowGraph] = useState(false);
 
-    const GRID_API = process.env.NEXT_PUBLIC_GRID_API_BASE || "http://localhost:8001";
+    const CONSTELLATION_API = "/api/graph/constellation"; // always server-side proxied
 
     useEffect(() => {
         const timer = setTimeout(() => setIsClient(true), 0);
@@ -93,7 +93,7 @@ export default function ConstellationEngine() {
 
     const fetchGraph = async () => {
         try {
-            const res = await fetch(`${GRID_API}/api/v1/graph/constellation?limit=1500`, { cache: "no-store" });
+            const res = await fetch(`${CONSTELLATION_API}?limit=1500`, { cache: "no-store" });
             if (res.ok) {
                 const data = await res.json();
                 setGraphData(data);

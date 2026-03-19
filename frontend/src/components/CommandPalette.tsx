@@ -19,7 +19,6 @@ const COMMANDS: CommandItem[] = [
   // Navigation
   { id: "home", label: "Go to Sanctum", shortcut: "G H", icon: "◐", href: "/", category: "Navigation" },
   { id: "flame", label: "African Flame", shortcut: "G F", icon: "⚡", href: "/flame", category: "Navigation" },
-  { id: "hyperspine", label: "Hyper-Spine Map", shortcut: "G S", icon: "⫷", href: "/hyperspine", category: "Navigation" },
   { id: "grid-vitals", label: "System Health", shortcut: "G V", icon: "◒", href: "/grid-vitals", category: "Navigation" },
   { id: "graph", label: "Graph Explorer", shortcut: "G G", icon: "✦", href: "/graph", category: "Navigation" },
   { id: "chat", label: "Oracle Chat", shortcut: "G C", icon: "⥁", href: "/chat", category: "Navigation" },
@@ -58,7 +57,6 @@ export default function CommandPalette() {
         const navMap: Record<string, string> = {
           h: "/",
           f: "/flame",
-          s: "/hyperspine",
           v: "/grid-vitals",
           g: "/graph",
           c: "/chat",

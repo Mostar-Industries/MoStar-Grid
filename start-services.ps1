@@ -1,5 +1,5 @@
 # ==============================================================================
-# MOSTAR GRID - UNIFIED SERVICE LAUNCHER
+# MOSTAR GRID - UNIFIED SERVICE LAUNCHER (CLI Inline)
 # Starts ALL services: Neo4j, Memory Layer, Core Engine, Mo Executor, Frontend
 # ==============================================================================
 
@@ -8,14 +8,14 @@ $ScriptPath = $PSScriptRoot
 
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Magenta
-Write-Host "   MoStar-Grid: Full System Boot          " -ForegroundColor Magenta
+Write-Host "   MoStar-Grid: Inline System Boot" -ForegroundColor Magenta
 Write-Host "==========================================" -ForegroundColor Magenta
 
 # --- Configuration ---
-$Neo4jStart   = Join-Path $ScriptPath "backend\neo4j-mostar-industries\start-neo4j.ps1"
-$PythonExe    = Join-Path $ScriptPath ".venv\Scripts\python.exe"
+$Neo4jStart = Join-Path $ScriptPath "backend\neo4j-mostar-industries\start-neo4j.ps1"
+$PythonExe = Join-Path $ScriptPath ".venv\Scripts\python.exe"
 $FrontendPath = Join-Path $ScriptPath "frontend"
-$LogsDir      = Join-Path $ScriptPath "logs"
+$LogsDir = Join-Path $ScriptPath "logs"
 $ExecutorScript = Join-Path $ScriptPath "backend\mo_executor.py"
 
 if (-not (Test-Path $LogsDir)) { New-Item -ItemType Directory -Path $LogsDir | Out-Null }
@@ -38,133 +38,165 @@ function Stop-PortProcess {
     }
 }
 
-# --- Helper: Launch a python uvicorn service in a new window ---
-function Start-PythonService {
-    param([string]$Title, [string]$Module, [string]$Port, [string]$LogFile)
-    $encodedCmd = [Convert]::ToBase64String(
-        [System.Text.Encoding]::Unicode.GetBytes(
-            "`$env:PYTHONPATH = '$ScriptPath'; " +
-            "`$env:PYTHONUTF8 = '1'; " +
-            "Write-Host '=== $Title (port $Port) ==='; " +
-            "& '$PythonExe' -m uvicorn $Module --host 0.0.0.0 --port $Port --reload " +
-            "2>&1 | Tee-Object -FilePath '$LogFile'"
-        )
-    )
-    Start-Process powershell -ArgumentList "-NoExit", "-EncodedCommand", $encodedCmd -WorkingDirectory $ScriptPath
+# --- Helper: Test if port is listening ---
+function Test-PortListening {
+    param([int]$Port)
+    try {
+        $result = Test-NetConnection -ComputerName localhost -Port $Port -WarningAction SilentlyContinue -InformationLevel Quiet
+        return $result
+    }
+    catch {
+        return $false
+    }
 }
 
-# --- 0. Clear stale processes on all ports ---
+# --- 0. Clear stale processes ---
 Write-Host "`n[0/5] Clearing stale processes on ports 3000, 8000, 8001..." -ForegroundColor DarkYellow
 Stop-PortProcess -Port 8000
 Stop-PortProcess -Port 8001
 Stop-PortProcess -Port 3000
+
+# Cleanup any lingering jobs from previous runs
+Get-Job | Stop-Job -ErrorAction SilentlyContinue
+Get-Job | Remove-Job -ErrorAction SilentlyContinue
+
 Write-Host "   >> Ports cleared." -ForegroundColor Gray
 
-# --- 1. Start Neo4j (Sovereign Soul) ---
+# --- 1. Start Neo4j ---
 Write-Host "`n[1/5] Starting Neo4j Database (ports 7474/7687)..." -ForegroundColor Cyan
-$Neo4jAlive = $false
-try {
-    $Neo4jAlive = Test-NetConnection -ComputerName localhost -Port 7687 -WarningAction SilentlyContinue -InformationLevel Quiet
-} catch {}
-
-if ($Neo4jAlive) {
-    Write-Host "   >> Neo4j already running on port 7687. Skipping." -ForegroundColor Green
-} elseif (Test-Path $Neo4jStart) {
-    Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", $Neo4jStart `
-        -WorkingDirectory (Join-Path $ScriptPath "backend\neo4j-mostar-industries")
-    Write-Host "   >> Neo4j console window launched. Waiting for ready..." -ForegroundColor Gray
+if (Test-PortListening -Port 7687) {
+    Write-Host "   ✅ Neo4j already running on port 7687" -ForegroundColor Green
+}
+elseif (Test-Path $Neo4jStart) {
+    Write-Host "   >> Launching Neo4j in background..." -ForegroundColor Gray
+    # We run Neo4j in a background job too
+    Start-Job -Name "Neo4j" -ScriptBlock {
+        param($path)
+        Set-Location $path
+        .\start-neo4j.ps1
+    } -ArgumentList (Join-Path $ScriptPath "backend\neo4j-mostar-industries") | Out-Null
+    
+    Write-Host "   >> Waiting for Neo4j to be ready (max 30s)..." -ForegroundColor Gray
     $waited = 0
     while ($waited -lt 30) {
         Start-Sleep -Seconds 2
         $waited += 2
-        try {
-            if (Test-NetConnection -ComputerName localhost -Port 7687 -WarningAction SilentlyContinue -InformationLevel Quiet) {
-                Write-Host "   >> Neo4j ready after ~${waited}s." -ForegroundColor Green
-                break
-            }
-        } catch {}
+        if (Test-PortListening -Port 7687) {
+            Write-Host "   ✅ Neo4j ready after ${waited}s" -ForegroundColor Green
+            break
+        }
     }
-    if ($waited -ge 30) { Write-Warning "   !! Neo4j may not be ready yet. Continuing anyway." }
-} else {
-    Write-Warning "   !! Neo4j start script not found at $Neo4jStart"
+}
+else {
+    Write-Host "   ❌ Neo4j start script not found at $Neo4jStart" -ForegroundColor Red
 }
 
 # --- 2. Start Memory Layer API (Port 8000) ---
 Write-Host "`n[2/5] Starting Memory Layer API (port 8000)..." -ForegroundColor Cyan
-if (Test-Path $PythonExe) {
-    $logFile = Join-Path $LogsDir "memory_layer.log"
-    Start-PythonService -Title "Memory Layer API" -Module "backend.memory_layer.api.main:app" -Port "8000" -LogFile $logFile
-    Write-Host "   >> Memory Layer window launched. Log: logs\memory_layer.log" -ForegroundColor Gray
-} else {
-    Write-Warning "   !! Python executable not found at $PythonExe"
+if (-not (Test-Path $PythonExe)) {
+    Write-Host "   ❌ Python executable not found at $PythonExe" -ForegroundColor Red
 }
-
-Start-Sleep -Seconds 2
+else {
+    $logFile = Join-Path $LogsDir "memory_layer.log"
+    Start-Job -Name "MemoryLayer" -ScriptBlock {
+        param($python, $scriptPath, $logFile)
+        $env:PYTHONPATH = $scriptPath
+        $env:PYTHONUTF8 = '1'
+        & $python -m uvicorn backend.memory_layer.api.main:app --host 0.0.0.0 --port 8000 --reload 2>&1 | Tee-Object -FilePath $logFile
+    } -ArgumentList $PythonExe, $ScriptPath, $logFile | Out-Null
+    Start-Sleep -Seconds 2
+}
 
 # --- 3. Start Core Engine API (Port 8001) ---
 Write-Host "`n[3/5] Starting Core Engine API (port 8001)..." -ForegroundColor Cyan
-if (Test-Path $PythonExe) {
+if (-not (Test-Path $PythonExe)) {
+    Write-Host "   ❌ Python executable not found at $PythonExe" -ForegroundColor Red
+}
+else {
     $logFile = Join-Path $LogsDir "core_engine.log"
-    Start-PythonService -Title "Core Engine API" -Module "backend.core_engine.api_gateway:app" -Port "8001" -LogFile $logFile
-    Write-Host "   >> Core Engine window launched. Log: logs\core_engine.log" -ForegroundColor Gray
-} else {
-    Write-Warning "   !! Python executable not found at $PythonExe"
+    Start-Job -Name "CoreEngine" -ScriptBlock {
+        param($python, $scriptPath, $logFile)
+        $env:PYTHONPATH = $scriptPath
+        $env:PYTHONUTF8 = '1'
+        & $python -m uvicorn backend.core_engine.api_gateway:app --host 0.0.0.0 --port 8001 --reload 2>&1 | Tee-Object -FilePath $logFile
+    } -ArgumentList $PythonExe, $ScriptPath, $logFile | Out-Null
+    Start-Sleep -Seconds 2
 }
 
-Start-Sleep -Seconds 2
-
-# --- 4. Start Mo Executor (background daemon) ---
+# --- 4. Start Mo Executor ---
 Write-Host "`n[4/5] Starting Mo Executor (graph mutation daemon)..." -ForegroundColor Cyan
-if ((Test-Path $PythonExe) -and (Test-Path $ExecutorScript)) {
+if (-not (Test-Path $ExecutorScript)) {
+    Write-Host "   ❌ Mo Executor script not found at $ExecutorScript" -ForegroundColor Red
+}
+else {
     $logFile = Join-Path $LogsDir "mo_executor.log"
-    $encodedCmd = [Convert]::ToBase64String(
-        [System.Text.Encoding]::Unicode.GetBytes(
-            "`$env:PYTHONPATH = '$ScriptPath'; " +
-            "`$env:PYTHONUTF8 = '1'; " +
-            "`$env:NEO4J_URI = 'bolt://localhost:7687'; " +
-            "`$env:NEO4J_USER = 'neo4j'; " +
-            "`$env:NEO4J_PASSWORD = 'mostar123'; " +
-            "Write-Host '=== Mo Executor (daemon) ==='; " +
-            "& '$PythonExe' '$ExecutorScript' " +
-            "2>&1 | Tee-Object -FilePath '$logFile'"
-        )
-    )
-    Start-Process powershell -ArgumentList "-NoExit", "-EncodedCommand", $encodedCmd -WorkingDirectory $ScriptPath
-    Write-Host "   >> Mo Executor window launched. Log: logs\mo_executor.log" -ForegroundColor Gray
-} else {
-    Write-Warning "   !! Mo Executor not found. Checked: $ExecutorScript"
+    Start-Job -Name "MoExecutor" -ScriptBlock {
+        param($python, $scriptPath, $executorScript, $logFile)
+        $env:PYTHONPATH = $scriptPath
+        $env:PYTHONUTF8 = '1'
+        $env:NEO4J_URI = 'bolt://localhost:7687'
+        $env:NEO4J_USER = 'neo4j'
+        $env:NEO4J_PASSWORD = 'mostar123'
+        & $python $executorScript 2>&1 | Tee-Object -FilePath $logFile
+    } -ArgumentList $PythonExe, $ScriptPath, $ExecutorScript, $logFile | Out-Null
 }
 
-Start-Sleep -Seconds 2
-
-# --- 5. Start Next.js Frontend (Port 3000) ---
+# --- 5. Start Next.js Frontend ---
 Write-Host "`n[5/5] Starting Next.js Frontend (port 3000)..." -ForegroundColor Cyan
-if (Test-Path $FrontendPath) {
+if (-not (Test-Path $FrontendPath)) {
+    Write-Host "   ❌ Frontend directory not found at $FrontendPath" -ForegroundColor Red
+}
+else {
     $logFile = Join-Path $LogsDir "frontend.log"
-    $encodedCmd = [Convert]::ToBase64String(
-        [System.Text.Encoding]::Unicode.GetBytes(
-            "Set-Location '$FrontendPath'; " +
-            "Write-Host '=== Next.js Frontend (port 3000) ==='; " +
-            "npm run dev 2>&1 | Tee-Object -FilePath '$logFile'"
-        )
-    )
-    Start-Process powershell -ArgumentList "-NoExit", "-EncodedCommand", $encodedCmd -WorkingDirectory $FrontendPath
-    Write-Host "   >> Frontend window launched. Log: logs\frontend.log" -ForegroundColor Gray
-} else {
-    Write-Warning "   !! Frontend directory not found at $FrontendPath"
+    Start-Job -Name "Frontend" -ScriptBlock {
+        param($frontendPath, $logFile)
+        Set-Location $frontendPath
+        npm run dev 2>&1 | Tee-Object -FilePath $logFile
+    } -ArgumentList $FrontendPath, $logFile | Out-Null
+    Start-Sleep -Seconds 2
 }
 
-# --- Summary ---
+# --- Summary & Streaming Mode ---
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Green
-Write-Host "  MoStar Grid - All Services Launched     " -ForegroundColor Green
+Write-Host "  Services Started in Background Jobs     " -ForegroundColor Green
+Write-Host "  Streaming logs... Press Ctrl+C to stop.  " -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "  Neo4j Browser   : http://localhost:7474  (neo4j / mostar123)" -ForegroundColor Cyan
-Write-Host "  Memory Layer API: http://localhost:8000/docs" -ForegroundColor Cyan
-Write-Host "  Core Engine API : http://localhost:8001/docs" -ForegroundColor Cyan
-Write-Host "  Mo Executor     : background daemon (logs\mo_executor.log)" -ForegroundColor Cyan
-Write-Host "  Frontend UI     : http://localhost:3000" -ForegroundColor Cyan
+Write-Host "Note: Output logs from each service will be interleaved below." -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "  Logs directory  : $LogsDir" -ForegroundColor DarkGray
-Write-Host "==========================================" -ForegroundColor Green
+
+try {
+    # Provide an initial flush and then loop
+    while ($true) {
+        $jobs = Get-Job | Where-Object { $_.State -eq 'Running' }
+        if (-not $jobs) {
+            Write-Host "All jobs exited automatically." -ForegroundColor DarkGray
+            break
+        }
+        foreach ($j in $jobs) {
+            $output = Receive-Job -Job $j
+            if ($output) {
+                # Add color prefix to logs for readability
+                switch ($j.Name) {
+                    "Neo4j"       { $color = "Green" }
+                    "MemoryLayer" { $color = "Cyan" }
+                    "CoreEngine"  { $color = "Yellow" }
+                    "MoExecutor"  { $color = "Magenta" }
+                    "Frontend"    { $color = "Blue" }
+                    default       { $color = "White" }
+                }
+                foreach ($line in $output) {
+                    $prefix = "[$($j.Name)]"
+                    Write-Host "$prefix $line" -ForegroundColor $color
+                }
+            }
+        }
+        Start-Sleep -Milliseconds 500
+    }
+} finally {
+    Write-Host "`nStopping all processes..." -ForegroundColor Yellow
+    Get-Job | Stop-Job
+    Get-Job | Remove-Job
+    Write-Host "Done!" -ForegroundColor Green
+}

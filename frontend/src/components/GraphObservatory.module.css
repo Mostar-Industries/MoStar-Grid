@@ -1,0 +1,238 @@
+.observatory {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  background: #020917;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 0 60px rgba(6, 182, 212, 0.04), inset 0 0 60px rgba(0,0,0,0.4);
+}
+
+/* ── Header ─────────────────────────────────────── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.eyebrow {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fbbf24;
+  font-family: 'Orbitron', monospace;
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+}
+
+.title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Orbitron', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.liveChip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  background: rgba(6, 182, 212, 0.08);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #06b6d4;
+  font-family: 'IBM Plex Mono', monospace;
+  transition: box-shadow 0.3s;
+}
+
+.liveChip.pulsing {
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.6);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #06b6d4;
+  box-shadow: 0 0 8px #06b6d4;
+  animation: blink 2s infinite ease-in-out;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.timestamp {
+  font-size: 0.6rem;
+  color: #475569;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ── Stat Row ───────────────────────────────────── */
+.statRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .statRow { grid-template-columns: repeat(2, 1fr); }
+}
+
+.statCard {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.statCard::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--bar-color, #06b6d4);
+  opacity: 0.7;
+}
+
+.statCard[data-accent="cyan"]  { --bar-color: #06b6d4; }
+.statCard[data-accent="amber"] { --bar-color: #fbbf24; }
+.statCard[data-accent="violet"]{ --bar-color: #8b5cf6; }
+.statCard[data-accent="rose"]  { --bar-color: #f43f5e; }
+
+.statCard:hover {
+  border-color: rgba(6,182,212,0.3);
+  box-shadow: 0 4px 24px rgba(6,182,212,0.08);
+}
+
+.statLabel {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+  font-family: 'IBM Plex Mono', monospace;
+  margin: 0;
+}
+
+.statValue {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Orbitron', monospace;
+  margin: 0;
+  line-height: 1;
+}
+
+.statSub {
+  font-size: 0.6rem;
+  color: #475569;
+  margin: 0;
+}
+
+/* ── Canvas ─────────────────────────────────────── */
+.canvasWrap {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(6, 182, 212, 0.15);
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
+}
+
+/* ── Type Cards ─────────────────────────────────── */
+.typeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+}
+
+@media (max-width: 700px) {
+  .typeGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.typeCard {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 0.75rem 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: border-color 0.25s;
+}
+
+.typeCard:hover {
+  border-color: var(--accent, #06b6d4);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent, #06b6d4) 20%, transparent);
+}
+
+.typeBar {
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.typeFill {
+  height: 100%;
+  background: var(--accent, #06b6d4);
+  border-radius: 9999px;
+  transition: width 1s ease;
+  box-shadow: 0 0 6px var(--accent, #06b6d4);
+}
+
+.typeMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.typeLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--accent, #06b6d4);
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.03em;
+}
+
+.typeCount {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Orbitron', monospace;
+}
+
+.typeCount small {
+  font-size: 0.55rem;
+  color: #475569;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 400;
+}

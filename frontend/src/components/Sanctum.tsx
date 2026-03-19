@@ -8,7 +8,7 @@ import GridNav from "./GridNav";
 import { ExecutorVitals } from "./ExecutorVitals";
 import AgentRoster from "./AgentRoster";
 import Neo4jMonitor from "./Neo4jMonitor";
-import ConstellationEngine from "./ConstellationEngine";
+import GraphObservatory from "./GraphObservatory";
 
 type WhisperType = "info" | "warn" | "error";
 
@@ -246,7 +246,7 @@ export default function Sanctum() {
             <p>Pulse drawn from OmniNeural resonance loop.</p>
           </div>
           <div className={styles.heartViz}>
-            <ConstellationEngine />
+            <GraphObservatory />
           </div>
         </article>
 
