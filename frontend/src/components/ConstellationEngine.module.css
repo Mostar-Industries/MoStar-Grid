@@ -129,3 +129,69 @@
 .container :global(canvas) {
     display: block;
 }
+
+/* ── Brain hover tooltip ──────────────────────── */
+.tooltip {
+    background: rgba(2, 6, 23, 0.92);
+    border: 1px solid rgba(6, 182, 212, 0.4);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    min-width: 180px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 16px rgba(6, 182, 212, 0.1);
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+.tooltipTitle {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #fbbf24;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+}
+
+.tooltipRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.2rem 0;
+    font-size: 0.6rem;
+}
+
+.tooltipRow span {
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.tooltipRow strong {
+    color: #fff;
+    font-size: 0.7rem;
+}
+
+.tooltipBar {
+    margin-top: 0.5rem;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.tooltipFill {
+    height: 100%;
+    background: linear-gradient(90deg, #06b6d4, #8b5cf6);
+    border-radius: 9999px;
+    transition: width 1s ease;
+    box-shadow: 0 0 6px rgba(6, 182, 212, 0.5);
+}
+
+.tooltipHint {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.5rem;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
