@@ -50,7 +50,7 @@ function BrainMesh({ momentsData }: BrainMeshProps) {
   return (
     <group ref={meshRef}>
       {/* GLTF Brain Model from holo.glb */}
-      <primitive object={brainModel} scale={[3, 3, 3]} position={[0, 0, 0]} />
+      <primitive object={brainModel} scale={[9, 10, 10,]} />
 
       {/* Neural Activity Points */}
       {momentsData.map((moment, index) => (
