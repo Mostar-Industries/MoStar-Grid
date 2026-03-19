@@ -51,9 +51,10 @@ function BrainModel({ telemetry }: { telemetry: BrainTelemetry }) {
     const activity = Math.min(telemetry.nodeCount / 500, 1);
     const resonance = telemetry.avgResonance;
 
-    const { brainModel, brainMaterials } = useMemo(() => {
+    const { brainModel, brainMaterials, originalPositions } = useMemo(() => {
         const cloned = scene.clone();
         const materials: THREE.MeshPhongMaterial[] = [];
+        const positionsMap = new Map<THREE.BufferGeometry, Float32Array>();
 
         cloned.traverse((child) => {
             if (child instanceof THREE.Mesh) {
@@ -69,9 +70,19 @@ function BrainModel({ telemetry }: { telemetry: BrainTelemetry }) {
                 });
                 child.material = mat;
                 materials.push(mat);
+
+                // Store original positions for physical displacement
+                const posAttr = child.geometry.attributes.position;
+                if (posAttr) {
+                    positionsMap.set(child.geometry, (posAttr.array as Float32Array).slice());
+                }
             }
         });
-        return { brainModel: cloned, brainMaterials: materials };
+        return { 
+            brainModel: cloned, 
+            brainMaterials: materials, 
+            originalPositions: positionsMap 
+        };
     }, [scene]);
 
     // Reusable color objects to avoid allocations per frame
@@ -79,19 +90,52 @@ function BrainModel({ telemetry }: { telemetry: BrainTelemetry }) {
 
     useFrame((state) => {
         const t = state.clock.getElapsedTime();
-        if (meshRef.current) meshRef.current.rotation.y += 0.003;
+        if (meshRef.current) {
+            meshRef.current.rotation.y += 0.003;
+            // Physical growth pulse based on activity
+            const scaleBase = 4;
+            const pulse = 1 + Math.sin(t * 0.8) * 0.02 * activity;
+            meshRef.current.scale.setScalar(scaleBase * pulse);
+        }
 
-        // Animated rainbow cycle — each mesh gets a slight hue offset
-        const cycleSpeed = 0.08 + activity * 0.04; // faster rainbow with more nodes
+        // 1. PHYSICAL VERTEX DISPLACEMENT (Water/Growth Effect)
+        originalPositions.forEach((orig, geo) => {
+            const posAttr = geo.attributes.position;
+            const arr = posAttr.array as Float32Array;
+            const waveFreq = 2.5 + activity * 2;
+            const waveAmp = 0.02 + activity * 0.05;
+
+            for (let i = 0; i < arr.length; i += 3) {
+                const ox = orig[i];
+                const oy = orig[i + 1];
+                const oz = orig[i + 2];
+
+                // Multi-frequency sine ripples (physical displacement)
+                const dist = Math.sqrt(ox * ox + oy * oy + oz * oz);
+                const offset = Math.sin(dist * waveFreq - t * 2) * waveAmp + 
+                               Math.cos(ox * 2 + t) * (waveAmp * 0.5);
+                
+                // Displace along the normal (pseudo-normal using radial direction)
+                const nx = ox / dist;
+                const ny = oy / dist;
+                const nz = oz / dist;
+
+                arr[i]     = ox + nx * offset;
+                arr[i + 1] = oy + ny * offset;
+                arr[i + 2] = oz + nz * offset;
+            }
+            posAttr.needsUpdate = true;
+        });
+
+        // 2. MATERIAL VISUALS (Rainbow + Opacity)
+        const cycleSpeed = 0.08 + activity * 0.04;
         const pulseRate = 1.5 + activity * 2;
         const baseEmissive = 0.3 + resonance * 0.5;
 
         brainMaterials.forEach((mat, i) => {
-            // Rainbow hue: cycles through full spectrum, offset per mesh piece
             const hue = ((t * cycleSpeed) + i * 0.15) % 1;
             mat.color.setHSL(hue, 0.85, 0.55);
 
-            // Emissive follows same hue but darker
             _hsl.current.h = hue;
             _hsl.current.s = 0.9;
             _hsl.current.l = 0.25;
@@ -118,10 +162,9 @@ function BrainModel({ telemetry }: { telemetry: BrainTelemetry }) {
     }, []);
 
     return (
-        <group ref={meshRef}>
+        <group ref={meshRef} scale={[4, 4, 4]}>
             <primitive
                 object={brainModel}
-                scale={[4, 4, 4]}
                 onPointerOver={handlePointerOver}
                 onPointerOut={handlePointerOut}
             />
