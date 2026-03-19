@@ -1,6 +1,6 @@
 # ==============================================================================
-# MOSTAR GRID - INLINE SERVICE LAUNCHER (with visible output)
-# Starts services in background jobs with real-time status feedback
+# MOSTAR GRID - INLINE SERVICE LAUNCHER (IDE terminal visible output)
+# Starts services in foreground with direct output to IDE terminal
 # ==============================================================================
 
 $ErrorActionPreference = "Continue"
@@ -12,10 +12,10 @@ Write-Host "   MoStar-Grid: Inline System Boot       " -ForegroundColor Magenta
 Write-Host "==========================================" -ForegroundColor Magenta
 
 # --- Configuration ---
-$Neo4jStart   = Join-Path $ScriptPath "backend\neo4j-mostar-industries\start-neo4j.ps1"
-$PythonExe    = Join-Path $ScriptPath ".venv\Scripts\python.exe"
+$Neo4jStart = Join-Path $ScriptPath "backend\neo4j-mostar-industries\start-neo4j.ps1"
+$PythonExe = Join-Path $ScriptPath ".venv\Scripts\python.exe"
 $FrontendPath = Join-Path $ScriptPath "frontend"
-$LogsDir      = Join-Path $ScriptPath "logs"
+$LogsDir = Join-Path $ScriptPath "logs"
 $ExecutorScript = Join-Path $ScriptPath "backend\mo_executor.py"
 
 if (-not (Test-Path $LogsDir)) { New-Item -ItemType Directory -Path $LogsDir | Out-Null }
@@ -24,7 +24,7 @@ if (-not (Test-Path $LogsDir)) { New-Item -ItemType Directory -Path $LogsDir | O
 function Stop-PortProcess {
     param([int]$Port)
     $conn = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue |
-        Where-Object { $_.State -eq "Listen" }
+    Where-Object { $_.State -eq "Listen" }
     if ($conn) {
         $procIds = $conn.OwningProcess | Sort-Object -Unique
         foreach ($p in $procIds) {
@@ -44,7 +44,8 @@ function Test-PortListening {
     try {
         $result = Test-NetConnection -ComputerName localhost -Port $Port -WarningAction SilentlyContinue -InformationLevel Quiet
         return $result
-    } catch {
+    }
+    catch {
         return $false
     }
 }
@@ -60,7 +61,8 @@ Write-Host "   >> Ports cleared." -ForegroundColor Gray
 Write-Host "`n[1/5] Starting Neo4j Database (ports 7474/7687)..." -ForegroundColor Cyan
 if (Test-PortListening -Port 7687) {
     Write-Host "   ✅ Neo4j already running on port 7687" -ForegroundColor Green
-} elseif (Test-Path $Neo4jStart) {
+}
+elseif (Test-Path $Neo4jStart) {
     Write-Host "   >> Launching Neo4j..." -ForegroundColor Gray
     Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", $Neo4jStart `
         -WorkingDirectory (Join-Path $ScriptPath "backend\neo4j-mostar-industries")
@@ -79,7 +81,8 @@ if (Test-PortListening -Port 7687) {
     if ($waited -ge 30) { 
         Write-Host "   ⚠️  Neo4j may not be ready yet. Continuing anyway." -ForegroundColor Yellow
     }
-} else {
+}
+else {
     Write-Host "   ❌ Neo4j start script not found at $Neo4jStart" -ForegroundColor Red
 }
 
@@ -87,7 +90,8 @@ if (Test-PortListening -Port 7687) {
 Write-Host "`n[2/5] Starting Memory Layer API (port 8000)..." -ForegroundColor Cyan
 if (-not (Test-Path $PythonExe)) {
     Write-Host "   ❌ Python executable not found at $PythonExe" -ForegroundColor Red
-} else {
+}
+else {
     $logFile = Join-Path $LogsDir "memory_layer.log"
     $job = Start-Job -ScriptBlock {
         param($python, $scriptPath, $logFile)
@@ -102,7 +106,8 @@ if (-not (Test-Path $PythonExe)) {
     if (Test-PortListening -Port 8000) {
         Write-Host "   ✅ Memory Layer API responding on port 8000" -ForegroundColor Green
         Write-Host "      Docs: http://localhost:8000/docs" -ForegroundColor DarkGray
-    } else {
+    }
+    else {
         Write-Host "   ⚠️  Port 8000 not responding yet. Check logs: $logFile" -ForegroundColor Yellow
     }
 }
@@ -111,7 +116,8 @@ if (-not (Test-Path $PythonExe)) {
 Write-Host "`n[3/5] Starting Core Engine API (port 8001)..." -ForegroundColor Cyan
 if (-not (Test-Path $PythonExe)) {
     Write-Host "   ❌ Python executable not found at $PythonExe" -ForegroundColor Red
-} else {
+}
+else {
     $logFile = Join-Path $LogsDir "core_engine.log"
     $job = Start-Job -ScriptBlock {
         param($python, $scriptPath, $logFile)
@@ -126,7 +132,8 @@ if (-not (Test-Path $PythonExe)) {
     if (Test-PortListening -Port 8001) {
         Write-Host "   ✅ Core Engine API responding on port 8001" -ForegroundColor Green
         Write-Host "      Docs: http://localhost:8001/docs" -ForegroundColor DarkGray
-    } else {
+    }
+    else {
         Write-Host "   ⚠️  Port 8001 not responding yet. Check logs: $logFile" -ForegroundColor Yellow
     }
 }
@@ -135,7 +142,8 @@ if (-not (Test-Path $PythonExe)) {
 Write-Host "`n[4/5] Starting Mo Executor (graph mutation daemon)..." -ForegroundColor Cyan
 if (-not (Test-Path $ExecutorScript)) {
     Write-Host "   ❌ Mo Executor script not found at $ExecutorScript" -ForegroundColor Red
-} else {
+}
+else {
     $logFile = Join-Path $LogsDir "mo_executor.log"
     $job = Start-Job -ScriptBlock {
         param($python, $scriptPath, $executorScript, $logFile)
@@ -155,7 +163,8 @@ if (-not (Test-Path $ExecutorScript)) {
 Write-Host "`n[5/5] Starting Next.js Frontend (port 3000)..." -ForegroundColor Cyan
 if (-not (Test-Path $FrontendPath)) {
     Write-Host "   ❌ Frontend directory not found at $FrontendPath" -ForegroundColor Red
-} else {
+}
+else {
     $logFile = Join-Path $LogsDir "frontend.log"
     $job = Start-Job -ScriptBlock {
         param($frontendPath, $logFile)
@@ -169,7 +178,8 @@ if (-not (Test-Path $FrontendPath)) {
     if (Test-PortListening -Port 3000) {
         Write-Host "   ✅ Frontend responding on port 3000" -ForegroundColor Green
         Write-Host "      URL: http://localhost:3000" -ForegroundColor DarkGray
-    } else {
+    }
+    else {
         Write-Host "   ⚠️  Port 3000 not responding yet. Check logs: $logFile" -ForegroundColor Yellow
     }
 }
