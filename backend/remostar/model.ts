@@ -41,15 +41,9 @@ export const REMOSTAR_CORE: MoScript = {
         avg_weight:
           processed.length > 0
             ? (
-<<<<<<< HEAD
-              processed.reduce((a: number, b: { weight: string; }) => a + parseFloat(b.weight), 0) /
-              processed.length
-            ).toFixed(3)
-=======
-                processed.reduce((a: number, b: { weight: string }) => a + parseFloat(b.weight), 0) /
+        processed.reduce((a: number, b: { weight: string }) => a + parseFloat(b.weight), 0) /
                 processed.length
               ).toFixed(3)
->>>>>>> cfb3fc4e0dd0b8cbddb51f7c6fd9c0230cce6d88
             : 0,
       },
     };

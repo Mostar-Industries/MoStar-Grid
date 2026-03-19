@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { GRID_API_BASE, OLLAMA_HOST } from "@/lib/apiConfig";
+import { extractApiResponse } from "@/lib/apiUtils";
 
-const BACKEND = process.env.GRID_API_BASE ?? "http://localhost:7001";
+const BACKEND = GRID_API_BASE;
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,7 +36,7 @@ export async function POST(req: NextRequest) {
         if (res.ok) {
           const data = await res.json();
           return NextResponse.json({
-            response: data.response ?? data.result ?? data.reply ?? data.answer ?? JSON.stringify(data),
+            response: extractApiResponse(data, JSON.stringify(data)),
             model_used: data.model_used ?? model ?? "mostar-ai",
             complexity_score: data.complexity_score ?? data.resonance ?? 0.85,
             endpoint_used: endpoint.url,
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
 
     // Fallback — Ollama direct
     try {
-      const ollamaRes = await fetch("http://localhost:11434/api/generate", {
+      const ollamaRes = await fetch(`${OLLAMA_HOST}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

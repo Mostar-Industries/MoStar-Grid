@@ -4,7 +4,7 @@
 
 import { execSync, spawnSync } from "child_process";
 import crypto from "crypto";
-import { MoScriptEngine, MoScriptResult } from "../remostar/model";
+import { MoScriptEngine, MoScriptResult } from "../lib/moScript";
 
 const DEFAULT_OLLAMA_MODEL = "akiniobong10/Mostar-REMOSTAR_DCX001:Q4_K_M";
 const OLLAMA_MODEL =

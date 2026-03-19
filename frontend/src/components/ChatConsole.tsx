@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./ChatConsole.module.css";
 import GridNav from "./GridNav";
+import { extractApiResponse } from "@/lib/apiUtils";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -60,7 +61,7 @@ export default function ChatConsole() {
         ...prev,
         {
           role: "assistant",
-          content: data.response ?? data.result ?? data.reply ?? ".",
+          content: extractApiResponse(data),
           meta: `${data.model_used ?? "mostar-ai"} · score ${score}`,
         },
       ]);

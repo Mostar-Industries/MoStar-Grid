@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-
-const CONSCIOUSNESS_API_BASE =
-  process.env.CONSCIOUSNESS_API_BASE ?? "http://localhost:8001";
+import { CONSCIOUSNESS_API_BASE } from "@/lib/apiConfig";
 
 type PreferredLayer = "auto" | "dcx0" | "dcx1" | "dcx2";
 
