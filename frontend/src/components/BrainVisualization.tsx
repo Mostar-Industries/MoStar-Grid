@@ -50,7 +50,7 @@ function BrainMesh({ momentsData }: BrainMeshProps) {
   return (
     <group ref={meshRef}>
       {/* GLTF Brain Model from holo.glb */}
-      <primitive object={brainModel} scale={[9, 10, 10,]} />
+      <primitive object={brainModel} scale={[5, 5, 5,]} />
 
       {/* Neural Activity Points */}
       {momentsData.map((moment, index) => (
@@ -235,10 +235,10 @@ export default function BrainVisualization() {
   }
 
   return (
-    <div className={styles.brainContainer}>
+    <>
       <Canvas
         camera={{ position: [0, 0, 6], fov: 60 }}
-        style={{ width: '100%', height: '100%', background: 'transparent' }}
+        style={{ width: '100vw', height: '100vh', background: 'transparent' }}
       >
         <ambientLight intensity={0.4} />
         <pointLight position={[5, 5, 5]} intensity={0.8} color={0x00ffff} />
@@ -307,6 +307,6 @@ export default function BrainVisualization() {
           />
         ))}
       </div>
-    </div>
+    </>
   );
 }
