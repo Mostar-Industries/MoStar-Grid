@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import { NextResponse } from "next/server";
 import { driver } from "../../../lib/neo4j";
 
 export async function GET() {
@@ -82,16 +82,21 @@ export async function GET() {
       },
     });
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Neo4j query error:', errorMsg);
+    console.error('Neo4j URI:', process.env.NEO4J_URI);
+    console.error('Neo4j User:', process.env.NEO4J_USER);
     return NextResponse.json(
       {
         moments: [],
         count: 0,
         provenance: {
-          source: "error",
+          source: "neo4j",
           timestamp,
           ingestion_run_id,
-          error: error instanceof Error ? error.message : "Unknown database error",
+          error: errorMsg,
           error_type: error instanceof Error ? (error as Error).name : "Unknown",
+          uri: process.env.NEO4J_URI,
         },
       },
       { status: 503 }
