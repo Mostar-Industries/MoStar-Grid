@@ -3,12 +3,9 @@
 
 /* Main brain container */
 .brainContainer {
-  min-height: 100vh;
   width: 100%;
-  position: relative;
-  padding: clamp(1rem, 2vw, 2rem);
-  color: var(--text-primary, #fff);
-  background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%);
+  height: 100%;
+  position: flex overflow: hidden;
 }
 
 /* Data overlay panel */
@@ -174,7 +171,7 @@
 
 .activityItem {
   font-size: 11px;
-  color: #aabbcc;
+  color: #eff309a4;
   margin-bottom: 4px;
   opacity: 0.8;
   white-space: nowrap;
@@ -185,7 +182,7 @@
 /* Loading state */
 .loadingContainer {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   background: #000000;
   display: flex;
   align-items: center;

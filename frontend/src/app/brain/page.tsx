@@ -1,12 +1,20 @@
 import BrainVisualization from '@/components/BrainVisualization';
-import styles from '@/components/BrainVisualization.module.css';
 import GridNav from '@/components/GridNav';
 
 export default function BrainPage() {
   return (
-    <div className={styles.brainContainer}>
+    <div style={{
+      width: '100vw',
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      background: 'linear-gradient(180deg, #001133 0%, #000011 50%, #000000 100%)'
+    }}>
       <GridNav />
-      <BrainVisualization />
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+        <BrainVisualization />
+      </div>
     </div>
   );
 }

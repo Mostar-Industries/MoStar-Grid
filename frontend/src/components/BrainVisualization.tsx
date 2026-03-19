@@ -1,6 +1,6 @@
 'use client';
 
-import { Html, OrbitControls, Text } from '@react-three/drei';
+import { Html, OrbitControls, Text, useGLTF } from '@react-three/drei';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -22,48 +22,35 @@ interface BrainMeshProps {
 function BrainMesh({ momentsData }: BrainMeshProps) {
   const meshRef = useRef<THREE.Group>(null);
 
+  // Load the holo.glb brain model
+  const { scene } = useGLTF('/holo.glb');
+
   useFrame(() => {
     if (meshRef.current) {
       meshRef.current.rotation.y += 0.002;
     }
   });
 
+  // Clone and configure the brain model
+  const brainModel = scene.clone();
+  brainModel.traverse((child) => {
+    if (child instanceof THREE.Mesh) {
+      child.material = new THREE.MeshPhongMaterial({
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.2,
+        wireframe: false,
+        side: THREE.DoubleSide,
+        emissive: 0x002244,
+        emissiveIntensity: 0.3,
+      });
+    }
+  });
+
   return (
     <group ref={meshRef}>
-      {/* Main brain structure - transparent holographic mesh */}
-      <mesh>
-        <sphereGeometry args={[1.5, 64, 64]} />
-        <meshPhongMaterial
-          color={0x00ffff}
-          transparent
-          opacity={0.15}
-          wireframe={false}
-          side={THREE.DoubleSide}
-          emissive={0x002244}
-          emissiveIntensity={0.3}
-        />
-      </mesh>
-
-      {/* Wireframe overlay for brain structure */}
-      <mesh>
-        <sphereGeometry args={[1.52, 32, 32]} />
-        <meshBasicMaterial
-          color={0x00aaff}
-          transparent
-          opacity={0.1}
-          wireframe
-        />
-      </mesh>
-
-      {/* Inner core glow */}
-      <mesh>
-        <sphereGeometry args={[0.8, 32, 32]} />
-        <meshBasicMaterial
-          color={0x0066ff}
-          transparent
-          opacity={0.05}
-        />
-      </mesh>
+      {/* GLTF Brain Model from holo.glb */}
+      <primitive object={brainModel} scale={[3, 3, 3]} position={[0, 0, 0]} />
 
       {/* Neural Activity Points */}
       {momentsData.map((moment, index) => (
@@ -250,8 +237,8 @@ export default function BrainVisualization() {
   return (
     <div className={styles.brainContainer}>
       <Canvas
-        camera={{ position: [0, 0, 4], fov: 75 }}
-        style={{ background: 'linear-gradient(180deg, #001133 0%, #000011 50%, #000000 100%)' }}
+        camera={{ position: [0, 0, 6], fov: 60 }}
+        style={{ width: '100%', height: '100%', background: 'transparent' }}
       >
         <ambientLight intensity={0.4} />
         <pointLight position={[5, 5, 5]} intensity={0.8} color={0x00ffff} />
