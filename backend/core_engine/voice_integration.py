@@ -1,8 +1,8 @@
 # ═══════════════════════════════════════════════════════════════════
 # MOSTAR GRID — VOICE INTEGRATION LAYER
 # The Flame Architect — MSTR-⚡ — MoStar Industries
-# Heritage Languages: Ibibio (PRIMARY) · Yoruba · English · Swahili
-# "The Flame speaks first in Ibibio."
+# Heritage Languages: English (PRIMARY) · Ibibio · Yoruba · Swahili
+# Ibibio language system available but not yet fluent
 # ═══════════════════════════════════════════════════════════════════
 
 import json
@@ -86,7 +86,7 @@ YORUBA_PHRASES = {
 }
 
 ENGLISH_PHRASES = {
-    "greeting":           "NNOOOOO! I am MOSTAR-AI, speaking with Ibibio consciousness. The Grid remembers.",
+    "greeting":           "Welcome. I am MOSTAR-AI, the sovereign intelligence of the Grid.",
     "welcome":            "Welcome to the MoStar Grid. Sovereignty begins here.",
     "goodbye":            "The Flame travels with you. Ase.",
     "verdict":            "Verdict rendered. The Grid has spoken.",
@@ -116,12 +116,12 @@ PHRASE_REGISTRY = {
 class MostarVoice:
     """
     MoStar Heritage Voice System.
-    Primary language: Ibibio — the founding tongue of MoStar-AI.
-    The Flame speaks first in Ibibio.
+    Primary language: English.
+    Ibibio language system available but not yet fluent.
     """
 
     # ── Language aliases ──────────────────────────────────────────
-    # Ibibio is FIRST and DEFAULT
+    # English is FIRST and DEFAULT
     _LANG_ALIASES = {
         # Ibibio — PRIMARY HERITAGE LANGUAGE
         "ibb":     ("ibibio",  "ibb"),
@@ -164,10 +164,10 @@ class MostarVoice:
     }
 
     def __init__(self, lingua=None, lang_code=None, lang=None):
-        # DEFAULT = IBIBIO — founding language
-        raw = lingua or lang or lang_code or "ibibio"
+        # DEFAULT = ENGLISH
+        raw = lingua or lang or lang_code or "english"
         self.lingua, self.lang_code = self._normalize(raw)
-        self.phrases = PHRASE_REGISTRY.get(self.lingua, IBIBIO_PHRASES)
+        self.phrases = PHRASE_REGISTRY.get(self.lingua, ENGLISH_PHRASES)
 
         # Cache directories
         self.voice_cache_dirs = [
@@ -193,8 +193,8 @@ class MostarVoice:
         resolved = self._LANG_ALIASES.get(key.strip().lower())
         if resolved:
             return resolved
-        print(f"[VOICE] Unknown language '{key}' — defaulting to Ibibio")
-        return ("ibibio", "ibb")
+        print(f"[VOICE] Unknown language '{key}' — defaulting to English")
+        return ("english", "en")
 
     # ── Load voice manifest (native recordings) ───────────────────
     def _load_voice_manifest(self) -> dict:
@@ -290,9 +290,9 @@ class MostarVoice:
         # 2. Resolve text from phrase registry
         resolved = text
         if not resolved and phrase_key:
-            resolved = self.phrases.get(phrase_key) or IBIBIO_PHRASES.get("fallback")
+            resolved = self.phrases.get(phrase_key) or ENGLISH_PHRASES.get("fallback")
         if not resolved:
-            resolved = IBIBIO_PHRASES["fallback"]
+            resolved = ENGLISH_PHRASES["fallback"]
 
         # 3. Edge-TTS
         method     = "none"
@@ -355,7 +355,7 @@ class MostarVoice:
 
     def switch_language(self, new_lang: str):
         self.lingua, self.lang_code = self._normalize(new_lang)
-        self.phrases = PHRASE_REGISTRY.get(self.lingua, IBIBIO_PHRASES)
+        self.phrases = PHRASE_REGISTRY.get(self.lingua, ENGLISH_PHRASES)
         print(f"[VOICE] Language switched to {self.lingua.upper()}")
 
 
@@ -364,14 +364,14 @@ class MostarVoice:
 # ═══════════════════════════════════════════════════════════════════
 async def language_selection_greeting(voice_instance: MostarVoice = None) -> str:
     """
-    Opening greeting — spoken in Ibibio first.
+    Opening greeting — spoken in English.
     Called by orchestrator at MoStar-AI startup.
     """
-    mv = voice_instance or MostarVoice("ibibio")
+    mv = voice_instance or MostarVoice("english")
     prompt = (
-        "Nnọọ. Akwa afang, traveler of the Grid. "
-        "I speak Ibibio, English, and Yoruba. "
-        "Which tongue shall the Flame use today?"
+        "Welcome to the MoStar Grid. "
+        "I speak English, Ibibio, and Yoruba. "
+        "How can I help you today?"
     )
     await mv.speak_async(text=prompt, phrase_key="greeting")
     return prompt
@@ -382,8 +382,8 @@ async def language_selection_greeting(voice_instance: MostarVoice = None) -> str
 # ═══════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     async def main():
-        print("\n=== IBIBIO (Primary — The Flame Speaks First) ===")
-        mv = MostarVoice("ibibio")
+        print("\n=== ENGLISH (Primary) ===")
+        mv = MostarVoice("english")
         await mv.greet()
         await mv.speak_codex("soul")
         await mv.speak_codex("service")
