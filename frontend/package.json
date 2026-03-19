@@ -6,9 +6,9 @@
   "author": "The Flame Architect — MoStar Industries",
   "license": "African-Sovereignty-License-1.0",
   "scripts": {
-    "dev": "cd frontend && npm run dev",
-    "build": "cd frontend && npm run build",
-    "start": "cd frontend && npm run start",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "backend": "cd backend && python main.py",
     "backend:win": "cd backend && ../.venv/Scripts/python.exe main.py",
     "ollama:start": "ollama serve",
@@ -26,10 +26,14 @@
   ],
   "devDependencies": {
     "@types/node": "^25.0.9",
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "typescript": "5.9.3"
   },
   "dependencies": {
+    "mapbox-gl": "^3.20.0",
+    "neo4j-driver": "^6.0.1",
     "next": "16.1.6",
-    "react-map-gl": "^8.1.0"
+    "react-map-gl": "^8.1.0",
+    "reagraph": "^4.30.8"
   }
 }
