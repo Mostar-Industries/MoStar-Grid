@@ -14,6 +14,7 @@ export const driver = neo4j.driver(
   {
     maxConnectionLifetime: 3 * 60 * 60 * 1000,
     maxConnectionPoolSize: 50,
-    connectionAcquisitionTimeout: 20000,
+    connectionAcquisitionTimeout: 4000,
+    connectionTimeout: 4000,
   }
 );

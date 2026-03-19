@@ -1,9 +1,11 @@
-import BrainVisualization from "@/components/BrainVisualization";
+import FloatingOracle from "@/components/FloatingOracle";
+import Sanctum from "@/components/Sanctum";
 
 export default function Home() {
   return (
-    <main className="w-full h-screen">
-      <BrainVisualization />
+    <main>
+      <Sanctum />
+      <FloatingOracle />
     </main>
   );
 }

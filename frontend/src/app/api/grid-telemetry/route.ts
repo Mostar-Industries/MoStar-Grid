@@ -1,5 +1,5 @@
-﻿import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+﻿import { randomUUID } from "crypto";
+import { NextResponse } from "next/server";
 import { driver } from "../../../lib/neo4j";
 
 function neoToNumber(v: unknown): number {
@@ -11,7 +11,7 @@ function neoToNumber(v: unknown): number {
 
 async function fetchBackendStatus(base: string) {
   try {
-    const r = await fetch(`${base}/api/v1/status`, { cache: "no-store", signal: AbortSignal.timeout(20000) });
+    const r = await fetch(`${base}/api/v1/status`, { cache: "no-store", signal: AbortSignal.timeout(4000) });
     if (!r.ok) return null;
     return await r.json();
   } catch {
@@ -21,7 +21,7 @@ async function fetchBackendStatus(base: string) {
 
 async function fetchBackendTelemetry(base: string) {
   try {
-    const r = await fetch(`${base}/api/v1/telemetry`, { cache: "no-store", signal: AbortSignal.timeout(20000) });
+    const r = await fetch(`${base}/api/v1/telemetry`, { cache: "no-store", signal: AbortSignal.timeout(4000) });
     if (!r.ok) return null;
     return await r.json();
   } catch {
@@ -91,9 +91,13 @@ export async function GET() {
     );
   }
 
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("Neo4j timeout")), 4000)
+  );
+
   const session = driver.session();
   try {
-    const momentsCountRes = await session.run("MATCH (m:MoStarMoment) RETURN count(m) AS c");
+    const momentsCountRes = await Promise.race([session.run("MATCH (m:MoStarMoment) RETURN count(m) AS c"), timeout]);
     const momentsRes = await session.run("MATCH (m:MoStarMoment) RETURN m ORDER BY m.timestamp DESC LIMIT 15");
     const agentsRes = await session.run("MATCH (a:Agent) RETURN a LIMIT 1000");
     const countsRes = await session.run(
@@ -183,13 +187,22 @@ export async function GET() {
         ingestion_run_id,
       },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
-        error: String(error),
+        backend: { ok: false, data: { system: "MoStar Grid API", neo4j: "offline" } },
+        graph: {
+          ok: false,
+          stats: { totalMoments: 0, avgResonance: 0, distinctInitiators: 0, totalAgents: 0, totalNodes: 0, totalRelationships: 0, moments24h: 0, totalArtifacts: 0, graphDensity: 0 },
+          latest: [],
+          agents: [],
+          layer_nodes: {},
+          relationship_types: {},
+        },
+        log: { entries: [], path: "neo4j://offline" },
         generatedAt: timestamp,
       },
-      { status: 500 }
+      { status: 503 }
     );
   } finally {
     await session.close();

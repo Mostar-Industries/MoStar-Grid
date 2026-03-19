@@ -1,17 +1,17 @@
 ﻿"use client";
 
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import { OrbitControls, useGLTF } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
 import dynamic from "next/dynamic";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import styles from "./ConstellationEngine.module.css";
 
-// Dynamically import ForceGraph3D to avoid SSR issues
 const ForceGraph3D = dynamic(
     () => import("react-force-graph-3d").then((mod) => mod.default),
     { ssr: false }
 );
 
-// Type for the ref - use any since ForceGraphMethods is complex
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ForceGraphRef = any;
 
@@ -20,7 +20,6 @@ interface GraphNode {
     name: string;
     labels: string[];
     resonance: number;
-    timestamp?: string;
     x?: number;
     y?: number;
     z?: number;
@@ -32,15 +31,61 @@ interface GraphLink {
     rel: string;
 }
 
+function BrainModel() {
+    const meshRef = useRef<THREE.Group>(null);
+    const { scene } = useGLTF("/holo.glb");
+
+    const { brainModel, brainMaterials } = useMemo(() => {
+        const cloned = scene.clone();
+        const materials: THREE.MeshPhongMaterial[] = [];
+        cloned.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+                const mat = new THREE.MeshPhongMaterial({
+                    color: 0x76f2ff,
+                    transparent: true,
+                    opacity: 0.22,
+                    wireframe: true,
+                    side: THREE.DoubleSide,
+                    emissive: 0x0a3a4f,
+                    emissiveIntensity: 0.8,
+                    shininess: 100,
+                });
+                child.material = mat;
+                materials.push(mat);
+            }
+        });
+        return { brainModel: cloned, brainMaterials: materials };
+    }, [scene]);
+
+    useFrame((state) => {
+        const t = state.clock.getElapsedTime();
+        if (meshRef.current) meshRef.current.rotation.y += 0.004;
+        brainMaterials.forEach((mat, i) => {
+            mat.emissiveIntensity = 0.65 + Math.sin(t * 2.2 + i * 0.12) * 0.35;
+            mat.opacity = 0.16 + Math.sin(t * 1.6 + i * 0.07) * 0.05;
+        });
+    });
+
+    useEffect(() => {
+        return () => { brainMaterials.forEach((m) => m.dispose()); };
+    }, [brainMaterials]);
+
+    return (
+        <group ref={meshRef}>
+            <primitive object={brainModel} scale={[4, 4, 4]} />
+        </group>
+    );
+}
+
 export default function ConstellationEngine() {
     const fgRef = useRef<ForceGraphRef>(null);
     const [graphData, setGraphData] = useState<{ nodes: GraphNode[]; links: GraphLink[] }>({ nodes: [], links: [] });
     const [loading, setLoading] = useState(true);
     const [isClient, setIsClient] = useState(false);
+    const [showGraph, setShowGraph] = useState(false);
 
     const GRID_API = process.env.NEXT_PUBLIC_GRID_API_BASE || "http://localhost:8001";
 
-    // Ensure client-side only rendering - deferred to avoid cascading renders
     useEffect(() => {
         const timer = setTimeout(() => setIsClient(true), 0);
         return () => clearTimeout(timer);
@@ -48,7 +93,7 @@ export default function ConstellationEngine() {
 
     const fetchGraph = async () => {
         try {
-            const res = await fetch(`${GRID_API}/api/v1/graph/constellation?limit=1500`, { cache: 'no-store' });
+            const res = await fetch(`${GRID_API}/api/v1/graph/constellation?limit=1500`, { cache: "no-store" });
             if (res.ok) {
                 const data = await res.json();
                 setGraphData(data);
@@ -56,6 +101,7 @@ export default function ConstellationEngine() {
             }
         } catch (err) {
             console.error("Constellation Fetch Error:", err);
+            setLoading(false);
         }
     };
 
@@ -68,12 +114,12 @@ export default function ConstellationEngine() {
     }, [isClient]);
 
     const getNodeColor = (labels: string[]) => {
-        if (labels.includes("Agent")) return "#00F5FF";       // Electric Cyan
-        if (labels.includes("KnowledgeArtifact")) return "#FFD700"; // Solar Gold
-        if (labels.includes("MoStarMoment")) return "#FFB347";      // Amber
-        if (labels.includes("Archetype")) return "#FF006E";         // Crimson
-        if (labels.includes("OduIfa")) return "#9D4EDD";            // Oracle Violet
-        if (labels.includes("CovenantKernel")) return "#fbbf24";    // Gold
+        if (labels.includes("Agent")) return "#00F5FF";
+        if (labels.includes("KnowledgeArtifact")) return "#FFD700";
+        if (labels.includes("MoStarMoment")) return "#FFB347";
+        if (labels.includes("Archetype")) return "#FF006E";
+        if (labels.includes("OduIfa")) return "#9D4EDD";
+        if (labels.includes("CovenantKernel")) return "#fbbf24";
         return "#ffffff";
     };
 
@@ -88,44 +134,32 @@ export default function ConstellationEngine() {
         }
     };
 
-    // Create node 3D object - only on client
-    const nodeThreeObject = useMemo(() => {
-        if (!isClient) return undefined;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (node: any) => {
-            const color = getNodeColor(node.labels);
-            const size = 3 + (node.resonance * 4);
-            const group = new THREE.Group();
-            const geometry = new THREE.SphereGeometry(size, 16, 16);
-            const material = new THREE.MeshBasicMaterial({ color });
-            const sphere = new THREE.Mesh(geometry, material);
-            group.add(sphere);
-            if (node.resonance > 0.7) {
-                const glowGeometry = new THREE.SphereGeometry(size * 1.5, 16, 16);
-                const glowMaterial = new THREE.MeshBasicMaterial({
-                    color,
-                    transparent: true,
-                    opacity: 0.15
-                });
-                const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-                group.add(glow);
-            }
-            return group;
-        };
-    }, [isClient]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nodeThreeObject = (node: any) => {
+        const color = getNodeColor(node.labels || []);
+        const geo = new THREE.SphereGeometry(4, 12, 12);
+        const mat = new THREE.MeshBasicMaterial({ color });
+        return new THREE.Mesh(geo, mat);
+    };
 
     return (
         <div className={styles.container}>
             <header className={styles.overlay}>
                 <div className={styles.hudLeft}>
                     <p className={styles.eyebrow}>NEO4J COGNITIVE SUBSTRATE</p>
-                    <h2 className={styles.title}>Knowledge Constellation</h2>
+                    <h2 className={styles.title}>Hyper-Spine</h2>
                 </div>
                 <div className={styles.hudRight}>
                     <div className={styles.status}>
                         <div className={styles.dot} />
                         <span>Resonance Tracking Active</span>
                     </div>
+                    <button
+                        onClick={() => setShowGraph((v) => !v)}
+                        style={{ marginLeft: "1rem", padding: "0.3rem 0.8rem", background: "rgba(0,200,255,0.15)", border: "1px solid #00c8ff", color: "#00c8ff", borderRadius: "4px", cursor: "pointer", fontSize: "0.72rem", letterSpacing: "0.1em" }}
+                    >
+                        {showGraph ? "BRAIN" : "GRAPH"}
+                    </button>
                 </div>
             </header>
 
@@ -136,7 +170,7 @@ export default function ConstellationEngine() {
                 </div>
             )}
 
-            {isClient && (
+            {isClient && showGraph ? (
                 <ForceGraph3D
                     ref={fgRef}
                     graphData={graphData}
@@ -144,10 +178,10 @@ export default function ConstellationEngine() {
                     showNavInfo={false}
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     nodeLabel={(node: any) => `
-                        <div style="background: rgba(0,0,0,0.8); padding: 8px; border: 1px solid #06b6d4; border-radius: 4px; color: white;">
-                            <b style="color: #fbbf24">${node.labels[0]}</b><br/>
+                        <div style="background:rgba(0,0,0,0.8);padding:8px;border:1px solid #06b6d4;border-radius:4px;color:white;">
+                            <b style="color:#fbbf24">${node.labels?.[0] ?? "Node"}</b><br/>
                             ${node.name}<br/>
-                            <small>Resonance: ${node.resonance.toFixed(3)}</small>
+                            <small>Resonance: ${(node.resonance ?? 0).toFixed(3)}</small>
                         </div>
                     `}
                     nodeThreeObject={nodeThreeObject}
@@ -173,6 +207,18 @@ export default function ConstellationEngine() {
                         }
                     }}
                 />
+            ) : (
+                <Canvas
+                    camera={{ position: [0, 0, 6], fov: 50 }}
+                    style={{ width: "100%", height: "100%" }}
+                >
+                    <ambientLight intensity={0.3} />
+                    <pointLight position={[10, 10, 10]} intensity={0.8} color={0x4df5ff} />
+                    <React.Suspense fallback={null}>
+                        <BrainModel />
+                    </React.Suspense>
+                    <OrbitControls enableZoom={true} enablePan={false} autoRotate={false} />
+                </Canvas>
             )}
 
             <footer className={styles.footerOverlay}>
@@ -189,4 +235,3 @@ export default function ConstellationEngine() {
         </div>
     );
 }
-

@@ -2,7 +2,7 @@
 
 import { Html, OrbitControls, Text, useGLTF } from '@react-three/drei';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import styles from './BrainVisualization.module.css';
 
@@ -15,67 +15,101 @@ interface MomentData {
   category: string;
 }
 
-interface BrainMeshProps {
-  momentsData: MomentData[];
-}
-
-function BrainMesh({ momentsData }: BrainMeshProps) {
+function BrainMesh() {
   const meshRef = useRef<THREE.Group>(null);
 
   // Load the holo.glb brain model
   const { scene } = useGLTF('/holo.glb');
 
-  useFrame(() => {
+  const { brainModel, brainMaterials } = useMemo(() => {
+    const cloned = scene.clone();
+    const materials: THREE.MeshPhongMaterial[] = [];
+
+    cloned.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        const material = new THREE.MeshPhongMaterial({
+          color: 0x76f2ff,
+          transparent: true,
+          opacity: 0.22,
+          wireframe: true,
+          side: THREE.DoubleSide,
+          emissive: 0x0a3a4f,
+          emissiveIntensity: 0.8,
+          shininess: 100,
+        });
+
+        child.material = material;
+        materials.push(material);
+      }
+    });
+
+    return { brainModel: cloned, brainMaterials: materials };
+  }, [scene]);
+
+  const circuitPaths = useMemo(() => {
+    return Array.from({ length: 14 }, (_, pathIndex) => {
+      const points = Array.from({ length: 28 }, (_, pointIndex) => {
+        const t = pointIndex / 27;
+        const theta = t * Math.PI * 2.2 + pathIndex * 0.42;
+        const phi = Math.PI * (0.33 + 0.34 * Math.sin(pathIndex * 0.7 + t * Math.PI * 1.8));
+        const radius = 1.42 + 0.18 * Math.sin(pathIndex + t * 9);
+
+        return new THREE.Vector3(
+          radius * Math.sin(phi) * Math.cos(theta),
+          radius * Math.cos(phi) * 1.08,
+          radius * Math.sin(phi) * Math.sin(theta),
+        );
+      });
+
+      const positions = new Float32Array(points.length * 3);
+      points.forEach((point, i) => {
+        positions[i * 3] = point.x;
+        positions[i * 3 + 1] = point.y;
+        positions[i * 3 + 2] = point.z;
+      });
+
+      return { points, positions };
+    });
+  }, []);
+
+  useFrame((state) => {
+    const t = state.clock.getElapsedTime();
+
     if (meshRef.current) {
-      meshRef.current.rotation.y += 0.002;
+      meshRef.current.rotation.y += 0.004;
     }
+
+    brainMaterials.forEach((material, index) => {
+      material.emissiveIntensity = 0.65 + Math.sin(t * 2.2 + index * 0.12) * 0.35;
+      material.opacity = 0.16 + Math.sin(t * 1.6 + index * 0.07) * 0.05;
+    });
   });
 
-  // Clone and configure the brain model
-  const brainModel = scene.clone();
-  brainModel.traverse((child) => {
-    if (child instanceof THREE.Mesh) {
-      child.material = new THREE.MeshPhongMaterial({
-        color: 0x00ffff,
-        transparent: true,
-        opacity: 0.2,
-        wireframe: false,
-        side: THREE.DoubleSide,
-        emissive: 0x002244,
-        emissiveIntensity: 0.3,
-      });
-    }
-  });
+  useEffect(() => {
+    return () => {
+      brainMaterials.forEach((material) => material.dispose());
+    };
+  }, [brainMaterials]);
+
+  const getCircuitColor = (index: number) => {
+    const palette = [0x4df5ff, 0x8dfff1, 0x5ca9ff, 0xa8ffcf];
+    return palette[index % palette.length];
+  };
 
   return (
     <group ref={meshRef}>
       {/* GLTF Brain Model from holo.glb */}
-      <primitive object={brainModel} scale={[5, 5, 5,]} />
+      <primitive object={brainModel} scale={[4, 4, 4]} />
 
-      {/* Neural Activity Points */}
-      {momentsData.map((moment, index) => (
-        <group key={moment.id} position={moment.position}>
-          {/* Pulsing sphere for each moment */}
-          <mesh>
-            <sphereGeometry args={[0.05 + moment.intensity * 0.1, 16, 16]} />
-            <meshBasicMaterial
-              color={moment.category === 'consciousness' ? 0xff0080 :
-                moment.category === 'memory' ? 0x00ff80 :
-                  moment.category === 'emotion' ? 0xff8000 : 0x0080ff}
-              transparent
-              opacity={0.7 + Math.sin(Date.now() * 0.01 + index) * 0.3}
-            />
-          </mesh>
-
-          {/* Data visualization trails */}
-          <mesh position={[0, 0, 0]}>
-            <cylinderGeometry args={[0.002, 0.002, moment.intensity, 8]} />
-            <meshBasicMaterial
-              color={0x00ffff}
-              transparent
-              opacity={0.5}
-            />
-          </mesh>
+      {/* Circuit pathways across brain wireframe */}
+      {circuitPaths.map((path, index) => (
+        <group key={`circuit-${index}`}>
+          <line>
+            <bufferGeometry>
+              <bufferAttribute attach="attributes-position" args={[path.positions, 3]} />
+            </bufferGeometry>
+            <lineBasicMaterial color={getCircuitColor(index)} transparent opacity={0.24} />
+          </line>
         </group>
       ))}
     </group>
@@ -246,7 +280,7 @@ export default function BrainVisualization() {
         <pointLight position={[0, 8, 0]} intensity={0.3} color={0x00ff88} />
 
         <Suspense fallback={<Html center>Loading Brain Model...</Html>}>
-          <BrainMesh momentsData={momentsData} />
+          <BrainMesh />
         </Suspense>
 
         <OrbitControls

@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import { Space_Grotesk, JetBrains_Mono, Orbitron, IBM_Plex_Mono } from "next/font/google";
-import "./globals.css";
 import "mapbox-gl/dist/mapbox-gl.css";
+import type { Metadata } from "next";
+import { IBM_Plex_Mono, JetBrains_Mono, Orbitron, Space_Grotesk } from "next/font/google";
+import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
