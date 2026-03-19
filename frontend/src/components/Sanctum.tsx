@@ -356,20 +356,20 @@ export default function Sanctum() {
         </article>
       </section>
 
-      <section className={styles.coreGlyphDeck}>
-        {Object.entries(telemetry?.graph?.layer_nodes || {}).map(([key, count]: [string, any]) => (
-          <article key={key} className={`${styles.coreGlyph} ${styles.ok}`}>
-            <div className={styles.glyphIcon} data-color="cyan">◒</div>
-            <div>
-              <p className={styles.glyphLabel}>{key.replace("_", " ")}</p>
-              <p className={styles.glyphMeta}>Active Nodes: {count}</p>
-            </div>
-          </article>
-        ))}
-      </section>
-
       <section className={styles.lowerGrid}>
         <article className={styles.scrollDeck}>
+          {/* Layer glyphs inline */}
+          <div className={styles.coreGlyphDeck}>
+            {Object.entries(telemetry?.graph?.layer_nodes || {}).map(([key, count]: [string, any]) => (
+              <div key={key} className={`${styles.coreGlyph} ${styles.ok}`}>
+                <div className={styles.glyphIcon} data-color="cyan">◒</div>
+                <div>
+                  <p className={styles.glyphLabel}>{key.replace("_", " ")}</p>
+                  <p className={styles.glyphMeta}>Nodes: {count}</p>
+                </div>
+              </div>
+            ))}
+          </div>
           <header>
             <p className={styles.eyebrow}>SoulProblems</p>
             <h2>Active dilemmas</h2>
@@ -411,7 +411,7 @@ export default function Sanctum() {
                 <small>{entry.source} · {formatWhisperTime(entry.timestamp)}</small>
               </div>
             )) : (
-              <p className={styles.emptyActivity}>No event whispers recorded in the current session cycle.</p>
+              <p className={styles.emptyActivity}>No event whispers recorded.</p>
             )}
           </div>
         </article>
