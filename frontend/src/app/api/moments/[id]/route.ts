@@ -1,14 +1,15 @@
-import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
+import { NextResponse } from 'next/server';
 import { driver } from '../../../../lib/neo4j';
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const ingestion_run_id = randomUUID();
   const timestamp = new Date().toISOString();
-  const momentId = params.id;
+  const { id } = await params;
+  const momentId = id;
 
   if (!process.env.NEO4J_URI || !process.env.NEO4J_USER || !process.env.NEO4J_PASSWORD) {
     return NextResponse.json(
@@ -48,8 +49,8 @@ export async function GET(
       properties: Record<string, unknown>;
       identity: { toString(): string };
     };
-    const nexts = (record.get('nextMoments') as unknown as Array<{ properties: Record<string, unknown> }> ) || [];
-    const agents = (record.get('agents') as unknown as Array<{ properties: Record<string, unknown> }> ) || [];
+    const nexts = (record.get('nextMoments') as unknown as Array<{ properties: Record<string, unknown> }>) || [];
+    const agents = (record.get('agents') as unknown as Array<{ properties: Record<string, unknown> }>) || [];
 
     const id = (mNode.properties['id'] as string) ?? mNode.identity.toString();
 

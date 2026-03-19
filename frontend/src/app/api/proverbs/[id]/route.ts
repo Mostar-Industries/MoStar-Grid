@@ -3,17 +3,18 @@
  * Enforces the Grid's truth gate: no proverb without valid provenance is served
  */
 
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { driver } from "../../../../lib/neo4j";
-import { randomUUID } from "crypto";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const provenanceRunId = randomUUID();
   const timestamp = new Date().toISOString();
-  const proverbId = params.id;
+  const { id } = await params;
+  const proverbId = id;
 
   try {
     const session = driver.session();
@@ -46,7 +47,7 @@ export async function GET(
     `;
 
     const result = await session.run(query, { proverbId });
-    
+
     if (result.records.length === 0) {
       await session.close();
       return NextResponse.json(

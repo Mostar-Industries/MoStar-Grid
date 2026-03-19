@@ -1,27 +1,32 @@
 import os
-from typing import List, Dict, Any
+from typing import Any, List
+
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
+from langchain_huggingface import HuggingFaceEmbeddings
 
 # Configuration
-STORE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'memory_store')
+STORE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "data", "memory_store"
+)
 MODEL_NAME = "all-MiniLM-L6-v2"
+
 
 class MoStarMemory:
     def __init__(self):
         if not os.path.exists(STORE_PATH):
-            raise FileNotFoundError(f"Memory store not found at {STORE_PATH}. Run ingest.py first.")
-            
+            raise FileNotFoundError(
+                f"Memory store not found at {STORE_PATH}. Run ingest.py first."
+            )
+
         self.embeddings = HuggingFaceEmbeddings(model_name=MODEL_NAME)
         self.vectorstore = FAISS.load_local(
-            STORE_PATH, 
-            self.embeddings, 
-            allow_dangerous_deserialization=True # Safe since we created it
+            STORE_PATH,
+            self.embeddings,
+            allow_dangerous_deserialization=True,  # Safe since we created it
         )
         self.retriever = self.vectorstore.as_retriever(
-            search_type="similarity",
-            search_kwargs={"k": 5}
+            search_type="similarity", search_kwargs={"k": 5}
         )
 
     def search(self, query: str, k: int = 5) -> List[Document]:
@@ -36,6 +41,7 @@ class MoStarMemory:
             context_parts.append(f"--- Context {i} ---\n{doc.page_content}")
         return "\n\n".join(context_parts)
 
+
 if __name__ == "__main__":
     # Test the retriever
     memory = MoStarMemory()
@@ -44,4 +50,6 @@ if __name__ == "__main__":
     results = memory.search(test_query)
     for doc in results:
         print(f"\n📄 {doc.page_content}")
-        print(f"   (Score info not available in simple search, Metadata: {doc.metadata})")
+        print(
+            f"   (Score info not available in simple search, Metadata: {doc.metadata})"
+        )
