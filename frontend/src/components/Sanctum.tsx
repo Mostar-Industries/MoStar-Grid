@@ -240,68 +240,73 @@ export default function Sanctum() {
 
       <section className={styles.networkGrid}>
         <article className={styles.heart}>
-          <div className={styles.heartHeader}>
-            <p className={styles.eyebrow}>Heart of the Grid</p>
-            <h2>Grid Coherence</h2>
-            <p>Pulse drawn from OmniNeural resonance loop.</p>
-          </div>
-          <div className={styles.heartViz}>
-            <GraphObservatory />
-          </div>
-        </article>
-
-        <article className={styles.vitals}>
-          <ExecutorVitals />
-        </article>
-
-        <article className={styles.matrix}>
-          <div className={styles.matrixHeader}>
-            <p className={styles.eyebrow}>Incarnation Matrix</p>
-            <h2>OmniNeural embodiments</h2>
-            <p>Where the Grid gains eyes, ears, and hands.</p>
-          </div>
-          <div className={styles.liveStats}>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Neo4j Aura</p>
-              <strong className={styles.statValue}>
-                {telemetry?.graph.ok ? "Streaming" : "Link pending"}
-              </strong>
-              <small>
-                {telemetry?.graph.ok
-                  ? `${totalMoments.toLocaleString()} stored moments`
-                  : telemetry?.graph.error ?? "Awaiting driver handshake"}
-              </small>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Backend Status</p>
-              <strong className={styles.statValue}>{backendPulse}</strong>
-              <small>Gateway Neo4j flag: {backendNeo4jState}</small>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Initiators weaving</p>
-              <strong className={styles.statValue}>{initiatorCount}</strong>
-              <small>Distinct voices shaping the Grid</small>
-            </div>
-          </div>
-          <div className={styles.matrixCards}>
-            {telemetry?.backend?.data?.layers ? Object.entries(telemetry.backend.data.layers).map(([id, layer]: [string, any]) => (
-              <div key={id} className={`${styles.matrixCard} ${styles.teal}`}>
-                <div className={styles.matrixGlyph}>⚡</div>
-                <div>
-                  <h3>{layer.name}</h3>
-                  <ul>
-                    <li>Status: {layer.status}</li>
-                    <li>Load: {layer.load}%</li>
-                  </ul>
-                  <p className={styles.matrixStatus}>Model: {layer.model}</p>
+          {/* ── Single landscape panel: stats | brain | layers ── */}
+          <div className={styles.consolidatedRow}>
+            {/* Left: key stats + executor */}
+            <div className={styles.consolidatedLeft}>
+              <div className={styles.heartHeader}>
+                <p className={styles.eyebrow}>Heart of the Grid</p>
+                <h2>Grid Coherence</h2>
+              </div>
+              <div className={styles.liveStats}>
+                <div className={styles.statCard}>
+                  <p className={styles.statLabel}>Neo4j Aura</p>
+                  <strong className={styles.statValue}>
+                    {telemetry?.graph.ok ? "Streaming" : "Link pending"}
+                  </strong>
+                  <small>
+                    {telemetry?.graph.ok
+                      ? `${totalMoments.toLocaleString()} stored moments`
+                      : telemetry?.graph.error ?? "Awaiting driver handshake"}
+                  </small>
+                </div>
+                <div className={styles.statCard}>
+                  <p className={styles.statLabel}>Backend</p>
+                  <strong className={styles.statValue}>{backendPulse}</strong>
+                  <small>Neo4j: {backendNeo4jState}</small>
+                </div>
+                <div className={styles.statCard}>
+                  <p className={styles.statLabel}>Initiators</p>
+                  <strong className={styles.statValue}>{initiatorCount}</strong>
+                  <small>Distinct voices</small>
                 </div>
               </div>
-            )) : (
-              <p>No layer data streaming from backend.</p>
-            )}
+              <ExecutorVitals />
+            </div>
+
+            {/* Center: 3D brain / graph viz */}
+            <div className={styles.consolidatedCenter}>
+              <GraphObservatory />
+            </div>
+
+            {/* Right: DCX layers */}
+            <div className={styles.consolidatedRight}>
+              <div className={styles.matrixHeader}>
+                <p className={styles.eyebrow}>Incarnation Matrix</p>
+                <h2>DCX Layers</h2>
+              </div>
+              <div className={styles.matrixCards}>
+                {telemetry?.backend?.data?.layers ? Object.entries(telemetry.backend.data.layers).map(([id, layer]: [string, any]) => (
+                  <div key={id} className={`${styles.matrixCard} ${styles.teal}`}>
+                    <div className={styles.matrixGlyph}>⚡</div>
+                    <div>
+                      <h3>{layer.name}</h3>
+                      <ul>
+                        <li>Status: {layer.status}</li>
+                        <li>Load: {layer.load}%</li>
+                      </ul>
+                      <p className={styles.matrixStatus}>Model: {layer.model}</p>
+                    </div>
+                  </div>
+                )) : (
+                  <p style={{color: 'var(--text-muted)'}}>No layer data streaming.</p>
+                )}
+              </div>
+            </div>
           </div>
         </article>
       </section>
+
 
       <section className={styles.agentOps}>
         <article className={styles.agentVitals}>

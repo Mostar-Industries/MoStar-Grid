@@ -96,29 +96,11 @@
 }
 
 .networkGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
-@media (max-width: 1400px) {
-  .networkGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 900px) {
-  .networkGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.vitals {
-  height: 100%;
-}
-
-.heart,
-.matrix {
+.heart {
   background: rgba(3, 7, 18, 0.85);
   border-radius: 30px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -126,6 +108,7 @@
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
+  width: 100%;
 }
 
 .heart::after {
@@ -140,7 +123,7 @@
 .heartHeader h2,
 .matrixHeader h2 {
   margin: 0.3rem 0;
-  font-size: 1.9rem;
+  font-size: 1.5rem;
 }
 
 .heartHeader p,
@@ -149,11 +132,53 @@
   color: var(--text-muted);
 }
 
+
+.consolidatedRow {
+  display: grid;
+  grid-template-columns: 260px 1fr 260px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.consolidatedLeft,
+.consolidatedRight {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.consolidatedCenter {
+  min-width: 0;
+}
+
+.consolidatedLeft .liveStats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+@media (max-width: 1100px) {
+  .consolidatedRow {
+    grid-template-columns: 1fr;
+  }
+  .consolidatedLeft .liveStats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .consolidatedLeft .liveStats {
+    grid-template-columns: 1fr;
+  }
+}
+
 .heartViz {
   margin-top: 2rem;
   display: flex;
   justify-content: center;
 }
+
 
 .orbitalField {
   position: relative;
