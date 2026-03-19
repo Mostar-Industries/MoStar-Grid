@@ -1,98 +1,48 @@
 version: '3.8'
 
-
-
 services:
-
+  # Neo4j Database Service
   neo4j:
-
-    image: neo4j:5.15
-
-    container_name: mostar-neo4j
-
+    image: neo4j:5.20.0-enterprise # Using Enterprise to support plugins like GDS
+    container_name: neo4j_db
     ports:
-
-      - "7474:7474" # HTTP
-
-      - "7687:7687" # Bolt
-
-    environment:
-
-      - NEO4J_AUTH=neo4j/mostar123
-
-      - NEO4J_PLUGINS=["apoc"]
-
+      - "7474:7474" # HTTP Browser
+      - "7687:7687" # Bolt driver port
     volumes:
+      - ./neo4j/data:/data
+      - ./neo4j/logs:/logs
+      - ./neo4j/import:/var/lib/neo4j/import # Place your .cypher or .md files here for import
+    environment:
+      - NEO4J_AUTH=neo4j/your-strong-password # CHANGE THIS PASSWORD
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes # Required for Enterprise Edition
+      - NEO4J_PLUGINS=["apoc", "gds"] # Installs useful plugins like APOC and Graph Data Science
 
-      - neo4j_data:/data
-
-      - neo4j_logs:/logs
-
-
-
+  # Python Backend Service
   backend:
-
     build:
-
       context: .
-
       dockerfile: Dockerfile.backend
-
-    container_name: mostar-backend
-
+    container_name: backend_api
     ports:
-
       - "8001:8001"
-
-    environment:
-
-      - NEO4J_URI=bolt://neo4j:7687
-
-      - NEO4J_USER=neo4j
-
-      - NEO4J_PASSWORD=mostar123
-
-      - NEO4J_DATABASE=neo4j
-
-      - OLLAMA_HOST=http://host.docker.internal:11434
-
     depends_on:
-
       - neo4j
-
-    extra_hosts:
-
-      - "host.docker.internal:host-gateway"
-
-
-
-  frontend:
-
-    build:
-
-      context: .
-
-      dockerfile: Dockerfile.frontend
-
-    container_name: mostar-frontend
-
-    ports:
-
-      - "3000:3000"
-
     environment:
+      - NEO4J_URI=bolt://neo4j_db:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=mostar123
+      - NEO4J_DATABASE=neo4j
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: uvicorn backend.core_engine.api_gateway:app --host 0.0.0.0 --port 8001
 
-      - NEXT_PUBLIC_API_URL=http://localhost:8001
-
+  # Frontend Service (Placeholder)
+  frontend:
+    build:
+      context: ./frontend # Assumes Dockerfile is in the 'frontend' directory
+    container_name: frontend_app
+    ports:
+      - "3000:80" # Maps host port 3000 to container port 80 (for Nginx)
     depends_on:
-
       - backend
-
-
-
-volumes:
-
-  neo4j_data:
-
-  neo4j_logs:
-

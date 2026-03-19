@@ -105,7 +105,7 @@ Start-Sleep -Seconds 2
 Write-Host "`n[3/5] Starting Core Engine API (port 8001)..." -ForegroundColor Cyan
 if (Test-Path $PythonExe) {
     $logFile = Join-Path $LogsDir "core_engine.log"
-    Start-PythonService -Title "Core Engine API" -Module "core_engine.api_gateway:app" -Port "8001" -LogFile $logFile
+    Start-PythonService -Title "Core Engine API" -Module "backend.core_engine.api_gateway:app" -Port "8001" -LogFile $logFile
     Write-Host "   >> Core Engine window launched. Log: logs\core_engine.log" -ForegroundColor Gray
 } else {
     Write-Warning "   !! Python executable not found at $PythonExe"

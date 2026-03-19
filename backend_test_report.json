@@ -1,0 +1,100 @@
+{
+  "timestamp": "2026-03-19T12:00:34.316800",
+  "total_tests": 9,
+  "passed": 3,
+  "failed": 6,
+  "total_time_ms": 17482.561826705933,
+  "results": [
+    {
+      "component": "Python Environment",
+      "status": "\u2705 PASS",
+      "latency_ms": "0.01ms",
+      "details": "Python 3.13.12",
+      "data": {
+        "version": "3.13.12 (tags/v3.13.12:1cbe481, Feb  3 2026, 18:22:25) [MSC v.1944 64 bit (AMD64)]",
+        "executable": "C:\\Users\\idona\\OneDrive - World Health Organization\\Documents\\Dev\\MoStar-Grid\\.venv\\Scripts\\python.exe",
+        "packages": {
+          "httpx": true,
+          "neo4j": true,
+          "ollama": true,
+          "asyncpg": false,
+          "fastapi": true
+        }
+      }
+    },
+    {
+      "component": "Environment Variables",
+      "status": "\u2705 PASS",
+      "latency_ms": "0.03ms",
+      "details": "4 vars checked, 0 missing",
+      "data": {
+        "found": {
+          "NEO4J_URI": "\u2713 Set",
+          "NEO4J_PASSWORD": "\u2713 Set",
+          "OLLAMA_HOST": "\u25cb Not set",
+          "NEON_PASSWORD": "\u25cb Not set"
+        },
+        "missing": []
+      }
+    },
+    {
+      "component": "File Structure",
+      "status": "\u2705 PASS",
+      "latency_ms": "0.52ms",
+      "details": "6/6 files found",
+      "data": {
+        "found": [
+          "backend/core_engine/api_gateway.py",
+          "backend/memory_layer/api/main.py",
+          "backend/utils/grid_vitals.py",
+          "backend/utils/grid_neo4j.py",
+          "backend/requirements.txt",
+          "start-services.ps1"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "component": "Ollama (Local)",
+      "status": "\u274c FAIL",
+      "latency_ms": "12.72ms",
+      "details": "'name'",
+      "data": null
+    },
+    {
+      "component": "Ollama (Cloud)",
+      "status": "\u274c FAIL",
+      "latency_ms": "463.96ms",
+      "details": "HTTP 530",
+      "data": null
+    },
+    {
+      "component": "Neo4j (Local)",
+      "status": "\u274c FAIL",
+      "latency_ms": "4104.99ms",
+      "details": "Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):\nFailed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)\nFailed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)",
+      "data": null
+    },
+    {
+      "component": "Neo4j (Aura)",
+      "status": "\u274c FAIL",
+      "latency_ms": "4075.24ms",
+      "details": "Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):\nFailed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)\nFailed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)",
+      "data": null
+    },
+    {
+      "component": "Core Engine API",
+      "status": "\u274c FAIL",
+      "latency_ms": "4392.02ms",
+      "details": "[WinError 10061] No connection could be made because the target machine actively refused it",
+      "data": null
+    },
+    {
+      "component": "Memory Layer API",
+      "status": "\u274c FAIL",
+      "latency_ms": "4425.81ms",
+      "details": "[WinError 10061] No connection could be made because the target machine actively refused it",
+      "data": null
+    }
+  ]
+}

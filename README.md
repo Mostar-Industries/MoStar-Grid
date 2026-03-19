@@ -26,31 +26,33 @@ Unlike traditional AI systems, MoStar Grid:
 
 ### Prerequisites
 
-- Docker Desktop
 - Node.js 18+ (for frontend)
 - Python 3.11+ (for backend)
+- Java 21+ (required by Neo4j 2025.10.1 in `backend/neo4j-mostar-industries`)
 
-### Start the Grid (30 seconds)
+### Start the Grid (recommended)
+
+1. From the repo root, run the unified launcher so every service lives inside the IDE terminal:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\start-services.ps1
+```
+
+1. When you need to run only a subset (e.g., backend/frontend while Neo4j is in Aura), open `.env` and set `NEO4J_URI`/`VITE_NEO4J_URI` to `neo4j+s://371530ba.databases.neo4j.io` along with `NEO4J_PASSWORD`/`VITE_NEO4J_PASSWORD`. Leave the local `bolt://localhost:7687` values commented if you switch to Aura.
+
+2. Confirm the backend reports healthy
 
 ```bash
-# 1. Start Docker containers (Neo4j + Backend)
-docker-compose up -d
-
-# 2. Start frontend (separate terminal)
-cd frontend
-npm install
-npm run dev
-
-# 3. Verify Grid is alive
 curl http://localhost:8001/api/v1/status
 ```
 
-**Access Points:**
+**Live Access Points after start-services**
 
-- **Frontend Dashboard**: <http://localhost:3000>
-- **Backend API**: <http://localhost:8001>
-- **Neo4j Browser**: <http://localhost:7474> (neo4j/mostar123)
-- **Evidence Machine**: <http://localhost:8002> (when running)
+- Frontend Dashboard: <http://localhost:3000>
+- Memory Layer API: <http://localhost:8000/docs>
+- Core Engine API: <http://localhost:8001/docs>
+- Neo4j Browser (local): <http://localhost:7474> (neo4j/mostar123)
+- Evidence Machine (when running): <http://localhost:8002/docs>
 
 ---
 
@@ -199,13 +201,9 @@ The Mind Graph stores:
 **Access Neo4j:**
 
 ```bash
-# Browser UI
-open http://localhost:7474
-# Username: neo4j
-# Password: mostar123
-
-# Cypher Shell
-docker exec -it mostar-neo4j cypher-shell -u neo4j -p mostar123
+## Neo4j access modes
+- **Local (default):** use Neo4j Browser at <http://localhost:7474> (neo4j/mostar123) or run `neo4j/bin/cypher-shell.bat` after Neo4j starts via `start-services.ps1`.
+- **AuraDB (mo_moments):** when your `.env` points to `neo4j+s://371530ba.databases.neo4j.io`, skip the local Neo4j step and use the Aura console or `cypher-shell` with the Aura password to import data.
 ```
 
 **Quick Queries:**

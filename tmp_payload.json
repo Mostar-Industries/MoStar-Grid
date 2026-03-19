@@ -1,4 +1,0 @@
-{
-    "cypher": "MATCH (n) DETACH DELETE n",
-    "purpose": "malicious_test"
-}
