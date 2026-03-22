@@ -110,7 +110,7 @@ class TemporalActivationSimulator:
         """
         
         activations = []
-        layer_dist = defaultdict(int)
+        layer_dist: Dict[str, int] = {}
         
         with self.driver.session() as session:
             results = session.run(query, qid=seed_quantum_id, max_depth=max_depth)
@@ -135,7 +135,7 @@ class TemporalActivationSimulator:
                 activations.append(state)
                 
                 era = record["era"] or "Unknown"
-                layer_dist[era] += 1
+                layer_dist[era] = layer_dist.get(era, 0) + 1
         
         total_resonance = sum(a.resonance_score * a.activation_level for a in activations)
         max_d = max((a.depth for a in activations), default=0)
@@ -167,7 +167,7 @@ class TemporalActivationSimulator:
         """
         
         activations = []
-        layer_dist = defaultdict(int)
+        layer_dist: Dict[str, int] = {}
         
         with self.driver.session() as session:
             results = session.run(query, qid=seed_quantum_id, max_depth=max_depth)
@@ -186,7 +186,8 @@ class TemporalActivationSimulator:
                     depth=depth
                 )
                 activations.append(state)
-                layer_dist[record["era"] or "Unknown"] += 1
+                era = record["era"] or "Unknown"
+                layer_dist[era] = layer_dist.get(era, 0) + 1
         
         return RippleResult(
             seed_moment=seed_quantum_id,
@@ -197,7 +198,7 @@ class TemporalActivationSimulator:
             layer_distribution=dict(layer_dist)
         )
     
-    def find_resonance_peaks(self, threshold: float = 0.95) -> List[Dict]:
+    def find_resonance_peaks(self, threshold: float = 0.95) -> List[Dict[str, Any]]:
         """Find high-resonance moments that could serve as activation seeds"""
         query = """
         MATCH (m:MoStarMoment)
@@ -228,7 +229,7 @@ class TemporalActivationSimulator:
         
         return peaks
     
-    def get_next_activations(self, current_quantum_id: str, top_k: int = 3) -> List[Dict]:
+    def get_next_activations(self, current_quantum_id: str, top_k: int = 3) -> List[Dict[str, Any]]:
         """Get the top-k most likely next activations from current moment"""
         query = """
         MATCH (m:MoStarMoment {quantum_id: $qid})-[:PRECEDES]->(next:MoStarMoment)
@@ -252,7 +253,7 @@ class TemporalActivationSimulator:
         
         return nexts
     
-    def simulate_query_activation(self, query_text: str, top_k: int = 5) -> List[Dict]:
+    def simulate_query_activation(self, query_text: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """Find moments most relevant to a query (for RAG context)"""
         # Simple keyword matching - could be enhanced with embeddings
         cypher = """
@@ -291,7 +292,8 @@ def print_ripple_result(result: RippleResult):
     print(f"   Total Resonance: {result.total_resonance:.3f}")
     print(f"   Era Distribution: {result.layer_distribution}")
     print("\n   Activation Path:")
-    for state in result.activation_path[:10]:  # Show first 10
+    for i, state in enumerate(result.activation_path):  # Show first 10
+        if i >= 10: break
         bar = "█" * int(state.activation_level * 10)
         print(f"   [{state.depth}] {bar} {state.activation_level:.2f} | {state.quantum_id[:30]}...")
 
@@ -304,7 +306,8 @@ def main():
         # Find peak moments
         print("\n🔥 Finding resonance peaks...")
         peaks = sim.find_resonance_peaks(threshold=0.98)
-        for p in peaks[:5]:
+        for i, p in enumerate(peaks):
+            if i >= 5: break
             print(f"  ⚡ {p['quantum_id']}: {p['resonance_score']:.2f} - {p['description'][:50]}...")
         
         if peaks:

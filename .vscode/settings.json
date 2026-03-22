@@ -18,6 +18,10 @@
     "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
     "python.terminal.activateEnvironment": true,
     "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}\\.venv\\Lib\\site-packages",
+        "${workspaceFolder}\\backend\\.venv\\Lib\\site-packages"
+    ],
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
@@ -75,5 +79,6 @@
         "**/backend/neo4j-mostar-industries/logs": true,
         "**/frontend/.next": true,
         "**/frontend/node_modules": true
-    }
+    },
+    "pieces.cloudCapabilities": "Local"
 }

@@ -189,11 +189,11 @@ class CanonicalTelemetryEngine:
         """
         nodes_cypher = f"""
             MATCH (n)
-            // Filter to important types to avoid clutter
-            WHERE labels(n)[0] IN ['Agent', 'KnowledgeArtifact', 'MoStarMoment', 'OduIfa', 'Archetype', 'CovenantKernel']
+            // Broadened filter: Allow all non-internal labels
+            WHERE NOT labels(n)[0] STARTS WITH '_'
             RETURN id(n) AS id, labels(n) AS labels, n.name AS name, n.description AS desc, 
                    n.resonance_score AS resonance, n.timestamp AS timestamp
-            LIMIT {limit}
+            LIMIT 5000
         """
         nodes_records = await self._safe_traverse(nodes_cypher, "telemetry_constellation_nodes")
         

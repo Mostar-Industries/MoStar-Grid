@@ -1,62 +1,49 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "npm: start-all",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run",
-                "start-all"
-            ],
-            "internalConsoleOptions": "neverOpen"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "npm: start-all",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run",
-                "start-all"
-            ],
-            "internalConsoleOptions": "neverOpen"
-        },
-        {
-            "name": "Run Windows Hermes",
-            "request": "launch",
-            "type": "reactnativedirect",
-            "cwd": "${workspaceFolder}",
-            "enableDebug": false,
-            "platform": "windows"
-        },
-        {
-            "type": "dockerfile",
-            "request": "launch",
-            "name": "Docker: Build",
-            "dockerfile": "Dockerfile",
-            "contextPath": "${workspaceFolder}"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Run json5",
-            "runtimeExecutable": "json5",
-            "cwd": "${workspaceFolder}/node_modules/tsconfig-paths",
-            "args": []
-        },
-        {
-            "name": "PowerShell: Launch Current File",
-            "type": "PowerShell",
-            "request": "launch",
-            "script": "${file}",
-            "args": []
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "PowerShell Attach to Host Process",
+      "type": "PowerShell",
+      "request": "attach"
+    },
+    {
+      "name": "npm: start-all",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start-all"],
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Run Windows Hermes",
+      "type": "reactnativedirect",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "enableDebug": false,
+      "platform": "windows"
+    },
+    {
+      "name": "Docker: Build",
+      "type": "dockerfile",
+      "request": "launch",
+      "dockerfile": "Dockerfile",
+      "contextPath": "${workspaceFolder}"
+    },
+    {
+      "name": "Run json5",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "json5",
+      "cwd": "${workspaceFolder}/node_modules/tsconfig-paths",
+      "args": []
+    },
+    {
+      "name": "PowerShell: Launch Current File",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "${file}",
+      "args": []
+    }
+  ]
 }

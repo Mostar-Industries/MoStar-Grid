@@ -132,9 +132,10 @@ def _check_neo4j() -> str:
     if _neo4j_cache["state"] is not None and (now - _neo4j_cache["ts"]) < 30:
         return _neo4j_cache["state"]
     try:
-        from neo4j import GraphDatabase
+        from neo4j import GraphDatabase, TrustAll
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS),
-                                       connection_timeout=3, max_connection_lifetime=60)
+                                       connection_timeout=3, max_connection_lifetime=60,
+                                       trusted_certificates=TrustAll())
         driver.verify_connectivity()
         driver.close()
         _neo4j_cache["state"] = "online"

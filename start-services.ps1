@@ -62,37 +62,11 @@ Get-Job | Remove-Job -ErrorAction SilentlyContinue
 
 Write-Host "   >> Ports cleared." -ForegroundColor Gray
 
-# --- 1. Start Neo4j ---
-Write-Host "`n[1/5] Starting Neo4j Database (ports 7474/7687)..." -ForegroundColor Cyan
-if (Test-PortListening -Port 7687) {
-    Write-Host "   ✅ Neo4j already running on port 7687" -ForegroundColor Green
-}
-elseif (Test-Path $Neo4jStart) {
-    Write-Host "   >> Launching Neo4j in background..." -ForegroundColor Gray
-    # We run Neo4j in a background job too
-    Start-Job -Name "Neo4j" -ScriptBlock {
-        param($path)
-        Set-Location $path
-        .\start-neo4j.ps1
-    } -ArgumentList (Join-Path $ScriptPath "backend\neo4j-mostar-industries") | Out-Null
-    
-    Write-Host "   >> Waiting for Neo4j to be ready (max 30s)..." -ForegroundColor Gray
-    $waited = 0
-    while ($waited -lt 30) {
-        Start-Sleep -Seconds 2
-        $waited += 2
-        if (Test-PortListening -Port 7687) {
-            Write-Host "   ✅ Neo4j ready after ${waited}s" -ForegroundColor Green
-            break
-        }
-    }
-}
-else {
-    Write-Host "   ❌ Neo4j start script not found at $Neo4jStart" -ForegroundColor Red
-}
+# --- 1. Start Neo4j (Disabled: Using Aura) ---
+Write-Host "`n[1/6] (Skipped) Starting Neo4j Database - Using Aura" -ForegroundColor Gray
 
 # --- 2. Start Memory Layer API (Port 8000) ---
-Write-Host "`n[2/5] Starting Memory Layer API (port 8000)..." -ForegroundColor Cyan
+Write-Host "`n[2/6] Starting Memory Layer API (port 8000)..." -ForegroundColor Cyan
 if (-not (Test-Path $PythonExe)) {
     Write-Host "   ❌ Python executable not found at $PythonExe" -ForegroundColor Red
 }
@@ -102,13 +76,16 @@ else {
         param($python, $scriptPath, $logFile)
         $env:PYTHONPATH = $scriptPath
         $env:PYTHONUTF8 = '1'
+        $env:NEO4J_URI = 'bolt+s://371530ba.databases.neo4j.io'
+        $env:NEO4J_USER = 'neo4j'
+        $env:NEO4J_PASSWORD = 'mostar123'
         & $python -m uvicorn backend.memory_layer.api.main:app --host 0.0.0.0 --port 8000 --reload 2>&1 | Tee-Object -FilePath $logFile
     } -ArgumentList $PythonExe, $ScriptPath, $logFile | Out-Null
     Start-Sleep -Seconds 2
 }
 
 # --- 3. Start Core Engine API (Port 8001) ---
-Write-Host "`n[3/5] Starting Core Engine API (port 8001)..." -ForegroundColor Cyan
+Write-Host "`n[3/6] Starting Core Engine API (port 8001)..." -ForegroundColor Cyan
 if (-not (Test-Path $PythonExe)) {
     Write-Host "   ❌ Python executable not found at $PythonExe" -ForegroundColor Red
 }
@@ -118,13 +95,16 @@ else {
         param($python, $scriptPath, $logFile)
         $env:PYTHONPATH = $scriptPath
         $env:PYTHONUTF8 = '1'
+        $env:NEO4J_URI = 'bolt+s://371530ba.databases.neo4j.io'
+        $env:NEO4J_USER = 'neo4j'
+        $env:NEO4J_PASSWORD = 'mostar123'
         & $python -m uvicorn backend.core_engine.api_gateway:app --host 0.0.0.0 --port 8001 --reload 2>&1 | Tee-Object -FilePath $logFile
     } -ArgumentList $PythonExe, $ScriptPath, $logFile | Out-Null
     Start-Sleep -Seconds 2
 }
 
 # --- 4. Start Mo Executor ---
-Write-Host "`n[4/5] Starting Mo Executor (graph mutation daemon)..." -ForegroundColor Cyan
+Write-Host "`n[4/6] Starting Mo Executor (graph mutation daemon)..." -ForegroundColor Cyan
 if (-not (Test-Path $ExecutorScript)) {
     Write-Host "   ❌ Mo Executor script not found at $ExecutorScript" -ForegroundColor Red
 }
@@ -134,7 +114,7 @@ else {
         param($python, $scriptPath, $executorScript, $logFile)
         $env:PYTHONPATH = $scriptPath
         $env:PYTHONUTF8 = '1'
-        $env:NEO4J_URI = 'bolt://localhost:7687'
+        $env:NEO4J_URI = 'bolt+s://371530ba.databases.neo4j.io'
         $env:NEO4J_USER = 'neo4j'
         $env:NEO4J_PASSWORD = 'mostar123'
         & $python $executorScript 2>&1 | Tee-Object -FilePath $logFile
@@ -142,7 +122,7 @@ else {
 }
 
 # --- 5. Start Next.js Frontend ---
-Write-Host "`n[5/5] Starting Next.js Frontend (port 3000)..." -ForegroundColor Cyan
+Write-Host "`n[5/6] Starting Next.js Frontend (port 3000)..." -ForegroundColor Cyan
 if (-not (Test-Path $FrontendPath)) {
     Write-Host "   ❌ Frontend directory not found at $FrontendPath" -ForegroundColor Red
 }
@@ -156,6 +136,41 @@ else {
     Start-Sleep -Seconds 2
 }
 
+# --- 6. Start Cloudflare Tunnels ---
+Write-Host "`n[6/6] Starting Cloudflare Tunnels (Whisper, Ollama, Neo4j)..." -ForegroundColor Cyan
+$CloudflaredExe = "C:\Users\idona\Downloads\cloudflared-windows-amd64.exe"
+if (-not (Test-Path $CloudflaredExe)) {
+    Write-Host "   ❌ cloudflared not found at $CloudflaredExe" -ForegroundColor Red
+}
+else {
+    $logFileWhisper = Join-Path $LogsDir "cloudflared_whisper.log"
+    $logFileOllama = Join-Path $LogsDir "cloudflared_ollama.log"
+    $logFileNeo4j = Join-Path $LogsDir "cloudflared_neo4j.log"
+    
+    # Tunnel Tokens
+    $WhisperToken = "eyJhIjoiYTI5NmFlN2I1ZjZkNmE2ZDZjMDAzY2Q4YmMzYzIyYTIiLCJ0IjoiYmZjNWM0NjgtMTdhZC00OTZjLWE4OWUtNWUzYWQyMjVmYjA4IiwicyI6Ik0yVXlZamsyWXpVdFpXWXdPUzAwTm1WbExUZzBZamt0TkdKbFpqSTFaVGhoTWpGbSJ9"
+    $OllamaToken  = "eyJhIjoiYTI5NmFlN2I1ZjZkNmE2ZDZjMDAzY2Q4YmMzYzIyYTIiLCJ0IjoiOGVhZjgwMTMtYjQwYy00YTJiLWI1MjgtZjMyN2VkNTA2ODE1IiwicyI6Ik5UUXpOREJrWXpjdE16aGpOeTAwWlRrNExUazJOVGt0WVRkbE9XSTBOVFV3TnpRNVpEUTBNemxrWmpBdFpEbG1OUzAwTldOaExXRm1aakF0TnpSaFlqSmtObVZtTTJZMiJ9"
+    $Neo4jToken   = "eyJhIjoiYTI5NmFlN2I1ZjZkNmE2ZDZjMDAzY2Q4YmMzYzIyYTIiLCJ0IjoiZjQ4OGUxNjgtYjlhMy00NGM1LWFkOGQtMzRmYTFhMzVhMTkzIiwicyI6Ill6YzBaR1UzTkRndE9HUXpNQzAwTVdabExXSmhNekl0TXpjeE9UTXhZMlkwWVRoayJ9"
+
+    Start-Job -Name "CloudflaredWhisper" -ScriptBlock {
+        param($exe, $token, $logFile)
+        & $exe tunnel run --token $token 2>&1 | Tee-Object -FilePath $logFile
+    } -ArgumentList $CloudflaredExe, $WhisperToken, $logFileWhisper | Out-Null
+
+    Start-Job -Name "CloudflaredOllama" -ScriptBlock {
+        param($exe, $token, $logFile)
+        & $exe tunnel run --token $token 2>&1 | Tee-Object -FilePath $logFile
+    } -ArgumentList $CloudflaredExe, $OllamaToken, $logFileOllama | Out-Null
+
+    Start-Job -Name "CloudflaredNeo4j" -ScriptBlock {
+        param($exe, $token, $logFile)
+        & $exe tunnel run --token $token 2>&1 | Tee-Object -FilePath $logFile
+    } -ArgumentList $CloudflaredExe, $Neo4jToken, $logFileNeo4j | Out-Null
+
+    Write-Host "   ✅ All Cloudflare Tunnels starting in background..." -ForegroundColor Green
+    Start-Sleep -Seconds 2
+}
+
 # --- Summary & Streaming Mode ---
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Green
@@ -163,11 +178,10 @@ Write-Host "  Services Started in Background Jobs     " -ForegroundColor Green
 Write-Host "  Streaming logs... Press Ctrl+C to stop.  " -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Note: Output logs from each service will be interleaved below." -ForegroundColor DarkGray
-Write-Host ""
 
 try {
-    # Provide an initial flush and then loop
+    Write-Host "Waiting for jobs to initialize..." -ForegroundColor DarkGray
+    Start-Sleep -Seconds 5
     while ($true) {
         $jobs = Get-Job | Where-Object { $_.State -eq 'Running' }
         if (-not $jobs) {
@@ -177,18 +191,19 @@ try {
         foreach ($j in $jobs) {
             $output = Receive-Job -Job $j
             if ($output) {
-                # Add color prefix to logs for readability
                 switch ($j.Name) {
-                    "Neo4j"       { $color = "Green" }
-                    "MemoryLayer" { $color = "Cyan" }
-                    "CoreEngine"  { $color = "Yellow" }
-                    "MoExecutor"  { $color = "Magenta" }
-                    "Frontend"    { $color = "Blue" }
-                    default       { $color = "White" }
+                    "Neo4j"              { $color = "Green" }
+                    "MemoryLayer"        { $color = "Cyan" }
+                    "CoreEngine"         { $color = "Yellow" }
+                    "MoExecutor"         { $color = "Magenta" }
+                    "Frontend"           { $color = "Blue" }
+                    "CloudflaredWhisper" { $color = "DarkCyan" }
+                    "CloudflaredOllama"  { $color = "DarkYellow" }
+                    "CloudflaredNeo4j"   { $color = "DarkGreen" }
+                    default              { $color = "White" }
                 }
                 foreach ($line in $output) {
-                    $prefix = "[$($j.Name)]"
-                    Write-Host "$prefix $line" -ForegroundColor $color
+                    Write-Host "[$($j.Name)] $line" -ForegroundColor $color
                 }
             }
         }

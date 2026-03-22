@@ -477,13 +477,13 @@ class MoScriptEngine:
             
         # Execute query via sovereign driver
         def _run_query():
-            from neo4j import GraphDatabase
+            from neo4j import GraphDatabase, TrustAll
             uri  = os.getenv("NEO4J_URI", "bolt://localhost:7687")
             user = os.getenv("NEO4J_USER", "neo4j")
             pw   = os.getenv("NEO4J_PASSWORD", "mostar123")
             
             try:
-                driver = GraphDatabase.driver(uri, auth=(user, pw))
+                driver = GraphDatabase.driver(uri, auth=(user, pw), trusted_certificates=TrustAll())
                 with driver.session() as session:
                     res = session.run(cypher, **params)
                     return [dict(r) for r in res]
@@ -631,7 +631,7 @@ class MoScriptEngine:
 
     async def _set_agent_strength(self, payload: dict):
         import os
-        from neo4j import GraphDatabase
+        from neo4j import GraphDatabase, TrustAll
         agent_id = payload.get("agent_id")
         strength = payload.get("new_strength")
 
@@ -640,7 +640,8 @@ class MoScriptEngine:
 
         driver = GraphDatabase.driver(
             os.getenv("NEO4J_URI", "bolt://localhost:7687"),
-            auth=(os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASSWORD", "mostar123"))
+            auth=(os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASSWORD", "mostar123")),
+            trusted_certificates=TrustAll()
         )
 
         with driver.session() as session:
