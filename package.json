@@ -3,11 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "npm --prefix frontend run build",
+    "build": "cd frontend && npm install && npm run build",
     "dev": "npm --prefix frontend run dev",
     "start": "npm --prefix frontend start"
   },
   "workspaces": [
     "frontend"
-  ]
+  ],
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "@types/react": "^19.0.9",
+    "@types/react-dom": "^19.0.3",
+    "typescript": "5.9.3"
+  }
 }

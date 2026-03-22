@@ -21,11 +21,10 @@
     "health": "curl -s http://localhost:7001/health && curl -s http://localhost:11434/api/tags",
     "health:win": "powershell -Command \"Invoke-RestMethod http://localhost:7001/health | ConvertTo-Json\""
   },
-  "workspaces": [
-    "frontend"
-  ],
   "devDependencies": {
     "@types/node": "^25.0.9",
+    "@types/react": "^19.0.9",
+    "@types/react-dom": "^19.0.3",
     "concurrently": "^9.2.1",
     "typescript": "5.9.3"
   },
@@ -34,6 +33,8 @@
     "mapbox-gl": "^3.20.0",
     "neo4j-driver": "^6.0.1",
     "next": "16.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-force-graph-3d": "^1.29.1",
     "react-map-gl": "^8.1.0",
     "reagraph": "^4.30.8"

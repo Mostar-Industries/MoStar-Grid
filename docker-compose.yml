@@ -37,12 +37,21 @@ services:
       - "host.docker.internal:host-gateway"
     command: uvicorn backend.core_engine.api_gateway:app --host 0.0.0.0 --port 8001
 
-  # Frontend Service (Placeholder)
+  # Frontend Service
   frontend:
     build:
-      context: ./frontend # Assumes Dockerfile is in the 'frontend' directory
+      context: .
+      dockerfile: Dockerfile
     container_name: frontend_app
     ports:
-      - "3000:80" # Maps host port 3000 to container port 80 (for Nginx)
+      - "3000:8080" # Maps host port 3000 to container port 8080 (non-root Nginx)
     depends_on:
       - backend
+    environment:
+      - VITE_API_URL=http://localhost:8001
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /var/run
+      - /var/cache/nginx
