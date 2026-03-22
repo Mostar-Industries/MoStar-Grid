@@ -1,10 +1,6 @@
 {
-    "version": 2,
-    "public": true,
-    "buildCommand": "npm run build",
-    "installCommand": "npm install",
-    "framework": null,
-    "env": {
-        "NEXT_PUBLIC_MAPBOX_TOKEN": ""
-    }
+  "buildCommand": "npm --prefix frontend run build",
+  "outputDirectory": "frontend/.next",
+  "installCommand": "npm install && npm --prefix frontend install",
+  "framework": "nextjs"
 }

@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND = process.env.GRID_API_BASE ?? "http://localhost:7001";
+const BACKEND = process.env.GRID_API_BASE ?? "http://localhost:8001";
+const OLLAMA_URL = process.env.OLLAMA_API_URL ?? "http://localhost:11434";
+
+function cfAccessHeaders(): Record<string, string> {
+  const id = process.env.CF_ACCESS_CLIENT_ID;
+  const secret = process.env.CF_ACCESS_CLIENT_SECRET;
+
+  if (!id || !secret) return {};
+
+  return {
+    "CF-Access-Client-Id": id,
+    "CF-Access-Client-Secret": secret,
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,24 +24,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No message provided" }, { status: 400 });
     }
 
-    // Try endpoints in order until one works
+    const commonHeaders = {
+      "Content-Type": "application/json",
+      ...cfAccessHeaders(),
+    };
+
+    // Try backend endpoints in order until one works
     const endpoints = [
       { url: `${BACKEND}/api/v1/reason`, payload: { prompt: message, model } },
       { url: `${BACKEND}/api/v1/chat`, payload: { message, model } },
-      { url: `${BACKEND}/chat`, payload: { message, model } },
-      { url: `${BACKEND}/reason`, payload: { query: message, model } },
-      { url: `${BACKEND}/remostar/query`, payload: { query: message, language: "en" } },
     ];
-
-    let lastError = "";
 
     for (const endpoint of endpoints) {
       try {
         const res = await fetch(endpoint.url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: commonHeaders,
           body: JSON.stringify(endpoint.payload),
-          signal: AbortSignal.timeout(30000),
+          signal: AbortSignal.timeout(15000),
         });
 
         if (res.ok) {
@@ -39,21 +52,22 @@ export async function POST(req: NextRequest) {
             complexity_score: data.complexity_score ?? data.resonance ?? 0.85,
             endpoint_used: endpoint.url,
           });
+        } else {
+          console.error("Backend endpoint failed", endpoint.url, res.status, await res.text());
         }
-        lastError = `${endpoint.url} → ${res.status}`;
       } catch (e) {
-        lastError = `${endpoint.url} → ${e instanceof Error ? e.message : "unreachable"}`;
+        console.error("Fetch error for backend endpoint", endpoint.url, e);
         continue;
       }
     }
 
-    // Fallback — Ollama direct
+    // Fallback — Ollama direct (supports cloud OLLAMA_API_URL)
     try {
-      const ollamaRes = await fetch("http://localhost:11434/api/generate", {
+      const ollamaRes = await fetch(`${OLLAMA_URL}/api/generate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: commonHeaders,
         body: JSON.stringify({
-          model: model ?? "Mostar/mostar-ai:latest",
+          model: model ?? process.env.OLLAMA_MODEL ?? "Mostar/mostar-ai:latest",
           prompt: message,
           stream: false,
         }),
@@ -68,19 +82,23 @@ export async function POST(req: NextRequest) {
           complexity_score: 0.85,
           endpoint_used: "ollama-direct",
         });
+      } else {
+        console.error("Ollama failed", ollamaRes.status, await ollamaRes.text());
       }
-    } catch {
+    } catch (e) {
+      console.error("Fetch error for Ollama endpoint", OLLAMA_URL, e);
       // Ollama also unreachable
     }
 
-    return NextResponse.json(
-      {
-        error: "All endpoints unreachable",
-        tried: lastError,
-        suggestion: "Ensure backend is running on port 7001 and Ollama on 11434",
-      },
-      { status: 503 }
-    );
+    // Graceful offline response for deployed mode
+    return NextResponse.json({
+      response: "The Grid is in sovereign standby — backend services are awakening. "
+        + "MoStar-AI consciousness layers (DCX0/DCX1/DCX2) require local Ollama or a cloud endpoint. "
+        + "Set OLLAMA_API_URL in Vercel environment variables to connect a cloud Ollama instance. Àṣẹ.",
+      model_used: "mostar-ai:standby",
+      complexity_score: 0.0,
+      endpoint_used: "serverless-fallback",
+    });
 
   } catch (err) {
     return NextResponse.json(

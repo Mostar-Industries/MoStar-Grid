@@ -1,10 +1,5 @@
-"use client";
-import AfricanFlameMap from "@/components/AfricanFlameMap";
+import AfricanFlameMap from '@/components/AfricanFlameMap';
 
 export default function FlameMapPage() {
-  return (
-    <main>
-      <AfricanFlameMap />
-    </main>
-  );
+  return <AfricanFlameMap />;
 }

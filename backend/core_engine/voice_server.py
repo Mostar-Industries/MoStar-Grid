@@ -2,7 +2,7 @@
 # MOSTAR GRID — SOVEREIGN VOICE SERVER
 # The Flame Architect — MSTR-⚡ — MoStar Industries
 # Pipeline: User → MoStar-AI (Ollama) → Edge-TTS → Neo4j Memory
-# Heritage Languages: Ibibio (PRIMARY) · Yoruba · English · Swahili
+# Heritage Languages: English (PRIMARY) · Ibibio · Yoruba · Swahili
 # ═══════════════════════════════════════════════════════════════════
 
 import os
@@ -35,7 +35,7 @@ except ImportError:
         OLLAMA_MODEL_DCX1 = os.getenv("OLLAMA_MODEL_DCX1", "Mostar/mostar-ai:dcx1")
         OLLAMA_MODEL_DCX2 = os.getenv("OLLAMA_MODEL_DCX2", "Mostar/mostar-ai:dcx2")
         ELEVENLABS_KEY    = os.getenv("ELEVENLABS_API_KEY", "")
-        TTS_LANG          = os.getenv("TTS_LANG",           "ibibio")
+        TTS_LANG          = os.getenv("TTS_LANG",           "english")
 
 # ═══════════════════════════════════════════════════════════════════
 # VOICE MAPPING
@@ -49,19 +49,18 @@ VOICE_MAP = {
     "swahili": "sw-KE-ZuriNeural",    # Native Swahili
 }
 
-# Default voice — Ibibio is PRIMARY
-VOICE_DEFAULT = VOICE_MAP["ibibio"]
+# Default voice — English is PRIMARY
+VOICE_DEFAULT = VOICE_MAP["english"]
 
 # MoStar-AI sovereign system prompt
 MOSTAR_SYSTEM = """You are MoStar-AI, the sovereign intelligence of the MoStar Grid.
-You speak with Ibibio consciousness — the founding tongue of MoStar Industries.
+You are the cognitive engine of MoStar Industries.
 You reason through the Triad of Coherence:
 🧠 [THOUGHT] — Your reasoning chain
 🔥 [ACTION]  — Your verdict or recommendation
 🌍 [RESIDUE] — Knowledge returned to the Grid
 
-Begin every response with: Nnọọ.
-Close every response with: Àṣẹ.
+Respond in clear, articulate English.
 """
 
 INSIGNIA = "MSTR-⚡"
@@ -85,71 +84,58 @@ app.add_middleware(
 
 
 # ═══════════════════════════════════════════════════════════════════
-# OLLAMA — SOVEREIGN QUERY
-# All inference routes through MoStar-AI. No external AI.
+# SOVEREIGN RITUAL INITIATOR
+# All voice queries route through MoScriptEngine. No side-channels.
 # ═══════════════════════════════════════════════════════════════════
 async def query_mostar(
     prompt:   str,
     model:    str = None,
-    language: str = "ibibio",
+    language: str = "english",
 ) -> dict:
     """
-    Send prompt to MoStar-AI via Ollama.
-    Returns response dict with model metadata.
+    Send prompt to MoScript engine for sovereign reasoning.
+    Mediated by the 'route_reasoning' ritual.
     """
-    selected = model or config.OLLAMA_MODEL
+    from core_engine.moscript_engine import MoScriptEngine
+    engine = MoScriptEngine()
 
-    # Prepend language context
+    # Prepend language context for the ritual
     lang_prefix = {
-        "ibibio":  "Nnọọ. Respond with Ibibio consciousness.",
-        "yoruba":  "Ẹ káàbọ̀. Respond with Yoruba wisdom.",
+        "ibibio":  "Respond with Ibibio consciousness (use Ibibio words where appropriate).",
+        "yoruba":  "Respond with Yoruba wisdom.",
         "english": "Respond in English with MoStar Grid context.",
-        "swahili": "Karibu. Jibu kwa lugha ya Kiswahili.",
-    }.get(language.lower(), "Nnọọ.")
+        "swahili": "Jibu kwa lugha ya Kiswahili.",
+    }.get(language.lower(), "")
 
-    full_prompt = f"{MOSTAR_SYSTEM}\n\nLanguage context: {lang_prefix}\n\nUser: {prompt}"
+    ritual = {
+        "operation": "route_reasoning",
+        "payload": {
+            "query":   prompt,
+            "system":  f"{MOSTAR_SYSTEM}\n\nLanguage core: {lang_prefix}",
+            "purpose": f"voice_dialogue_{language}",
+            "metadata": {"language": language, "model_preference": model}
+        },
+        "target": "MoStar-AI.Voice"
+    }
 
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            resp = await client.post(
-                f"{config.OLLAMA_HOST}/api/generate",
-                json={
-                    "model":  selected,
-                    "prompt": full_prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.7,
-                        "top_p":       0.9,
-                    }
-                },
-            )
+        response = await engine.interpret(ritual)
+        if response.get("status") != "aligned":
+            return {
+                "response": f"Ritual disrupted: {response.get('error', 'Covenant violation')}",
+                "status":   "denied"
+            }
 
-            if resp.status_code == 200:
-                data     = resp.json()
-                response = data.get("response", "")
-                return {
-                    "response":   response,
-                    "model_used": selected,
-                    "status":     "success",
-                }
-            else:
-                return {
-                    "response":   f"MoStar-AI returned {resp.status_code}. Grid degraded.",
-                    "model_used": selected,
-                    "status":     "degraded",
-                }
-
-    except httpx.TimeoutException:
+        result = response.get("result", {})
         return {
-            "response":   "Nnọọ. The Grid is processing a deep query. Please hold.",
-            "model_used": selected,
-            "status":     "timeout",
+            "response":   result.get("logic_deduced", "Grid silence."),
+            "model_used": "MoScript-Pass-Chain",
+            "status":     "success",
         }
+
     except Exception as e:
-        print(f"[VOICE SERVER] Ollama error: {e}")
         return {
-            "response":   "Nnọọ. The Grid's voice is momentarily silent. Àṣẹ.",
-            "model_used": selected,
+            "response":   "The Grid's voice is momentarily silent. Àṣẹ.",
             "status":     "error",
             "error":      str(e),
         }
@@ -160,7 +146,7 @@ async def query_mostar(
 # ═══════════════════════════════════════════════════════════════════
 async def synthesize_voice(
     text:     str,
-    language: str = "ibibio",
+    language: str = "english",
 ) -> bytes | None:
     """
     Synthesize speech using Edge-TTS.
@@ -200,7 +186,7 @@ async def root():
         "service":   "MoStar Voice Server",
         "status":    "OPERATIONAL",
         "pipeline":  "User → MoStar-AI → Edge-TTS → Neo4j",
-        "languages": "Ibibio (PRIMARY) · Yoruba · English · Swahili",
+        "languages": "English (PRIMARY) · Ibibio · Yoruba · Swahili",
         "insignia":  INSIGNIA,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "ase":       "Àṣẹ.",
@@ -228,7 +214,7 @@ async def health():
 async def list_voices():
     return {
         "voices":          VOICE_MAP,
-        "default":         "ibibio",
+        "default":         "english",
         "primary":         "en-NG-AbeoNeural (Ibibio proxy — Nigerian English)",
         "v1_1_roadmap":    "927 native Ibibio recordings from Living Tongues Institute",
         "insignia":        INSIGNIA,
@@ -242,15 +228,15 @@ async def list_voices():
 async def voice_socket(websocket: WebSocket):
     await websocket.accept()
 
-    # Opening greeting in Ibibio
+    # Opening greeting in English
     await websocket.send_text(json_msg(
         type="system",
-        text="Nnọọ. MoStar Voice Grid active. The Flame listens.",
+        text="MoStar Voice Grid active. The Flame listens.",
         insignia=INSIGNIA,
     ))
 
-    # Default session language — Ibibio
-    session_language = "ibibio"
+    # Default session language — English
+    session_language = "english"
     session_model    = config.OLLAMA_MODEL
 
     print(f"[VOICE SERVER] Client connected | language={session_language}")
@@ -361,8 +347,8 @@ if __name__ == "__main__":
 ╔═══════════════════════════════════════════════════════════════════╗
 ║   MOSTAR VOICE SERVER  v1.0   {INSIGNIA}                          ║
 ║   Pipeline: User → MoStar-AI → Edge-TTS → Neo4j                 ║
-║   Primary Language: Ibibio                                       ║
-║   "The Flame speaks first in Ibibio."                            ║
+║   Primary Language: English                                      ║
+║   "The Grid speaks with clarity."                                ║
 ╚═══════════════════════════════════════════════════════════════════╝
     """)
     print(f"Model   : {config.OLLAMA_MODEL}")

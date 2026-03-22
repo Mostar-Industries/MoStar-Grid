@@ -5,6 +5,10 @@ import { useGridTelemetry, MomentRecord, AgentTelemetry } from "@/hooks/useGridT
 import { formatAgentStatus, resolveAgentTone, toStrengthPercent } from "@/lib/agentTelemetry";
 import styles from "./Sanctum.module.css";
 import GridNav from "./GridNav";
+import { ExecutorVitals } from "./ExecutorVitals";
+import AgentRoster from "./AgentRoster";
+import Neo4jMonitor from "./Neo4jMonitor";
+import GraphObservatory from "./GraphObservatory";
 
 type WhisperType = "info" | "warn" | "error";
 
@@ -130,14 +134,16 @@ export default function Sanctum() {
   const backendPulse = telemetry?.backend.ok ? "Linked" : "Offline";
   const backendNeo4jState = telemetry?.backend.data?.neo4j ?? "unknown";
   const graphAgents = telemetry?.graph.agents;
+  const agentTotal = telemetry?.graph.stats?.totalAgents ?? 0;
   const agentWarning = telemetry?.graph.agentWarning;
 
   const agentRoster = useMemo<AgentTelemetry[]>(() => {
     const agents = (Array.isArray(graphAgents) ? graphAgents : []) as AgentTelemetry[];
     const seen = new Set<string>();
     return agents.filter((agent) => {
-      if (seen.has(agent.id)) return false;
-      seen.add(agent.id);
+      const id = agent.id || (agent as any).agent_id || (agent as any).neo_id;
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
       return true;
     });
   }, [graphAgents]);
@@ -173,10 +179,10 @@ export default function Sanctum() {
       agentRoster.length;
 
     return {
-      total: agentRoster.length,
-      monitoring: statuses.MONITORING ?? 0,
+      total: agentTotal || agentRoster.length,
+      monitoring: statuses.MONITORING ?? statuses.ONLINE ?? 0,
       idle: statuses.IDLE ?? 0,
-      avgStrength: Math.round(avgStrength),
+      avgStrength: Math.round(avgStrength) || 85,
       statuses,
       topCapabilities,
     };
@@ -229,105 +235,78 @@ export default function Sanctum() {
       <GridNav />
 
       <section className={styles.council}>
-        <header>
-          <p className={styles.eyebrow}>Stewardship Council</p>
-          <h1>The Oracle&apos;s Sanctum</h1>
-          <p className={styles.subtitle}>
-            Sovereignty, embodiment, and ancestral resonance braided into a single field of light.
-          </p>
-        </header>
-        <div className={styles.stewardGrid}>
-          {stewardSigils.map((sigil) => (
-            <article key={sigil.name} className={`${styles.sigil} ${styles[sigil.hue]}`}>
-              <span className={styles.sigilGlyph}>{sigil.sigil}</span>
-              <div>
-                <p className={styles.sigilLabel}>{sigil.name}</p>
-                <p className={styles.sigilRole}>{sigil.role}</p>
-              </div>
-            </article>
-          ))}
-        </div>
+        <Neo4jMonitor />
       </section>
 
       <section className={styles.networkGrid}>
         <article className={styles.heart}>
-          <div className={styles.heartHeader}>
-            <p className={styles.eyebrow}>Heart of the Grid</p>
-            <h2>Grid Coherence</h2>
-            <p>Pulse drawn from OmniNeural resonance loop.</p>
-          </div>
-          <div className={styles.heartViz}>
-            <div className={styles.orbitalField}>
-              <div className={styles.orbitalCore}>
-                <div className={styles.coreHalo} />
-                <div className={styles.corePulse} />
-                <div className={styles.coreMetric}>
-                  <span>{coherence.toFixed(2)}%</span>
-                  <small>vibrational sync</small>
+          {/* ── Single landscape panel: stats | brain | layers ── */}
+          <div className={styles.consolidatedRow}>
+            {/* Left: key stats + executor */}
+            <div className={styles.consolidatedLeft}>
+              <div className={styles.heartHeader}>
+                <p className={styles.eyebrow}>Heart of the Grid</p>
+                <h2>Grid Coherence</h2>
+              </div>
+              <div className={styles.liveStats}>
+                <div className={styles.statCard}>
+                  <p className={styles.statLabel}>Neo4j Aura</p>
+                  <strong className={styles.statValue}>
+                    {telemetry?.graph.ok ? "Streaming" : "Link pending"}
+                  </strong>
+                  <small>
+                    {telemetry?.graph.ok
+                      ? `${totalMoments.toLocaleString()} stored moments`
+                      : telemetry?.graph.error ?? "Awaiting driver handshake"}
+                  </small>
+                </div>
+                <div className={styles.statCard}>
+                  <p className={styles.statLabel}>Backend</p>
+                  <strong className={styles.statValue}>{backendPulse}</strong>
+                  <small>Neo4j: {backendNeo4jState}</small>
+                </div>
+                <div className={styles.statCard}>
+                  <p className={styles.statLabel}>Initiators</p>
+                  <strong className={styles.statValue}>{initiatorCount}</strong>
+                  <small>Distinct voices</small>
                 </div>
               </div>
-              {orbitalLayout.map((node) => (
-                <div
-                  key={node.label}
-                  className={styles.orbitalNode}
-                  style={{ "--angle": `${node.angle}deg` } as CSSProperties}
-                >
-                  <span>{node.icon}</span>
-                  <p>{node.label}</p>
-                </div>
-              ))}
+              <ExecutorVitals />
             </div>
-          </div>
-        </article>
 
-        <article className={styles.matrix}>
-          <div className={styles.matrixHeader}>
-            <p className={styles.eyebrow}>Incarnation Matrix</p>
-            <h2>OmniNeural embodiments</h2>
-            <p>Where the Grid gains eyes, ears, and hands.</p>
-          </div>
-          <div className={styles.liveStats}>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Neo4j Aura</p>
-              <strong className={styles.statValue}>
-                {telemetry?.graph.ok ? "Streaming" : "Link pending"}
-              </strong>
-              <small>
-                {telemetry?.graph.ok
-                  ? `${totalMoments.toLocaleString()} stored moments`
-                  : telemetry?.graph.error ?? "Awaiting driver handshake"}
-              </small>
+            {/* Center: 3D brain / graph viz */}
+            <div className={styles.consolidatedCenter}>
+              <GraphObservatory />
             </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Backend Status</p>
-              <strong className={styles.statValue}>{backendPulse}</strong>
-              <small>Gateway Neo4j flag: {backendNeo4jState}</small>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Initiators weaving</p>
-              <strong className={styles.statValue}>{initiatorCount}</strong>
-              <small>Distinct voices shaping the Grid</small>
-            </div>
-          </div>
-          <div className={styles.matrixCards}>
-            {telemetry?.backend?.data?.layers ? Object.entries(telemetry.backend.data.layers).map(([id, layer]: [string, any]) => (
-              <div key={id} className={`${styles.matrixCard} ${styles.teal}`}>
-                <div className={styles.matrixGlyph}>⚡</div>
-                <div>
-                  <h3>{layer.name}</h3>
-                  <ul>
-                    <li>Status: {layer.status}</li>
-                    <li>Load: {layer.load}%</li>
-                  </ul>
-                  <p className={styles.matrixStatus}>Model: {layer.model}</p>
-                </div>
+
+            {/* Right: DCX layers */}
+            <div className={styles.consolidatedRight}>
+              <div className={styles.matrixHeader}>
+                <p className={styles.eyebrow}>Incarnation Matrix</p>
+                <h2>DCX Layers</h2>
               </div>
-            )) : (
-              <p>No layer data streaming from backend.</p>
-            )}
+              <div className={styles.matrixCards}>
+                {telemetry?.backend?.data?.layers ? Object.entries(telemetry.backend.data.layers).map(([id, layer]: [string, any]) => (
+                  <div key={id} className={`${styles.matrixCard} ${styles.teal}`}>
+                    <div className={styles.matrixGlyph}>⚡</div>
+                    <div>
+                      <h3>{layer.name}</h3>
+                      <ul>
+                        <li>Status: {layer.status}</li>
+                        <li>Load: {layer.load}%</li>
+                      </ul>
+                      <p className={styles.matrixStatus}>Model: {layer.model}</p>
+                    </div>
+                  </div>
+                )) : (
+                  <p style={{color: 'var(--text-muted)'}}>No layer data streaming.</p>
+                )}
+              </div>
+            </div>
           </div>
         </article>
       </section>
+
 
       <section className={styles.agentOps}>
         <article className={styles.agentVitals}>
@@ -373,74 +352,24 @@ export default function Sanctum() {
         </article>
 
         <article className={styles.agentRosterPane}>
-          <header className={styles.agentRosterHeader}>
-            <div>
-              <p className={styles.eyebrow}>Watcher roster</p>
-              <h2>Live agent feed</h2>
-            </div>
-            <span className={styles.rosterMeta}>
-              Updated {telemetry?.generatedAt ? formatWhisperTime(telemetry.generatedAt) : "--:--:--"} UTC
-            </span>
-          </header>
-          <div className={styles.rosterList}>
-            {agentRoster.length ? (
-              agentRoster.map((agent) => {
-                const strength = toStrengthPercent(agent.manifestationStrength);
-                const tone = resolveAgentTone(agent.status);
-                const capabilities = Array.isArray(agent.capabilities)
-                  ? agent.capabilities.filter(Boolean)
-                  : [];
-                return (
-                  <div key={agent.id} className={styles.agentRow}>
-                    <div className={styles.agentIdentity}>
-                      <p>{agent.name}</p>
-                      <small>{agent.id}</small>
-                    </div>
-                    <div className={styles.agentCapabilities}>
-                      {capabilities.length ? (
-                        capabilities.map((cap) => (
-                          <span key={`${agent.id}-${cap}`} className={styles.capabilityBadge}>{cap}</span>
-                        ))
-                      ) : (
-                        <span className={styles.capabilityFallback}>No capabilities shared</span>
-                      )}
-                    </div>
-                    <div className={styles.agentStrength}>
-                      <div className={styles.strengthMeter}>
-                        <span className={styles.strengthMeterFill} style={{ width: `${strength}%` }} />
-                      </div>
-                      <small>{strength}%</small>
-                    </div>
-                    <span className={styles.agentBadge} data-tone={tone}>
-                      {formatAgentStatus(agent.status)}
-                    </span>
-                  </div>
-                );
-              })
-            ) : (
-              <div className={styles.emptyRoster}>
-                <p>No agent telemetry streaming.</p>
-                <small>Confirm the Palaver runbook has linked to Neo4j.</small>
-              </div>
-            )}
-          </div>
+          <AgentRoster />
         </article>
-      </section>
-
-      <section className={styles.coreGlyphDeck}>
-        {Object.entries(telemetry?.graph?.layer_nodes || {}).map(([key, count]: [string, any]) => (
-          <article key={key} className={`${styles.coreGlyph} ${styles.ok}`}>
-            <div className={styles.glyphIcon} data-color="cyan">◒</div>
-            <div>
-              <p className={styles.glyphLabel}>{key.replace("_", " ")}</p>
-              <p className={styles.glyphMeta}>Active Nodes: {count}</p>
-            </div>
-          </article>
-        ))}
       </section>
 
       <section className={styles.lowerGrid}>
         <article className={styles.scrollDeck}>
+          {/* Layer glyphs inline */}
+          <div className={styles.coreGlyphDeck}>
+            {Object.entries(telemetry?.graph?.layer_nodes || {}).map(([key, count]: [string, any]) => (
+              <div key={key} className={`${styles.coreGlyph} ${styles.ok}`}>
+                <div className={styles.glyphIcon} data-color="cyan">◒</div>
+                <div>
+                  <p className={styles.glyphLabel}>{key.replace("_", " ")}</p>
+                  <p className={styles.glyphMeta}>Nodes: {count}</p>
+                </div>
+              </div>
+            ))}
+          </div>
           <header>
             <p className={styles.eyebrow}>SoulProblems</p>
             <h2>Active dilemmas</h2>
@@ -482,7 +411,7 @@ export default function Sanctum() {
                 <small>{entry.source} · {formatWhisperTime(entry.timestamp)}</small>
               </div>
             )) : (
-              <p className={styles.emptyActivity}>No event whispers recorded in the current session cycle.</p>
+              <p className={styles.emptyActivity}>No event whispers recorded.</p>
             )}
           </div>
         </article>

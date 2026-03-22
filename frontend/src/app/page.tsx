@@ -1,5 +1,5 @@
-import Sanctum from "@/components/Sanctum";
 import FloatingOracle from "@/components/FloatingOracle";
+import Sanctum from "@/components/Sanctum";
 
 export default function Home() {
   return (

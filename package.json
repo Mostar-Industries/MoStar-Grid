@@ -2,35 +2,12 @@
   "name": "mostar-grid-monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "MoStar Grid — First African AI Homeworld. Built from African intelligence. For African sovereignty.",
-  "author": "The Flame Architect — MoStar Industries",
-  "license": "African-Sovereignty-License-1.0",
   "scripts": {
-    "dev": "cd frontend && npm run dev",
-    "build": "cd frontend && npm run build",
-    "start": "cd frontend && npm run start",
-    "backend": "cd backend && python main.py",
-    "backend:win": "cd backend && ../.venv/Scripts/python.exe main.py",
-    "ollama:start": "ollama serve",
-    "ollama:pull": "ollama pull Mostar/mostar-ai && ollama pull Mostar/remostar-light:dcx1 && ollama pull Mostar/remostar-light:dcx2",
-    "ollama:list": "ollama list",
-    "grid": "concurrently --names \"BACKEND,FRONTEND,OLLAMA\" --prefix-colors \"yellow,cyan,magenta\" \"npm:backend:win\" \"npm:dev\" \"npm:ollama:start\"",
-    "grid:check": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"yellow,cyan\" \"npm:backend:win\" \"npm:dev\"",
-    "verify": "powershell -ExecutionPolicy Bypass -File scripts/verify-grid.ps1",
-    "sovereignty-audit": "powershell -ExecutionPolicy Bypass -File sovereignty_audit.ps1",
-    "health": "curl -s http://localhost:7001/health && curl -s http://localhost:11434/api/tags",
-    "health:win": "powershell -Command \"Invoke-RestMethod http://localhost:7001/health | ConvertTo-Json\""
+    "build": "npm --prefix frontend run build",
+    "dev": "npm --prefix frontend run dev",
+    "start": "npm --prefix frontend start"
   },
   "workspaces": [
     "frontend"
-  ],
-  "devDependencies": {
-    "@types/node": "^25.0.9",
-    "concurrently": "^9.2.1"
-  },
-  "dependencies": {
-    "next": "16.1.6",
-    "react-map-gl": "^8.1.0",
-    "vercel": "^41.0.2"
-  }
+  ]
 }

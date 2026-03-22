@@ -21,7 +21,7 @@ Copyright © 2026 MoStar Industries
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api import consciousness, moments, performance, grid_metrics
+from .api import consciousness, moments, performance
 
 # Create FastAPI app
 app = FastAPI(

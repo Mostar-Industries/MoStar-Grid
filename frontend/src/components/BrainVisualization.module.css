@@ -1,0 +1,283 @@
+/* BrainVisualization.module.css */
+/* Heart of the Grid - Neural Cognitive Substrate Styling */
+
+/* Main brain container */
+.brainContainer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Data overlay panel */
+.dataOverlay {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 24px;
+  color: #00ffff;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  min-width: 280px;
+  max-width: 340px;
+  z-index: 100;
+}
+
+/* Header section */
+.overlayHeader {
+  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.overlayTitle {
+  font-size: 18px;
+  font-weight: bold;
+  color: #00ffff;
+  margin-bottom: 4px;
+}
+
+.overlaySubtitle {
+  font-size: 12px;
+  color: #8899aa;
+}
+
+/* Grid coherence section */
+.coherenceSection {
+  margin-bottom: 16px;
+}
+
+.coherenceTitle {
+  color: #00ffff;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.coherenceText {
+  color: #aabbcc;
+  font-size: 12px;
+}
+
+/* Neo4j status section */
+.statusSection {
+  margin-bottom: 16px;
+}
+
+.statusHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.statusIndicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.statusConnected {
+  background: #00ff00;
+}
+
+.statusSyncing {
+  background: #ffaa00;
+}
+
+.statusError {
+  background: #ff4444;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.statusTitle {
+  color: #00ffff;
+  font-size: 14px;
+}
+
+.statusDetails {
+  font-size: 12px;
+  color: #aabbcc;
+  margin-left: 16px;
+}
+
+.statusActive {
+  color: #00ff88;
+}
+
+/* Metrics section */
+.metricsSection {
+  margin-bottom: 16px;
+}
+
+.metricRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.metricLabel {
+  color: #aabbcc;
+}
+
+.metricValue {
+  font-weight: bold;
+}
+
+.metricNodes {
+  color: #00ff88;
+}
+
+.metricCoherence {
+  color: #00aaff;
+}
+
+.metricResonance {
+  color: #aa66ff;
+}
+
+/* Activity stream section */
+.activitySection {
+  border-top: 1px solid rgba(0, 255, 255, 0.3);
+  padding-top: 12px;
+}
+
+.activityTitle {
+  font-size: 12px;
+  color: #00ffff;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.activityStream {
+  max-height: 100px;
+  overflow: hidden;
+}
+
+.activityItem {
+  font-size: 11px;
+  color: #eff309a4;
+  margin-bottom: 4px;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Loading state */
+.loadingContainer {
+  width: 100%;
+  height: 100%;
+  background: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00ffff;
+  font-family: 'Courier New', monospace;
+}
+
+.loadingSpinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #00ffff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error notification */
+.errorNotification {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: rgba(255, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 12px;
+  color: #ff6666;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  z-index: 100;
+}
+
+/* Neural activity particles background */
+.particleBackground {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.neuralParticle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #00ffff;
+  border-radius: 50%;
+  animation: particlePulse 2s ease-in-out infinite;
+}
+
+@keyframes particlePulse {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+}
+
+/* Canvas container */
+.canvasContainer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 10;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dataOverlay {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    min-width: auto;
+    max-width: none;
+    padding: 16px;
+  }
+
+  .overlayTitle {
+    font-size: 16px;
+  }
+
+  .metricRow {
+    font-size: 12px;
+  }
+}
