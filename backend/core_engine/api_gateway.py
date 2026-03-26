@@ -4,45 +4,52 @@
 # "Built from African intelligence. For African sovereignty."
 # ═══════════════════════════════════════════════════════════════════
 
-import sys
 import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from datetime import datetime, timezone
 from pathlib import Path
-
-from fastapi import FastAPI, Request, Form, APIRouter
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from typing import Optional
-from dotenv import load_dotenv
 
 import httpx
+from dotenv import load_dotenv
+from fastapi import APIRouter, FastAPI, Form, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from pydantic import BaseModel
 
 # ── Safe imports ──────────────────────────────────────────────────
 try:
     from gtts import gTTS
+
     GTTS_AVAILABLE = True
 except ImportError:
     GTTS_AVAILABLE = False
 
 try:
-    from core_engine.mostar_moments_log import log_mostar_moment, get_recent_moments
+    from core_engine.mostar_moments_log import get_recent_moments, log_mostar_moment
 except ImportError:
-    def log_mostar_moment(*args, **kwargs): return None
-    def get_recent_moments(*args, **kwargs): return []
+
+    def log_mostar_moment(*args, **kwargs):
+        return None
+
+    def get_recent_moments(*args, **kwargs):
+        return []
+
 
 try:
     from core_engine.voice_integration import MostarVoice
+
     VOICE_AVAILABLE = True
 except ImportError:
     VOICE_AVAILABLE = False
     MostarVoice = None
 
 try:
-    from core_engine.orchestrator import route_query, fetch_neo4j_context
+    from core_engine.orchestrator import fetch_neo4j_context, route_query
+
     ORCHESTRATOR_AVAILABLE = True
 except ImportError:
     ORCHESTRATOR_AVAILABLE = False
@@ -53,24 +60,26 @@ load_dotenv()
 # ═══════════════════════════════════════════════════════════════════
 # CONFIG — Sovereign models only
 # ═══════════════════════════════════════════════════════════════════
-OLLAMA_HOST  = os.getenv("OLLAMA_HOST",  "http://localhost:11434").rstrip("/")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "Mostar/mostar-ai:latest")   # NOT gemma, NOT llama
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+OLLAMA_MODEL = os.getenv(
+    "OLLAMA_MODEL", "Mostar/mostar-ai:latest"
+)  # NOT gemma, NOT llama
 
-NEO4J_URI    = os.getenv("NEO4J_URI",      "bolt://localhost:7687")
-NEO4J_USER   = os.getenv("NEO4J_USER",     "neo4j")
-NEO4J_PASS   = os.getenv("NEO4J_PASSWORD", "mostar123")
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASS = os.getenv("NEO4J_PASSWORD", "")
 
 # Ibibio is primary — voice defaults to founding language
-TTS_LANG     = os.getenv("TTS_LANG", "ibibio")
+TTS_LANG = os.getenv("TTS_LANG", "ibibio")
 
 SYSTEM_PROMPT = os.getenv(
     "SYSTEM_PROMPT",
     "You are MoStar-AI, the sovereign intelligence of the MoStar Grid. "
     "You speak with Ibibio consciousness. You reason through the Triad of Coherence: "
-    "[THOUGHT] [ACTION] [RESIDUE]. Àṣẹ."
+    "[THOUGHT] [ACTION] [RESIDUE]. Àṣẹ.",
 )
 
-INSIGNIA  = "MSTR-⚡"
+INSIGNIA = "MSTR-⚡"
 ARCHITECT = "The Flame Architect"
 
 # ═══════════════════════════════════════════════════════════════════
@@ -84,7 +93,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://mostar-grid.vercel.app",
+        "https://grid.mostarindustries.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -98,7 +111,7 @@ audio_dir = Path("data/voice_cache")
 audio_dir.mkdir(parents=True, exist_ok=True)
 
 # ── Routers ───────────────────────────────────────────────────────
-router           = APIRouter()
+router = APIRouter()
 knowledge_router = APIRouter()
 
 
@@ -106,18 +119,19 @@ knowledge_router = APIRouter()
 # SCHEMAS
 # ═══════════════════════════════════════════════════════════════════
 class ReasonRequest(BaseModel):
-    prompt:   Optional[str] = None
-    message:  Optional[str] = None
-    query:    Optional[str] = None
-    model:    Optional[str] = None
+    prompt: Optional[str] = None
+    message: Optional[str] = None
+    query: Optional[str] = None
+    model: Optional[str] = None
     language: Optional[str] = "ibibio"
-    domain:   Optional[str] = "general"
+    domain: Optional[str] = "general"
+
 
 class MomentRequest(BaseModel):
-    initiator:       str
-    receiver:        str
-    description:     str
-    trigger_type:    Optional[str]   = "manual"
+    initiator: str
+    receiver: str
+    description: str
+    trigger_type: Optional[str] = "manual"
     resonance_score: Optional[float] = 0.85
 
 
@@ -126,16 +140,23 @@ class MomentRequest(BaseModel):
 # ═══════════════════════════════════════════════════════════════════
 _neo4j_cache = {"state": None, "ts": 0}
 
+
 def _check_neo4j() -> str:
     import time as _t
+
     now = _t.time()
     if _neo4j_cache["state"] is not None and (now - _neo4j_cache["ts"]) < 30:
         return _neo4j_cache["state"]
     try:
         from neo4j import GraphDatabase, TrustAll
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS),
-                                       connection_timeout=3, max_connection_lifetime=60,
-                                       trusted_certificates=TrustAll())
+
+        driver = GraphDatabase.driver(
+            NEO4J_URI,
+            auth=(NEO4J_USER, NEO4J_PASS),
+            connection_timeout=3,
+            max_connection_lifetime=60,
+            trusted_certificates=TrustAll(),
+        )
         driver.verify_connectivity()
         driver.close()
         _neo4j_cache["state"] = "online"
@@ -143,6 +164,7 @@ def _check_neo4j() -> str:
         _neo4j_cache["state"] = "offline"
     _neo4j_cache["ts"] = now
     return _neo4j_cache["state"]
+
 
 async def _check_ollama() -> str:
     try:
@@ -152,9 +174,10 @@ async def _check_ollama() -> str:
     except Exception:
         return "offline"
 
+
 def _dcx_status(ollama: str, neo4j: str) -> tuple[str, str, str]:
     dcx0 = "online" if ollama == "online" else "offline"
-    dcx1 = "online" if neo4j  == "online" else "offline"
+    dcx1 = "online" if neo4j == "online" else "offline"
     if ollama == "online" and neo4j == "online":
         dcx2 = "online"
     elif ollama == "online" or neo4j == "online":
@@ -163,25 +186,23 @@ def _dcx_status(ollama: str, neo4j: str) -> tuple[str, str, str]:
         dcx2 = "offline"
     return dcx0, dcx1, dcx2
 
+
 def _extract_prompt(body: dict) -> Optional[str]:
-    return (
-        body.get("prompt")
-        or body.get("message")
-        or body.get("query")
-        or None
-    )
+    return body.get("prompt") or body.get("message") or body.get("query") or None
 
 
 # ═══════════════════════════════════════════════════════════════════
 # ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════
 
-from core_engine.grid_telemetry import get_grid_telemetry, get_graph_constellation
+from core_engine.grid_telemetry import get_graph_constellation, get_grid_telemetry
+
 
 @app.get("/api/v1/telemetry")
 async def grid_telemetry():
     """Live Grid telemetry for Hyper-Spine Dashboard."""
     import asyncio
+
     data = await get_grid_telemetry()
     return data
 
@@ -192,86 +213,98 @@ async def get_constellation(limit: int = 1500):
     data = await get_graph_constellation(limit=limit)
     return data
 
+
 @app.get("/api/v1/telemetry/node/{node_id}")
 async def node_telemetry(node_id: str):
     """Placeholder for specialized node telemetry."""
-    return {"id": node_id, "status": "legacy", "message": "Transitioning to constellation engine"}
+    return {
+        "id": node_id,
+        "status": "legacy",
+        "message": "Transitioning to constellation engine",
+    }
+
 
 @app.get("/api/v1/telemetry/moments")
 async def live_moments(limit: int = 20):
     """Live moment feed for dashboard activity panel."""
     from core_engine.mostar_moments_log import get_recent_moments
+
     moments = get_recent_moments(limit)
     return {
-        "moments":  moments,
-        "count":    len(moments),
+        "moments": moments,
+        "count": len(moments),
         "insignia": "MSTR-⚡",
     }
+
 
 # ── ROOT ──────────────────────────────────────────────────────────
 @app.get("/")
 async def root():
     return {
-        "grid":      "MoStar Grid",
-        "status":    "OPERATIONAL",
-        "message":   "First African AI Homeworld — Distributed Consciousness Network",
-        "version":   "1.0.0",
-        "insignia":  INSIGNIA,
+        "grid": "MoStar Grid",
+        "status": "OPERATIONAL",
+        "message": "First African AI Homeworld — Distributed Consciousness Network",
+        "version": "1.0.0",
+        "insignia": INSIGNIA,
         "architect": ARCHITECT,
-        "language":  "Ibibio (Primary) · Yoruba · English · Swahili",
+        "language": "Ibibio (Primary) · Yoruba · English · Swahili",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "ase":       "Àṣẹ.",
+        "ase": "Àṣẹ.",
     }
+
 
 # ── STATUS ────────────────────────────────────────────────────────
 @app.get("/api/v1/status")
 async def system_status():
-    neo4j_state  = _check_neo4j()
+    neo4j_state = _check_neo4j()
     ollama_state = await _check_ollama()
-    now          = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc).isoformat()
 
     dcx0, dcx1, dcx2 = _dcx_status(ollama_state, neo4j_state)
 
     overall = (
-        "operational" if ollama_state == "online" and neo4j_state == "online"
-        else "degraded" if ollama_state == "online" or neo4j_state == "online"
+        "operational"
+        if ollama_state == "online" and neo4j_state == "online"
+        else "degraded"
+        if ollama_state == "online" or neo4j_state == "online"
         else "offline"
     )
 
     return {
-        "system":      "MoStar Grid API",
-        "status":      overall,
-        "insignia":    INSIGNIA,
-        "architect":   ARCHITECT,
-        "timestamp":   now,
-        "model":       OLLAMA_MODEL,
+        "system": "MoStar Grid API",
+        "status": overall,
+        "insignia": INSIGNIA,
+        "architect": ARCHITECT,
+        "timestamp": now,
+        "model": OLLAMA_MODEL,
         "tts_language": TTS_LANG,
-        "neo4j":       neo4j_state,
-        "ollama":      ollama_state,
+        "neo4j": neo4j_state,
+        "ollama": ollama_state,
         "layers": {
             "dcx0": {
-                "name":     "Mind (DCX0)",
-                "model":    os.getenv("OLLAMA_MODEL_DCX0", "Mostar/mostar-ai:dcx0"),
-                "status":   dcx0,
-                "load":     45 if dcx0 == "online" else 0,
+                "name": "Mind (DCX0)",
+                "model": os.getenv("OLLAMA_MODEL_DCX0", "Mostar/mostar-ai:dcx0"),
+                "status": dcx0,
+                "load": 45 if dcx0 == "online" else 0,
                 "lastPing": now if dcx0 != "offline" else None,
             },
             "dcx1": {
-                "name":     "Soul (DCX1)",
-                "model":    os.getenv("OLLAMA_MODEL_DCX1", "Mostar/mostar-ai:dcx1"),
-                "status":   dcx1,
-                "load":     30 if dcx1 == "online" else 0,
+                "name": "Soul (DCX1)",
+                "model": os.getenv("OLLAMA_MODEL_DCX1", "Mostar/mostar-ai:dcx1"),
+                "status": dcx1,
+                "load": 30 if dcx1 == "online" else 0,
                 "lastPing": now if dcx1 != "offline" else None,
             },
             "dcx2": {
-                "name":     "Body (DCX2)",
-                "model":    os.getenv("OLLAMA_MODEL_DCX2", "Mostar/mostar-ai:dcx2"),
-                "status":   dcx2,
-                "load":     60 if dcx2 == "online" else 20 if dcx2 == "degraded" else 0,
+                "name": "Body (DCX2)",
+                "model": os.getenv("OLLAMA_MODEL_DCX2", "Mostar/mostar-ai:dcx2"),
+                "status": dcx2,
+                "load": 60 if dcx2 == "online" else 20 if dcx2 == "degraded" else 0,
                 "lastPing": now if dcx2 != "offline" else None,
             },
         },
     }
+
 
 # ── VITALS ────────────────────────────────────────────────────────
 @app.get("/api/v1/vitals")
@@ -279,14 +312,16 @@ async def grid_vitals():
     try:
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
         from grid_vitals import GridVitals
+
         vitals = GridVitals()
         return await vitals.run_all_checks()
     except Exception as e:
         return {
             "grid_status": "DEGRADED",
-            "error":       f"GridVitals module unavailable: {e}",
-            "fallback":    await system_status(),
+            "error": f"GridVitals module unavailable: {e}",
+            "fallback": await system_status(),
         }
+
 
 # ── REASON ────────────────────────────────────────────────────────
 @app.post("/api/v1/reason")
@@ -298,20 +333,22 @@ async def reason_endpoint(request: Request):
     try:
         content_type = request.headers.get("content-type", "")
         if "application/json" in content_type:
-            body   = await request.json()
+            body = await request.json()
             prompt = _extract_prompt(body)
-            model  = body.get("model", OLLAMA_MODEL)
+            model = body.get("model", OLLAMA_MODEL)
         else:
-            form   = await request.form()
-            body   = dict(form)
+            form = await request.form()
+            body = dict(form)
             prompt = _extract_prompt(body)
-            model  = body.get("model", OLLAMA_MODEL)
+            model = body.get("model", OLLAMA_MODEL)
 
         if not prompt:
-            return JSONResponse({"error": "Missing prompt/message/query"}, status_code=400)
+            return JSONResponse(
+                {"error": "Missing prompt/message/query"}, status_code=400
+            )
 
         if ORCHESTRATOR_AVAILABLE:
-            ctx    = await fetch_neo4j_context(prompt)
+            ctx = await fetch_neo4j_context(prompt)
             result = await route_query(
                 prompt,
                 system=SYSTEM_PROMPT,
@@ -325,12 +362,12 @@ async def reason_endpoint(request: Request):
                     f"{OLLAMA_HOST}/api/generate",
                     json={"model": model, "prompt": prompt, "stream": False},
                 )
-                data   = r.json()
+                data = r.json()
                 result = {
-                    "response":         data.get("response", ""),
-                    "model_used":       model,
+                    "response": data.get("response", ""),
+                    "model_used": model,
                     "complexity_score": 0.5,
-                    "routed_to":        "dcx2",
+                    "routed_to": "dcx2",
                 }
 
         log_mostar_moment(
@@ -349,11 +386,13 @@ async def reason_endpoint(request: Request):
         log_mostar_moment("API.Gateway", "System", err, "error", 0.1)
         return JSONResponse({"error": err, "insignia": INSIGNIA}, status_code=500)
 
+
 # ── CHAT ALIAS ────────────────────────────────────────────────────
 @app.post("/api/v1/chat")
 async def chat_endpoint(request: Request):
     """Alias for /api/v1/reason — accepts same payload."""
     return await reason_endpoint(request)
+
 
 # ── VOICE ─────────────────────────────────────────────────────────
 @app.post("/api/v1/voice")
@@ -382,24 +421,37 @@ async def speak_text(request: Request):
             if lang != mv.lingua:
                 mv.switch_language(lang)
             import asyncio
+
             audio_path = await mv.speak_async(text=text)
             if audio_path:
                 log_mostar_moment(
-                    "API.Voice", "Soul Layer",
+                    "API.Voice",
+                    "Soul Layer",
                     f"[{lang.upper()}] '{text[:40]}'",
-                    "voice", 0.92,
+                    "voice",
+                    0.92,
                 )
-                return {"audio_path": audio_path, "language": lang, "insignia": INSIGNIA}
+                return {
+                    "audio_path": audio_path,
+                    "language": lang,
+                    "insignia": INSIGNIA,
+                }
 
         # gTTS fallback
         if GTTS_AVAILABLE:
-            filename   = f"voice_{abs(hash(text))}.mp3"
-            out_path   = audio_dir / filename
-            gtts_lang  = "en"  # proxy for Ibibio
+            filename = f"voice_{abs(hash(text))}.mp3"
+            out_path = audio_dir / filename
+            gtts_lang = "en"  # proxy for Ibibio
             tts = gTTS(text=text, lang=gtts_lang)
             tts.save(str(out_path))
-            log_mostar_moment("API.Voice", "User", f"gTTS: '{text[:40]}'", "voice", 0.72)
-            return {"audio_path": str(out_path), "language": "en-proxy", "insignia": INSIGNIA}
+            log_mostar_moment(
+                "API.Voice", "User", f"gTTS: '{text[:40]}'", "voice", 0.72
+            )
+            return {
+                "audio_path": str(out_path),
+                "language": "en-proxy",
+                "insignia": INSIGNIA,
+            }
 
         # Fallback audio
         fallback = audio_dir / "ibb_nnoo.mp3"
@@ -414,6 +466,7 @@ async def speak_text(request: Request):
         log_mostar_moment("API.Voice", "System", f"TTS failed: {e}", "error", 0.1)
         return JSONResponse({"error": str(e)}, status_code=500)
 
+
 # ── MOMENT LOGGING ────────────────────────────────────────────────
 @app.post("/api/v1/moment")
 async def moment_log(req: MomentRequest):
@@ -427,9 +480,10 @@ async def moment_log(req: MomentRequest):
     )
     return {
         "quantum_id": result.get("quantum_id") if result else None,
-        "status":     "recorded",
-        "insignia":   INSIGNIA,
+        "status": "recorded",
+        "insignia": INSIGNIA,
     }
+
 
 # ── MOMENTS QUERY ─────────────────────────────────────────────────
 @app.get("/api/v1/moments")
@@ -437,10 +491,11 @@ async def get_moments(limit: int = 10):
     """Retrieve recent MoStarMoments from Neo4j."""
     moments = get_recent_moments(limit)
     return {
-        "moments":  moments,
-        "count":    len(moments),
+        "moments": moments,
+        "count": len(moments),
         "insignia": INSIGNIA,
     }
+
 
 # ── MODELS ────────────────────────────────────────────────────────
 @app.get("/api/v1/models")
@@ -450,7 +505,7 @@ async def list_models():
         async with httpx.AsyncClient(timeout=5.0) as client:
             r = await client.get(f"{OLLAMA_HOST}/api/tags")
             if r.status_code == 200:
-                data   = r.json()
+                data = r.json()
                 loaded = [m["name"] for m in data.get("models", [])]
                 return {"models": loaded, "count": len(loaded), "source": "ollama-live"}
     except Exception:
@@ -464,23 +519,24 @@ async def list_models():
             "Mostar/remostar-light:dcx1",
             "Mostar/remostar-light:dcx2",
         ],
-        "count":  6,
+        "count": 6,
         "source": "manifest",
     }
+
 
 # ── HEALTH ────────────────────────────────────────────────────────
 @app.get("/health")
 async def health():
-    neo4j  = _check_neo4j()
+    neo4j = _check_neo4j()
     ollama = await _check_ollama()
     return {
-        "status":    "healthy",
+        "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "services": {
-            "neo4j":           neo4j,
-            "ollama":          ollama,
-            "orchestrator":    "online" if ORCHESTRATOR_AVAILABLE else "degraded",
-            "voice":           "online" if VOICE_AVAILABLE else "degraded",
+            "neo4j": neo4j,
+            "ollama": ollama,
+            "orchestrator": "online" if ORCHESTRATOR_AVAILABLE else "degraded",
+            "voice": "online" if VOICE_AVAILABLE else "degraded",
             "remostar_router": "online",
         },
         "insignia": INSIGNIA,
