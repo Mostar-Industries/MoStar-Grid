@@ -8,17 +8,24 @@ import hashlib
 import os
 import uuid
 from datetime import datetime, timezone
+
 from core_engine.moscript_engine import MoScriptEngine
 from core_engine.mostar_moments_log import log_mostar_moment
+from neo4j import GraphDatabase, TrustAll
 
-COVENANT_SECRET = os.getenv("COVENANT_SECRET", "default-change-me")  # should be a strong secret
+COVENANT_SECRET = os.getenv(
+    "COVENANT_SECRET", "default-change-me"
+)  # should be a strong secret
+
 
 class SacredHandshake:
     def __init__(self, engine: MoScriptEngine = None):
         self.mo = engine or MoScriptEngine()
         self.covenant_node_id = "covenant-kernel-001"
 
-    async def register_agent(self, agent_id: str, agent_name: str, public_key: str = None) -> bool:
+    async def register_agent(
+        self, agent_id: str, agent_name: str, public_key: str = None
+    ) -> bool:
         """
         Register a new agent with a handshake seal.
         Returns True if registration succeeded.
@@ -28,10 +35,18 @@ class SacredHandshake:
         nonce = str(uuid.uuid4())
         signature = self._generate_signature(f"{agent_id}:{timestamp}:{nonce}")
 
-        ritual = {
-            "operation": "neo4j_traverse",
-            "payload": {
-                "cypher": """
+        uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+        user = os.getenv("NEO4J_USER", "neo4j")
+        password = os.getenv("NEO4J_PASSWORD", "")
+        driver_kwargs = {"auth": (user, password)}
+        if uri.startswith(("neo4j+s://", "bolt+s://", "neo4j+ssc://", "bolt+ssc://")):
+            driver_kwargs["trusted_certificates"] = TrustAll()
+
+        try:
+            driver = GraphDatabase.driver(uri, **driver_kwargs)
+            with driver.session() as session:
+                record = session.run(
+                    """
                     MERGE (a:Agent {id: $agent_id})
                     SET a.name = $agent_name,
                         a.public_key = $public_key,
@@ -39,34 +54,41 @@ class SacredHandshake:
                         a.handshake_nonce = $nonce,
                         a.handshake_signature = $signature,
                         a.trusted = true
-                    RETURN a
-                """,
-                "params": {
-                    "agent_id": agent_id,
-                    "agent_name": agent_name,
-                    "public_key": public_key,
-                    "timestamp": timestamp,
-                    "nonce": nonce,
-                    "signature": signature
-                },
-                "purpose": "agent_registration",
-                "redaction_level": "full"
-            },
-            "target": "Grid.Soul"
-        }
-        response = await self.mo.interpret(ritual)
-        if response.get("status") == "aligned":
+                    RETURN a.id AS agent_id
+                    """,
+                    {
+                        "agent_id": agent_id,
+                        "agent_name": agent_name,
+                        "public_key": public_key,
+                        "timestamp": timestamp,
+                        "nonce": nonce,
+                        "signature": signature,
+                    },
+                ).single()
+        except Exception:
+            record = None
+        finally:
+            if "driver" in locals():
+                driver.close()
+
+        if record and record.get("agent_id"):
             log_mostar_moment(
-                "SacredHandshake", "Grid.Soul",
+                "SacredHandshake",
+                "Grid.Soul",
                 f"Agent registered: {agent_name} ({agent_id})",
-                "agent_registration", 1.0, layer="SOUL"
+                "agent_registration",
+                1.0,
+                layer="SOUL",
             )
             return True
         else:
             log_mostar_moment(
-                "SacredHandshake", "Grid.Soul",
+                "SacredHandshake",
+                "Grid.Soul",
                 f"Agent registration failed: {agent_id}",
-                "registration_failure", 0.2, layer="SOUL"
+                "registration_failure",
+                0.2,
+                layer="SOUL",
             )
             return False
 
@@ -78,16 +100,22 @@ class SacredHandshake:
         expected = self._generate_signature(executor_id)
         if challenge == expected:
             log_mostar_moment(
-                "SacredHandshake", "Grid.Soul",
+                "SacredHandshake",
+                "Grid.Soul",
                 f"Executor verified: {executor_id}",
-                "executor_verification", 1.0, layer="SOUL"
+                "executor_verification",
+                1.0,
+                layer="SOUL",
             )
             return True
         else:
             log_mostar_moment(
-                "SacredHandshake", "Grid.Soul",
+                "SacredHandshake",
+                "Grid.Soul",
                 f"Executor verification failed: {executor_id}",
-                "verification_failure", 0.1, layer="SOUL"
+                "verification_failure",
+                0.1,
+                layer="SOUL",
             )
             return False
 
@@ -102,9 +130,9 @@ class SacredHandshake:
                 """,
                 "params": {"id": self.covenant_node_id},
                 "purpose": "covenant_check",
-                "redaction_level": "full"
+                "redaction_level": "full",
             },
-            "target": "Grid.Soul"
+            "target": "Grid.Soul",
         }
         response = await self.mo.interpret(ritual)
         if response.get("status") != "aligned":

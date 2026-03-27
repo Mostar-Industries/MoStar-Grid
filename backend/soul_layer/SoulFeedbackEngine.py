@@ -8,8 +8,10 @@ Provides empirical, MoScript-governed feedback to shape the Grid's adaptation.
 import asyncio
 import json
 import random
+
 from core_engine.moscript_engine import MoScriptEngine
 from core_engine.mostar_moments_log import log_mostar_moment
+
 
 class SoulFeedbackEngine:
     def __init__(self, engine: MoScriptEngine = None):
@@ -27,20 +29,22 @@ class SoulFeedbackEngine:
                 "cypher": """
                     MATCH (m:MoStarMoment)
                     WHERE m.resonance_score IS NOT NULL
+                    WITH m
+                    ORDER BY m.timestamp DESC
+                    LIMIT 20
                     RETURN avg(m.resonance_score) AS avg_score, count(m) AS moment_count
-                    ORDER BY m.timestamp DESC LIMIT 20
                 """,
                 "purpose": "calculate_soul_resonance",
-                "redaction_level": "full"
+                "redaction_level": "full",
             },
-            "target": "Grid.Soul"
+            "target": "Grid.Soul",
         }
 
         response = await self.mo.interpret(ritual)
-        
+
         base_resonance = 0.5
         moment_count = 0
-        
+
         if response.get("status") == "aligned":
             records = response.get("result", {}).get("records", [])
             if records and records[0].get("avg_score") is not None:
@@ -57,7 +61,7 @@ class SoulFeedbackEngine:
             description=f"Calculated stochastic resonance signal: {stochastic_signal:.2f} (Base: {base_resonance:.2f})",
             trigger_type="resonance_feedback",
             resonance_score=stochastic_signal,
-            layer="SOUL"
+            layer="SOUL",
         )
 
         return {
@@ -66,13 +70,15 @@ class SoulFeedbackEngine:
             "fluctuation": fluctuation,
             "stochastic_signal": stochastic_signal,
             "moment_count_analyzed": moment_count,
-            "seal": self.mo.bless(f"resonance_{stochastic_signal:.4f}")
+            "seal": self.mo.bless(f"resonance_{stochastic_signal:.4f}"),
         }
+
 
 async def main():
     sfe = SoulFeedbackEngine()
     signal = await sfe.calculate_resonance_signal()
     print(json.dumps(signal, indent=2))
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,0 +1,46 @@
+╔══════════════════════════════════════════════════════════╗
+║           MOSTAR GRID — COMMAND CHEATSHEET               ║
+╚══════════════════════════════════════════════════════════╝
+
+DAILY USE (open any terminal, run any of these):
+─────────────────────────────────────────────────
+  pm2 status                  → see if backend + executor are alive
+  pm2 logs mostar-backend     → live backend logs
+  pm2 logs mostar-executor    → live executor logs
+  pm2 logs                    → all logs together
+
+RESTART (if something's off):
+─────────────────────────────────────────────────
+  pm2 restart mostar-backend
+  pm2 restart mostar-executor
+  pm2 restart all             → restarts everything at once
+
+STOP / START:
+─────────────────────────────────────────────────
+  pm2 stop all
+  pm2 start ecosystem.config.js
+
+AFTER A CRASH OR UPDATE:
+─────────────────────────────────────────────────
+  pm2 kill                    → kill all PM2 processes
+  pm2 start ecosystem.config.js
+  pm2 save                    → always save after changes
+
+OLLAMA (already a Windows service, but if needed):
+─────────────────────────────────────────────────
+  ollama serve                → manually start if service stopped
+  ollama list                 → check loaded models
+
+CLOUDFLARE TUNNEL (one-time, run as Admin):
+─────────────────────────────────────────────────
+  cloudflared service install
+  cloudflared tunnel run mostar-grid
+
+LOG FILES LOCATION:
+─────────────────────────────────────────────────
+  C:\Users\idona\OneDrive - World Health Organization\
+    Documents\Dev\MoStar-Grid\logs\
+      backend.out.log
+      backend.err.log
+      executor.out.log
+      executor.err.log

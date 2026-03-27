@@ -6,13 +6,14 @@
 
 import hashlib
 import os
-import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 # ── Neo4j connection ──────────────────────────────────────────────
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASS = os.getenv("NEO4J_PASSWORD", "")
+MOMENT_DEDUP_WINDOW_SECONDS = int(os.getenv("MOMENT_DEDUP_WINDOW_SECONDS", "30"))
+_RECENT_MOMENT_CACHE: dict[str, datetime] = {}
 
 
 def _get_driver():
@@ -25,10 +26,63 @@ def _get_driver():
         return None
 
 
+def _generate_moment_fingerprint(
+    initiator: str,
+    receiver: str,
+    description: str,
+    trigger_type: str,
+    layer: str,
+) -> str:
+    base = "|".join(
+        [
+            initiator.strip(),
+            receiver.strip(),
+            description.strip(),
+            trigger_type.strip(),
+            layer.strip(),
+        ]
+    )
+    return hashlib.sha256(base.encode()).hexdigest()[:24]
+
+
 def _generate_quantum_id(initiator: str, description: str) -> str:
     """Deterministic quantum ID — same moment never logs twice."""
     base = f"{initiator}:{description}:{datetime.now(timezone.utc).isoformat()}"
     return hashlib.sha256(base.encode()).hexdigest()[:16]
+
+
+def _is_recent_duplicate(driver, fingerprint: str) -> bool:
+    now = datetime.now(timezone.utc)
+    cached_at = _RECENT_MOMENT_CACHE.get(fingerprint)
+    if cached_at and (now - cached_at).total_seconds() < MOMENT_DEDUP_WINDOW_SECONDS:
+        return True
+
+    if not driver:
+        return False
+
+    cutoff = (now - timedelta(seconds=MOMENT_DEDUP_WINDOW_SECONDS)).isoformat()
+    try:
+        with driver.session() as session:
+            record = session.run(
+                """
+                MATCH (m:MoStarMoment {fingerprint: $fingerprint})
+                WHERE m.timestamp >= $cutoff
+                RETURN count(m) AS count
+                """,
+                {"fingerprint": fingerprint, "cutoff": cutoff},
+            ).single()
+        return bool(record and record["count"])
+    except Exception:
+        return False
+
+
+def _remember_fingerprint(fingerprint: str):
+    now = datetime.now(timezone.utc)
+    stale_before = now - timedelta(seconds=MOMENT_DEDUP_WINDOW_SECONDS)
+    stale_keys = [k for k, v in _RECENT_MOMENT_CACHE.items() if v < stale_before]
+    for key in stale_keys:
+        _RECENT_MOMENT_CACHE.pop(key, None)
+    _RECENT_MOMENT_CACHE[fingerprint] = now
 
 
 # ── CORE FUNCTION ─────────────────────────────────────────────────
@@ -49,9 +103,13 @@ def log_mostar_moment(
     """
     quantum_id = _generate_quantum_id(initiator, description)
     timestamp = datetime.now(timezone.utc).isoformat()
+    fingerprint = _generate_moment_fingerprint(
+        initiator, receiver, description, trigger_type, layer
+    )
 
     moment = {
         "quantum_id": quantum_id,
+        "fingerprint": fingerprint,
         "timestamp": timestamp,
         "initiator": initiator,
         "receiver": receiver,
@@ -66,6 +124,12 @@ def log_mostar_moment(
 
     # ── Write to Neo4j ────────────────────────────────────────────
     driver = _get_driver()
+    if _is_recent_duplicate(driver, fingerprint):
+        print(
+            f"[MOMENT] ⏭️ Skipped duplicate [{fingerprint[:8]}] {initiator} → {receiver}"
+        )
+        return {**moment, "logged": False, "deduplicated": True}
+
     if driver:
         try:
             with driver.session() as session:
@@ -73,6 +137,7 @@ def log_mostar_moment(
                     """
                     MERGE (m:MoStarMoment {quantum_id: $quantum_id})
                     SET
+                        m.fingerprint     = $fingerprint,
                         m.timestamp       = $timestamp,
                         m.initiator       = $initiator,
                         m.receiver        = $receiver,
@@ -86,6 +151,7 @@ def log_mostar_moment(
                 """,
                     moment,
                 )
+            _remember_fingerprint(fingerprint)
             driver.close()
             print(
                 f"[MOMENT] ✅ Neo4j logged [{quantum_id[:8]}] {initiator} → {receiver}"
@@ -123,6 +189,13 @@ def log_moments_batch(moments: list[dict]) -> list[dict]:
         with driver.session() as session:
             with session.begin_transaction() as tx:
                 for m in moments:
+                    fingerprint = _generate_moment_fingerprint(
+                        m.get("initiator", "Grid"),
+                        m.get("receiver", "Grid"),
+                        m.get("description", ""),
+                        m.get("trigger_type", "general"),
+                        m.get("layer", "MIND"),
+                    )
                     quantum_id = _generate_quantum_id(
                         m.get("initiator", "Grid"), m.get("description", "")
                     )
@@ -130,6 +203,7 @@ def log_moments_batch(moments: list[dict]) -> list[dict]:
                         """
                         MERGE (moment:MoStarMoment {quantum_id: $quantum_id})
                         SET
+                            moment.fingerprint     = $fingerprint,
                             moment.timestamp       = $timestamp,
                             moment.initiator       = $initiator,
                             moment.receiver        = $receiver,
@@ -140,6 +214,7 @@ def log_moments_batch(moments: list[dict]) -> list[dict]:
                     """,
                         {
                             "quantum_id": quantum_id,
+                            "fingerprint": fingerprint,
                             "timestamp": datetime.now(timezone.utc).isoformat(),
                             "initiator": m.get("initiator", "Grid"),
                             "receiver": m.get("receiver", "Grid"),

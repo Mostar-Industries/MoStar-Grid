@@ -507,14 +507,27 @@ class MoScriptEngine:
             uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
             user = os.getenv("NEO4J_USER", "neo4j")
             pw = os.getenv("NEO4J_PASSWORD", "")
+            scheme = uri.split("://", 1)[0]
 
+            stage = "driver_create"
             try:
-                driver = GraphDatabase.driver(
-                    uri, auth=(user, pw), trusted_certificates=TrustAll()
-                )
+                driver_kwargs = {"auth": (user, pw)}
+                if uri.startswith(
+                    ("neo4j+s://", "bolt+s://", "neo4j+ssc://", "bolt+ssc://")
+                ):
+                    driver_kwargs["trusted_certificates"] = TrustAll()
+                driver = GraphDatabase.driver(uri, **driver_kwargs)
+                stage = "session_open"
                 with driver.session() as session:
+                    stage = "query_run"
                     res = session.run(cypher, **params)
                     return [dict(r) for r in res]
+            except Exception as exc:
+                print(
+                    f"[MOSCRIPT][neo4j_traverse] failed purpose={purpose} "
+                    f"stage={stage} scheme={scheme} uri={uri} error={exc}"
+                )
+                raise
             finally:
                 if "driver" in locals():
                     driver.close()
