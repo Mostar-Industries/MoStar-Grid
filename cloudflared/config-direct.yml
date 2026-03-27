@@ -1,0 +1,10 @@
+# Direct tunnel configuration - bypass private network issues
+tunnel: YOUR-TUNNEL-ID
+credentials-file: /etc/cloudflared/YOUR-TUNNEL-ID.json
+
+ingress:
+  - hostname: api.mostarindustries.com
+    service: http://localhost:8001
+    originRequest:
+      noTLSVerify: true
+  - service: http_status:404
