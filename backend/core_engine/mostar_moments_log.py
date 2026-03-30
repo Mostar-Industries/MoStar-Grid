@@ -4,39 +4,97 @@
 # Every interaction is a MoStarMoment — logged, sealed, remembered.
 # ═══════════════════════════════════════════════════════════════════
 
-import uuid
-import os
 import hashlib
-from datetime import datetime, timezone
+import os
+from datetime import datetime, timedelta, timezone
 
 # ── Neo4j connection ──────────────────────────────────────────────
-NEO4J_URI  = os.getenv("NEO4J_URI",      "bolt://localhost:7687")
-NEO4J_USER = os.getenv("NEO4J_USER",     "neo4j")
-NEO4J_PASS = os.getenv("NEO4J_PASSWORD", "mostar123")
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASS = os.getenv("NEO4J_PASSWORD", "")
+MOMENT_DEDUP_WINDOW_SECONDS = int(os.getenv("MOMENT_DEDUP_WINDOW_SECONDS", "30"))
+_RECENT_MOMENT_CACHE: dict[str, datetime] = {}
+
 
 def _get_driver():
     try:
         from neo4j import GraphDatabase
+
         return GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS))
     except Exception as e:
         print(f"[MOMENT] Neo4j driver unavailable: {e}")
         return None
+
+
+def _generate_moment_fingerprint(
+    initiator: str,
+    receiver: str,
+    description: str,
+    trigger_type: str,
+    layer: str,
+) -> str:
+    base = "|".join(
+        [
+            initiator.strip(),
+            receiver.strip(),
+            description.strip(),
+            trigger_type.strip(),
+            layer.strip(),
+        ]
+    )
+    return hashlib.sha256(base.encode()).hexdigest()[:24]
+
 
 def _generate_quantum_id(initiator: str, description: str) -> str:
     """Deterministic quantum ID — same moment never logs twice."""
     base = f"{initiator}:{description}:{datetime.now(timezone.utc).isoformat()}"
     return hashlib.sha256(base.encode()).hexdigest()[:16]
 
+
+def _is_recent_duplicate(driver, fingerprint: str) -> bool:
+    now = datetime.now(timezone.utc)
+    cached_at = _RECENT_MOMENT_CACHE.get(fingerprint)
+    if cached_at and (now - cached_at).total_seconds() < MOMENT_DEDUP_WINDOW_SECONDS:
+        return True
+
+    if not driver:
+        return False
+
+    cutoff = (now - timedelta(seconds=MOMENT_DEDUP_WINDOW_SECONDS)).isoformat()
+    try:
+        with driver.session() as session:
+            record = session.run(
+                """
+                MATCH (m:MoStarMoment {fingerprint: $fingerprint})
+                WHERE m.timestamp >= $cutoff
+                RETURN count(m) AS count
+                """,
+                {"fingerprint": fingerprint, "cutoff": cutoff},
+            ).single()
+        return bool(record and record["count"])
+    except Exception:
+        return False
+
+
+def _remember_fingerprint(fingerprint: str):
+    now = datetime.now(timezone.utc)
+    stale_before = now - timedelta(seconds=MOMENT_DEDUP_WINDOW_SECONDS)
+    stale_keys = [k for k, v in _RECENT_MOMENT_CACHE.items() if v < stale_before]
+    for key in stale_keys:
+        _RECENT_MOMENT_CACHE.pop(key, None)
+    _RECENT_MOMENT_CACHE[fingerprint] = now
+
+
 # ── CORE FUNCTION ─────────────────────────────────────────────────
 def log_mostar_moment(
-    initiator:       str,
-    receiver:        str,
-    description:     str,
-    trigger_type:    str   = "general",
+    initiator: str,
+    receiver: str,
+    description: str,
+    trigger_type: str = "general",
     resonance_score: float = 0.85,
-    significance:    str   = "STANDARD",
-    approved:        bool  = True,
-    layer:           str   = "MIND",
+    significance: str = "STANDARD",
+    approved: bool = True,
+    layer: str = "MIND",
 ) -> dict:
     """
     Log a MoStarMoment to Neo4j.
@@ -44,30 +102,42 @@ def log_mostar_moment(
     Falls back to console log if Neo4j is unreachable.
     """
     quantum_id = _generate_quantum_id(initiator, description)
-    timestamp  = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(timezone.utc).isoformat()
+    fingerprint = _generate_moment_fingerprint(
+        initiator, receiver, description, trigger_type, layer
+    )
 
     moment = {
-        "quantum_id":      quantum_id,
-        "timestamp":       timestamp,
-        "initiator":       initiator,
-        "receiver":        receiver,
-        "description":     description,
-        "trigger_type":    trigger_type,
+        "quantum_id": quantum_id,
+        "fingerprint": fingerprint,
+        "timestamp": timestamp,
+        "initiator": initiator,
+        "receiver": receiver,
+        "description": description,
+        "trigger_type": trigger_type,
         "resonance_score": resonance_score,
-        "significance":    significance,
-        "approved":        approved,
-        "layer":           layer,
-        "insignia":        "MSTR-⚡",
+        "significance": significance,
+        "approved": approved,
+        "layer": layer,
+        "insignia": "MSTR-⚡",
     }
 
     # ── Write to Neo4j ────────────────────────────────────────────
     driver = _get_driver()
+    if _is_recent_duplicate(driver, fingerprint):
+        print(
+            f"[MOMENT] ⏭️ Skipped duplicate [{fingerprint[:8]}] {initiator} → {receiver}"
+        )
+        return {**moment, "logged": False, "deduplicated": True}
+
     if driver:
         try:
             with driver.session() as session:
-                session.run("""
+                session.run(
+                    """
                     MERGE (m:MoStarMoment {quantum_id: $quantum_id})
                     SET
+                        m.fingerprint     = $fingerprint,
                         m.timestamp       = $timestamp,
                         m.initiator       = $initiator,
                         m.receiver        = $receiver,
@@ -78,9 +148,14 @@ def log_mostar_moment(
                         m.approved        = $approved,
                         m.layer           = $layer,
                         m.insignia        = $insignia
-                """, moment)
+                """,
+                    moment,
+                )
+            _remember_fingerprint(fingerprint)
             driver.close()
-            print(f"[MOMENT] ✅ Neo4j logged [{quantum_id[:8]}] {initiator} → {receiver}")
+            print(
+                f"[MOMENT] ✅ Neo4j logged [{quantum_id[:8]}] {initiator} → {receiver}"
+            )
         except Exception as e:
             print(f"[MOMENT] ⚠️ Neo4j write failed: {e} — console fallback")
             _console_log(moment)
@@ -88,6 +163,7 @@ def log_mostar_moment(
         _console_log(moment)
 
     return moment
+
 
 def _console_log(moment: dict):
     print(
@@ -97,6 +173,7 @@ def _console_log(moment: dict):
         f"resonance={moment['resonance_score']} | "
         f"{moment['description'][:60]}"
     )
+
 
 # ── BATCH LOGGING ─────────────────────────────────────────────────
 def log_moments_batch(moments: list[dict]) -> list[dict]:
@@ -112,13 +189,21 @@ def log_moments_batch(moments: list[dict]) -> list[dict]:
         with driver.session() as session:
             with session.begin_transaction() as tx:
                 for m in moments:
-                    quantum_id = _generate_quantum_id(
-                        m.get("initiator","Grid"),
-                        m.get("description","")
+                    fingerprint = _generate_moment_fingerprint(
+                        m.get("initiator", "Grid"),
+                        m.get("receiver", "Grid"),
+                        m.get("description", ""),
+                        m.get("trigger_type", "general"),
+                        m.get("layer", "MIND"),
                     )
-                    tx.run("""
+                    quantum_id = _generate_quantum_id(
+                        m.get("initiator", "Grid"), m.get("description", "")
+                    )
+                    tx.run(
+                        """
                         MERGE (moment:MoStarMoment {quantum_id: $quantum_id})
                         SET
+                            moment.fingerprint     = $fingerprint,
                             moment.timestamp       = $timestamp,
                             moment.initiator       = $initiator,
                             moment.receiver        = $receiver,
@@ -126,15 +211,18 @@ def log_moments_batch(moments: list[dict]) -> list[dict]:
                             moment.trigger_type    = $trigger_type,
                             moment.resonance_score = $resonance_score,
                             moment.insignia        = 'MSTR-⚡'
-                    """, {
-                        "quantum_id":      quantum_id,
-                        "timestamp":       datetime.now(timezone.utc).isoformat(),
-                        "initiator":       m.get("initiator","Grid"),
-                        "receiver":        m.get("receiver","Grid"),
-                        "description":     m.get("description",""),
-                        "trigger_type":    m.get("trigger_type","general"),
-                        "resonance_score": m.get("resonance_score", 0.85),
-                    })
+                    """,
+                        {
+                            "quantum_id": quantum_id,
+                            "fingerprint": fingerprint,
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                            "initiator": m.get("initiator", "Grid"),
+                            "receiver": m.get("receiver", "Grid"),
+                            "description": m.get("description", ""),
+                            "trigger_type": m.get("trigger_type", "general"),
+                            "resonance_score": m.get("resonance_score", 0.85),
+                        },
+                    )
                     results.append({"quantum_id": quantum_id, "logged": True})
                 tx.commit()
         print(f"[MOMENT] ✅ Batch logged {len(results)} moments to Neo4j")
@@ -145,6 +233,7 @@ def log_moments_batch(moments: list[dict]) -> list[dict]:
 
     return results
 
+
 # ── QUERY ─────────────────────────────────────────────────────────
 def get_recent_moments(limit: int = 10) -> list[dict]:
     """Fetch recent MoStarMoments from Neo4j."""
@@ -153,10 +242,13 @@ def get_recent_moments(limit: int = 10) -> list[dict]:
         return []
     try:
         with driver.session() as session:
-            result = session.run("""
+            result = session.run(
+                """
                 MATCH (m:MoStarMoment)
                 RETURN m ORDER BY m.timestamp DESC LIMIT $limit
-            """, {"limit": limit})
+            """,
+                {"limit": limit},
+            )
             moments = [dict(r["m"]) for r in result]
         driver.close()
         return moments
@@ -183,4 +275,4 @@ if __name__ == "__main__":
     recent = get_recent_moments(5)
     print(f"Recent moments: {len(recent)}")
     for r in recent:
-        print(f"  {r.get('quantum_id','?')[:8]} | {r.get('description','')[:50]}")
+        print(f"  {r.get('quantum_id', '?')[:8]} | {r.get('description', '')[:50]}")

@@ -8,18 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "backend": "cd backend && python main.py",
-    "backend:win": "cd backend && ../.venv/Scripts/python.exe main.py",
-    "ollama:start": "ollama serve",
-    "ollama:pull": "ollama pull Mostar/mostar-ai && ollama pull Mostar/remostar-light:dcx1 && ollama pull Mostar/remostar-light:dcx2",
-    "ollama:list": "ollama list",
-    "grid": "concurrently --names \"BACKEND,FRONTEND,OLLAMA\" --prefix-colors \"yellow,cyan,magenta\" \"npm:backend:win\" \"npm:dev\" \"npm:ollama:start\"",
-    "grid:check": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"yellow,cyan\" \"npm:backend:win\" \"npm:dev\"",
-    "verify": "powershell -ExecutionPolicy Bypass -File scripts/verify-grid.ps1",
-    "sovereignty-audit": "powershell -ExecutionPolicy Bypass -File sovereignty_audit.ps1",
-    "health": "curl -s http://localhost:7001/health && curl -s http://localhost:11434/api/tags",
-    "health:win": "powershell -Command \"Invoke-RestMethod http://localhost:7001/health | ConvertTo-Json\""
+    "start": "next start"
   },
   "devDependencies": {
     "@types/node": "^25.0.9",
@@ -32,7 +21,7 @@
     "cmdk": "^1.1.1",
     "mapbox-gl": "^3.20.0",
     "neo4j-driver": "^6.0.1",
-    "next": "16.1.6",
+    "next": "16.1.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-force-graph-3d": "^1.29.1",

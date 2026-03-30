@@ -18,6 +18,27 @@ $FrontendPath = Join-Path $ScriptPath "frontend"
 $LogsDir = Join-Path $ScriptPath "logs"
 $ExecutorScript = Join-Path $ScriptPath "backend\mo_executor.py"
 
+# Resolve to absolute paths (required for Start-Job which runs in a separate process)
+$PythonExe = (Resolve-Path $PythonExe -ErrorAction SilentlyContinue).Path
+$ScriptPath = (Resolve-Path $ScriptPath -ErrorAction SilentlyContinue).Path
+
+# --- Load Neo4j config from backend/.env ---
+$envFile = Join-Path $ScriptPath "backend\.env"
+$Neo4jUri = 'bolt://localhost:7687'
+$Neo4jUser = 'neo4j'
+$Neo4jPass = ''
+if (Test-Path $envFile) {
+    Get-Content $envFile | ForEach-Object {
+        if ($_ -match '^NEO4J_URI=(.+)$') { $script:Neo4jUri = $matches[1].Trim() }
+        if ($_ -match '^NEO4J_PASSWORD=(.+)$') { $script:Neo4jPass = $matches[1].Trim() }
+        if ($_ -match '^NEO4J_USER=(.+)$') { $script:Neo4jUser = $matches[1].Trim() }
+    }
+    Write-Host "   Neo4j config: $Neo4jUri (from backend/.env)" -ForegroundColor Gray
+}
+else {
+    Write-Host "   backend/.env not found, using defaults" -ForegroundColor Yellow
+}
+
 if (-not (Test-Path $LogsDir)) { New-Item -ItemType Directory -Path $LogsDir | Out-Null }
 
 # --- Helper: Kill process on port ---
@@ -94,11 +115,15 @@ if (-not (Test-Path $PythonExe)) {
 else {
     $logFile = Join-Path $LogsDir "memory_layer.log"
     $job = Start-Job -ScriptBlock {
-        param($python, $scriptPath, $logFile)
+        param($python, $scriptPath, $logFile, $nUri, $nUser, $nPass)
         $env:PYTHONPATH = $scriptPath
         $env:PYTHONUTF8 = '1'
+        $env:NEO4J_URI = $nUri
+        $env:NEO4J_USER = $nUser
+        $env:NEO4J_PASSWORD = $nPass
+        Set-Location $scriptPath
         & $python -m uvicorn backend.memory_layer.api.main:app --host 0.0.0.0 --port 8000 --reload 2>&1 | Tee-Object -FilePath $logFile
-    } -ArgumentList $PythonExe, $ScriptPath, $logFile
+    } -ArgumentList $PythonExe, $ScriptPath, $logFile, $Neo4jUri, $Neo4jUser, $Neo4jPass
     
     Write-Host "   >> Job started (ID: $($job.Id)). Waiting for port..." -ForegroundColor Gray
     Start-Sleep -Seconds 3
@@ -120,11 +145,15 @@ if (-not (Test-Path $PythonExe)) {
 else {
     $logFile = Join-Path $LogsDir "core_engine.log"
     $job = Start-Job -ScriptBlock {
-        param($python, $scriptPath, $logFile)
+        param($python, $scriptPath, $logFile, $nUri, $nUser, $nPass)
         $env:PYTHONPATH = $scriptPath
         $env:PYTHONUTF8 = '1'
+        $env:NEO4J_URI = $nUri
+        $env:NEO4J_USER = $nUser
+        $env:NEO4J_PASSWORD = $nPass
+        Set-Location $scriptPath
         & $python -m uvicorn backend.core_engine.api_gateway:app --host 0.0.0.0 --port 8001 --reload 2>&1 | Tee-Object -FilePath $logFile
-    } -ArgumentList $PythonExe, $ScriptPath, $logFile
+    } -ArgumentList $PythonExe, $ScriptPath, $logFile, $Neo4jUri, $Neo4jUser, $Neo4jPass
     
     Write-Host "   >> Job started (ID: $($job.Id)). Waiting for port..." -ForegroundColor Gray
     Start-Sleep -Seconds 3
@@ -146,14 +175,15 @@ if (-not (Test-Path $ExecutorScript)) {
 else {
     $logFile = Join-Path $LogsDir "mo_executor.log"
     $job = Start-Job -ScriptBlock {
-        param($python, $scriptPath, $executorScript, $logFile)
+        param($python, $scriptPath, $executorScript, $logFile, $nUri, $nUser, $nPass)
         $env:PYTHONPATH = $scriptPath
         $env:PYTHONUTF8 = '1'
-        $env:NEO4J_URI = 'bolt://localhost:7687'
-        $env:NEO4J_USER = 'neo4j'
-        $env:NEO4J_PASSWORD = 'mostar123'
+        $env:NEO4J_URI = $nUri
+        $env:NEO4J_USER = $nUser
+        $env:NEO4J_PASSWORD = $nPass
+        Set-Location $scriptPath
         & $python $executorScript 2>&1 | Tee-Object -FilePath $logFile
-    } -ArgumentList $PythonExe, $ScriptPath, $ExecutorScript, $logFile
+    } -ArgumentList $PythonExe, $ScriptPath, $ExecutorScript, $logFile, $Neo4jUri, $Neo4jUser, $Neo4jPass
     
     Write-Host "   ✅ Mo Executor job started (ID: $($job.Id))" -ForegroundColor Green
     Write-Host "      Log: $logFile" -ForegroundColor DarkGray

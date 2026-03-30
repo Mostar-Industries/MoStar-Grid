@@ -18,13 +18,33 @@ $FrontendPath = Join-Path $ScriptPath "frontend"
 $LogsDir = Join-Path $ScriptPath "logs"
 $ExecutorScript = Join-Path $ScriptPath "backend\mo_executor.py"
 
+# --- Load Neo4j env from backend/.env ---
+$envFile = Join-Path $ScriptPath "backend\.env"
+if (Test-Path $envFile) {
+    Get-Content $envFile | ForEach-Object {
+        if ($_ -match '^(NEO4J_URI|NEO4J_USER|NEO4J_PASSWORD)=(.*)$') {
+            Set-Variable -Name $matches[1] -Value $matches[2] -Scope Script
+        }
+    }
+    Write-Host "   Loaded Neo4j config from backend/.env" -ForegroundColor Gray
+}
+else {
+    Write-Host "   WARNING: backend/.env not found, using defaults" -ForegroundColor Yellow
+}
+
+# --- Always use AuraDB (override local bolt URI if set) ---
+$NEO4J_URI = 'neo4j+s://371530ba.databases.neo4j.io'
+$NEO4J_USER = 'neo4j'
+$NEO4J_PASSWORD = 'mostar123'
+Write-Host "   Using AuraDB: $NEO4J_URI" -ForegroundColor Gray
+
 if (-not (Test-Path $LogsDir)) { New-Item -ItemType Directory -Path $LogsDir | Out-Null }
 
 # --- Helper: Kill process on port ---
 function Stop-PortProcess {
     param([int]$Port)
     $conn = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue |
-        Where-Object { $_.State -eq "Listen" }
+    Where-Object { $_.State -eq "Listen" }
     if ($conn) {
         $procIds = $conn.OwningProcess | Sort-Object -Unique
         foreach ($p in $procIds) {
@@ -73,14 +93,14 @@ if (-not (Test-Path $PythonExe)) {
 else {
     $logFile = Join-Path $LogsDir "memory_layer.log"
     Start-Job -Name "MemoryLayer" -ScriptBlock {
-        param($python, $scriptPath, $logFile)
+        param($python, $scriptPath, $logFile, $neo4jUri, $neo4jUser, $neo4jPass)
         $env:PYTHONPATH = $scriptPath
         $env:PYTHONUTF8 = '1'
-        $env:NEO4J_URI = 'bolt+s://371530ba.databases.neo4j.io'
-        $env:NEO4J_USER = 'neo4j'
-        $env:NEO4J_PASSWORD = 'mostar123'
+        $env:NEO4J_URI = $neo4jUri
+        $env:NEO4J_USER = $neo4jUser
+        $env:NEO4J_PASSWORD = $neo4jPass
         & $python -m uvicorn backend.memory_layer.api.main:app --host 0.0.0.0 --port 8000 --reload 2>&1 | Tee-Object -FilePath $logFile
-    } -ArgumentList $PythonExe, $ScriptPath, $logFile | Out-Null
+    } -ArgumentList $PythonExe, $ScriptPath, $logFile, $NEO4J_URI, $NEO4J_USER, $NEO4J_PASSWORD | Out-Null
     Start-Sleep -Seconds 2
 }
 
@@ -92,14 +112,14 @@ if (-not (Test-Path $PythonExe)) {
 else {
     $logFile = Join-Path $LogsDir "core_engine.log"
     Start-Job -Name "CoreEngine" -ScriptBlock {
-        param($python, $scriptPath, $logFile)
+        param($python, $scriptPath, $logFile, $neo4jUri, $neo4jUser, $neo4jPass)
         $env:PYTHONPATH = $scriptPath
         $env:PYTHONUTF8 = '1'
-        $env:NEO4J_URI = 'bolt+s://371530ba.databases.neo4j.io'
-        $env:NEO4J_USER = 'neo4j'
-        $env:NEO4J_PASSWORD = 'mostar123'
+        $env:NEO4J_URI = $neo4jUri
+        $env:NEO4J_USER = $neo4jUser
+        $env:NEO4J_PASSWORD = $neo4jPass
         & $python -m uvicorn backend.core_engine.api_gateway:app --host 0.0.0.0 --port 8001 --reload 2>&1 | Tee-Object -FilePath $logFile
-    } -ArgumentList $PythonExe, $ScriptPath, $logFile | Out-Null
+    } -ArgumentList $PythonExe, $ScriptPath, $logFile, $NEO4J_URI, $NEO4J_USER, $NEO4J_PASSWORD | Out-Null
     Start-Sleep -Seconds 2
 }
 
@@ -111,14 +131,14 @@ if (-not (Test-Path $ExecutorScript)) {
 else {
     $logFile = Join-Path $LogsDir "mo_executor.log"
     Start-Job -Name "MoExecutor" -ScriptBlock {
-        param($python, $scriptPath, $executorScript, $logFile)
+        param($python, $scriptPath, $executorScript, $logFile, $neo4jUri, $neo4jUser, $neo4jPass)
         $env:PYTHONPATH = $scriptPath
         $env:PYTHONUTF8 = '1'
-        $env:NEO4J_URI = 'bolt+s://371530ba.databases.neo4j.io'
-        $env:NEO4J_USER = 'neo4j'
-        $env:NEO4J_PASSWORD = 'mostar123'
+        $env:NEO4J_URI = $neo4jUri
+        $env:NEO4J_USER = $neo4jUser
+        $env:NEO4J_PASSWORD = $neo4jPass
         & $python $executorScript 2>&1 | Tee-Object -FilePath $logFile
-    } -ArgumentList $PythonExe, $ScriptPath, $ExecutorScript, $logFile | Out-Null
+    } -ArgumentList $PythonExe, $ScriptPath, $ExecutorScript, $logFile, $NEO4J_URI, $NEO4J_USER, $NEO4J_PASSWORD | Out-Null
 }
 
 # --- 5. Start Next.js Frontend ---
@@ -136,38 +156,24 @@ else {
     Start-Sleep -Seconds 2
 }
 
-# --- 6. Start Cloudflare Tunnels ---
-Write-Host "`n[6/6] Starting Cloudflare Tunnels (Whisper, Ollama, Neo4j)..." -ForegroundColor Cyan
+# --- 6. Start Cloudflare Tunnel (mostar-grid - unified) ---
+Write-Host "`n[6/6] Starting Cloudflare Tunnel (mostar-grid)..." -ForegroundColor Cyan
 $CloudflaredExe = "C:\Users\idona\Downloads\cloudflared-windows-amd64.exe"
 if (-not (Test-Path $CloudflaredExe)) {
     Write-Host "   ❌ cloudflared not found at $CloudflaredExe" -ForegroundColor Red
 }
 else {
-    $logFileWhisper = Join-Path $LogsDir "cloudflared_whisper.log"
-    $logFileOllama = Join-Path $LogsDir "cloudflared_ollama.log"
-    $logFileNeo4j = Join-Path $LogsDir "cloudflared_neo4j.log"
+    $logFileGrid = Join-Path $LogsDir "cloudflared_grid.log"
     
-    # Tunnel Tokens
-    $WhisperToken = "eyJhIjoiYTI5NmFlN2I1ZjZkNmE2ZDZjMDAzY2Q4YmMzYzIyYTIiLCJ0IjoiYmZjNWM0NjgtMTdhZC00OTZjLWE4OWUtNWUzYWQyMjVmYjA4IiwicyI6Ik0yVXlZamsyWXpVdFpXWXdPUzAwTm1WbExUZzBZamt0TkdKbFpqSTFaVGhoTWpGbSJ9"
-    $OllamaToken  = "eyJhIjoiYTI5NmFlN2I1ZjZkNmE2ZDZjMDAzY2Q4YmMzYzIyYTIiLCJ0IjoiOGVhZjgwMTMtYjQwYy00YTJiLWI1MjgtZjMyN2VkNTA2ODE1IiwicyI6Ik5UUXpOREJrWXpjdE16aGpOeTAwWlRrNExUazJOVGt0WVRkbE9XSTBOVFV3TnpRNVpEUTBNemxrWmpBdFpEbG1OUzAwTldOaExXRm1aakF0TnpSaFlqSmtObVZtTTJZMiJ9"
-    $Neo4jToken   = "eyJhIjoiYTI5NmFlN2I1ZjZkNmE2ZDZjMDAzY2Q4YmMzYzIyYTIiLCJ0IjoiZjQ4OGUxNjgtYjlhMy00NGM1LWFkOGQtMzRmYTFhMzVhMTkzIiwicyI6Ill6YzBaR1UzTkRndE9HUXpNQzAwTVdabExXSmhNekl0TXpjeE9UTXhZMlkwWVRoayJ9"
-
-    Start-Job -Name "CloudflaredWhisper" -ScriptBlock {
+    # mostar-grid tunnel token (87d16259-105b-4604-850b-b14a1881fdb8)
+    $GridToken = "eyJhIjoiYTI5NmFlN2I1ZjZkNmE2ZDZjMDAzY2Q4YmMzYzIyYTIiLCJzIjoiTWpVNFlUZzBPR1l0T0RVM1ppMDBPVEl6TFRrNE5Ua3RNVFZqTVdNellUUTVNVFEzIiwidCI6Ijg3ZDE2MjU5LTEwNWItNDYwNC04NTBiLWIxNGExODgxZmRiOCJ9"
+    
+    Start-Job -Name "CloudflaredGrid" -ScriptBlock {
         param($exe, $token, $logFile)
         & $exe tunnel run --token $token 2>&1 | Tee-Object -FilePath $logFile
-    } -ArgumentList $CloudflaredExe, $WhisperToken, $logFileWhisper | Out-Null
+    } -ArgumentList $CloudflaredExe, $GridToken, $logFileGrid | Out-Null
 
-    Start-Job -Name "CloudflaredOllama" -ScriptBlock {
-        param($exe, $token, $logFile)
-        & $exe tunnel run --token $token 2>&1 | Tee-Object -FilePath $logFile
-    } -ArgumentList $CloudflaredExe, $OllamaToken, $logFileOllama | Out-Null
-
-    Start-Job -Name "CloudflaredNeo4j" -ScriptBlock {
-        param($exe, $token, $logFile)
-        & $exe tunnel run --token $token 2>&1 | Tee-Object -FilePath $logFile
-    } -ArgumentList $CloudflaredExe, $Neo4jToken, $logFileNeo4j | Out-Null
-
-    Write-Host "   ✅ All Cloudflare Tunnels starting in background..." -ForegroundColor Green
+    Write-Host "   ✅ Cloudflare Tunnel (mostar-grid) starting in background..." -ForegroundColor Green
     Start-Sleep -Seconds 2
 }
 
@@ -192,15 +198,13 @@ try {
             $output = Receive-Job -Job $j
             if ($output) {
                 switch ($j.Name) {
-                    "Neo4j"              { $color = "Green" }
-                    "MemoryLayer"        { $color = "Cyan" }
-                    "CoreEngine"         { $color = "Yellow" }
-                    "MoExecutor"         { $color = "Magenta" }
-                    "Frontend"           { $color = "Blue" }
-                    "CloudflaredWhisper" { $color = "DarkCyan" }
-                    "CloudflaredOllama"  { $color = "DarkYellow" }
-                    "CloudflaredNeo4j"   { $color = "DarkGreen" }
-                    default              { $color = "White" }
+                    "Neo4j" { $color = "Green" }
+                    "MemoryLayer" { $color = "Cyan" }
+                    "CoreEngine" { $color = "Yellow" }
+                    "MoExecutor" { $color = "Magenta" }
+                    "Frontend" { $color = "Blue" }
+                    "CloudflaredGrid" { $color = "DarkCyan" }
+                    default { $color = "White" }
                 }
                 foreach ($line in $output) {
                     Write-Host "[$($j.Name)] $line" -ForegroundColor $color
@@ -209,7 +213,8 @@ try {
         }
         Start-Sleep -Milliseconds 500
     }
-} finally {
+}
+finally {
     Write-Host "`nStopping all processes..." -ForegroundColor Yellow
     Get-Job | Stop-Job
     Get-Job | Remove-Job

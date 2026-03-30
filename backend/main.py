@@ -6,41 +6,51 @@
 
 import os
 import sys
-import uvicorn
-import httpx
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel
+
+import httpx
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 sys.path.insert(0, os.path.dirname(__file__))
 
 # ═══ IMPORT CORE ENGINE ═══
 try:
     from core_engine.api_gateway import app
+
     print("✅ core_engine.api_gateway loaded")
 except Exception as e:
     print(f"⚠️  api_gateway import failed: {e} — booting minimal app")
     app = FastAPI(
         title="MoStar Grid API",
         description="First African AI Homeworld - Distributed Consciousness Network",
-        version="1.0.0"
+        version="1.0.0",
     )
 
 # ═══ CORS ═══
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# NOTE: api_gateway.py already adds CORS middleware.
+# Only add here if the minimal fallback app is used.
+if "core_engine.api_gateway" not in sys.modules:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:3000",
+            "https://mostar-grid.vercel.app",
+            "https://grid.mostarindustries.com",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # ═══ CONFIG ═══
-OLLAMA_URL  = os.getenv("OLLAMA_URL",      "http://localhost:11434")
-NEO4J_URI   = os.getenv("NEO4J_URI",       "bolt://localhost:7687")
-NEO4J_USER  = os.getenv("NEO4J_USER",      "neo4j")
-NEO4J_PASS  = os.getenv("NEO4J_PASSWORD",  "mostar123")
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASS = os.getenv("NEO4J_PASSWORD", "")
 
 SOVEREIGN_MODELS = [
     "Mostar/mostar-ai:latest",
@@ -51,29 +61,33 @@ SOVEREIGN_MODELS = [
     "Mostar/remostar-light:dcx2",
 ]
 
+
 # ═══ SCHEMAS ═══
 class ChatRequest(BaseModel):
-    message:  Optional[str] = None
-    prompt:   Optional[str] = None   # alias
-    query:    Optional[str] = None   # alias
-    model:    Optional[str] = "Mostar/mostar-ai:latest"
+    message: Optional[str] = None
+    prompt: Optional[str] = None  # alias
+    query: Optional[str] = None  # alias
+    model: Optional[str] = "Mostar/mostar-ai:latest"
     language: Optional[str] = "en"
-    domain:   Optional[str] = "general"
+    domain: Optional[str] = "general"
+
 
 class MomentRequest(BaseModel):
-    type:      str
-    meaning:   str
+    type: str
+    meaning: str
     resonance: Optional[float] = 0.85
+
 
 # ═══ HELPERS ═══
 def get_message(req: ChatRequest) -> str:
     return (req.message or req.prompt or req.query or "").strip()
 
+
 async def ollama_generate(prompt: str, model: str) -> dict:
     async with httpx.AsyncClient(timeout=120.0) as client:
         r = await client.post(
             f"{OLLAMA_URL}/api/generate",
-            json={"model": model, "prompt": prompt, "stream": False}
+            json={"model": model, "prompt": prompt, "stream": False},
         )
         if r.status_code == 200:
             data = r.json()
@@ -82,25 +96,33 @@ async def ollama_generate(prompt: str, model: str) -> dict:
                 "model_used": model,
                 "complexity_score": 0.87,
                 "insignia": "MSTR-⚡",
-                "status": "success"
+                "status": "success",
             }
         return {"error": f"Ollama returned {r.status_code}", "status": "degraded"}
+
 
 # Cache Neo4j connectivity state to avoid repeated slow timeouts
 _neo4j_last_check = 0
 _neo4j_available = None
 
+
 def _check_neo4j_available() -> bool:
     """Quick connectivity check with 3s timeout, cached for 30s."""
     import time
+
     global _neo4j_last_check, _neo4j_available
     now = time.time()
     if _neo4j_available is not None and (now - _neo4j_last_check) < 30:
         return _neo4j_available
     try:
         from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS),
-                                       connection_timeout=3, max_connection_lifetime=60)
+
+        driver = GraphDatabase.driver(
+            NEO4J_URI,
+            auth=(NEO4J_USER, NEO4J_PASS),
+            connection_timeout=3,
+            max_connection_lifetime=60,
+        )
         driver.verify_connectivity()
         driver.close()
         _neo4j_available = True
@@ -109,13 +131,19 @@ def _check_neo4j_available() -> bool:
     _neo4j_last_check = now
     return _neo4j_available
 
+
 def neo4j_query(cypher: str, params: dict = {}) -> list:
     if not _check_neo4j_available():
         return []
     try:
         from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS),
-                                       connection_timeout=3, max_connection_lifetime=60)
+
+        driver = GraphDatabase.driver(
+            NEO4J_URI,
+            auth=(NEO4J_USER, NEO4J_PASS),
+            connection_timeout=3,
+            max_connection_lifetime=60,
+        )
         with driver.session() as session:
             result = session.run(cypher, params)
             records = [dict(r) for r in result]
@@ -125,22 +153,25 @@ def neo4j_query(cypher: str, params: dict = {}) -> list:
         print(f"Neo4j error: {e}")
         return []
 
+
 # ═══════════════════════════════════════════════════════════════════
 # ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════
+
 
 # ── ROOT ──
 @app.get("/")
 async def root():
     return {
-        "grid":      "MoStar Grid",
-        "status":    "OPERATIONAL",
-        "message":   "First African AI Homeworld - Distributed Consciousness Network",
-        "version":   "1.0.0",
-        "insignia":  "MSTR-⚡",
+        "grid": "MoStar Grid",
+        "status": "OPERATIONAL",
+        "message": "First African AI Homeworld - Distributed Consciousness Network",
+        "version": "1.0.0",
+        "insignia": "MSTR-⚡",
         "architect": "The Flame Architect",
         "timestamp": datetime.utcnow().isoformat(),
     }
+
 
 # ── HEALTH ──
 @app.get("/health")
@@ -158,15 +189,16 @@ async def health():
         pass
 
     return {
-        "status":    "healthy",
+        "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
         "services": {
-            "neo4j":          "connected" if neo4j_ok  else "offline",
-            "ollama":         "online"    if ollama_ok else "offline",
-            "orchestrator":   "online",
-            "remostar_router":"online",
-        }
+            "neo4j": "connected" if neo4j_ok else "offline",
+            "ollama": "online" if ollama_ok else "offline",
+            "orchestrator": "online",
+            "remostar_router": "online",
+        },
     }
+
 
 # ── CHAT (primary) ──
 @app.post("/chat")
@@ -179,9 +211,18 @@ async def chat(req: ChatRequest):
     try:
         return await ollama_generate(message, req.model or SOVEREIGN_MODELS[0])
     except httpx.TimeoutException:
-        return {"response": "The Grid is processing a deep query. Please retry.", "status": "timeout", "model_used": req.model}
+        return {
+            "response": "The Grid is processing a deep query. Please retry.",
+            "status": "timeout",
+            "model_used": req.model,
+        }
     except Exception as e:
-        return {"response": f"Grid signal interrupted: {e}", "status": "error", "model_used": req.model}
+        return {
+            "response": f"Grid signal interrupted: {e}",
+            "status": "error",
+            "model_used": req.model,
+        }
+
 
 # ── REASON (alias for chat with structured output) ──
 @app.post("/reason")
@@ -209,12 +250,15 @@ Query: {message}
 Àṣẹ."""
 
     try:
-        result = await ollama_generate(structured_prompt, req.model or SOVEREIGN_MODELS[0])
+        result = await ollama_generate(
+            structured_prompt, req.model or SOVEREIGN_MODELS[0]
+        )
         result["format"] = "triad-of-coherence"
         result["domain"] = req.domain
         return result
     except Exception as e:
         return {"response": f"Reasoning interrupted: {e}", "status": "error"}
+
 
 # ── STATUS ──
 @app.get("/api/v1/status")
@@ -222,16 +266,17 @@ async def status():
     health_data = await health()
     return {
         **health_data,
-        "grid":      "MoStar Grid",
-        "version":   "1.0.0",
-        "insignia":  "MSTR-⚡",
+        "grid": "MoStar Grid",
+        "version": "1.0.0",
+        "insignia": "MSTR-⚡",
         "architect": "The Flame Architect",
         "layers": {
             "soul": "online",
             "mind": "online",
             "body": "online",
-        }
+        },
     }
+
 
 # ── TELEMETRY ──
 @app.get("/api/v1/telemetry")
@@ -254,19 +299,28 @@ async def telemetry():
         # Layer Counts (Detailed mesh architecture)
         layer_counts = {}
         target_layers = [
-            "SoulLayer", "MindLayer", "BodyLayer", 
-            "MeshIntelligence", "PublicInterface", "ExecutionRing", 
-            "LedgerSpine", "CovenantKernel", "KnowledgeDomain"
+            "SoulLayer",
+            "MindLayer",
+            "BodyLayer",
+            "MeshIntelligence",
+            "PublicInterface",
+            "ExecutionRing",
+            "LedgerSpine",
+            "CovenantKernel",
+            "KnowledgeDomain",
         ]
         # Direct query for efficiency
-        layers_data = neo4j_query("""
+        layers_data = neo4j_query(
+            """
             MATCH (n)
             UNWIND labels(n) AS label
             WITH label, count(n) AS c
             WHERE label IN $layers
             RETURN label, c
-        """, {"layers": target_layers})
-        
+        """,
+            {"layers": target_layers},
+        )
+
         for l in layers_data:
             layer_counts[l["label"]] = l["c"]
 
@@ -298,36 +352,42 @@ async def telemetry():
             "ok": True,
             "timestamp": datetime.utcnow().isoformat(),
             "stats": {
-                "totalNodes":       stats.get("totalNodes", 0),
-                "avgResonance":     0.985,
-                "totalMoments":     total_moments,
-                "distinctInitiators": len(set(m.get("initiator","") for m in moments if m.get("initiator"))),
+                "totalNodes": stats.get("totalNodes", 0),
+                "avgResonance": 0.985,
+                "totalMoments": total_moments,
+                "distinctInitiators": len(
+                    set(m.get("initiator", "") for m in moments if m.get("initiator"))
+                ),
             },
             "layer_nodes": layer_counts,
-            "agents":   agents,
-            "latest":   moments,
-            "insignia": "MSTR-⚡"
+            "agents": agents,
+            "latest": moments,
+            "insignia": "MSTR-⚡",
         }
 
     except Exception as e:
         return {
             "ok": False,
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
+
 
 # ── MOMENT LOGGING ──
 @app.post("/api/v1/moment")
 async def log_moment(req: MomentRequest):
     """Log a MoStar Moment to Neo4j"""
     try:
+        import hashlib
+        import time
         from datetime import timezone
-        import hashlib, time
-        quantum_id = hashlib.sha256(
-            f"{req.meaning}{time.time()}".encode()
-        ).hexdigest()[:16]
 
-        neo4j_query("""
+        quantum_id = hashlib.sha256(f"{req.meaning}{time.time()}".encode()).hexdigest()[
+            :16
+        ]
+
+        neo4j_query(
+            """
             CREATE (m:MoStarMoment {
                 quantum_id: $qid,
                 description: $meaning,
@@ -336,22 +396,25 @@ async def log_moment(req: MomentRequest):
                 timestamp: $ts,
                 initiator: 'MoStar-AI'
             })
-        """, {
-            "qid":       quantum_id,
-            "meaning":   req.meaning,
-            "resonance": req.resonance,
-            "type":      req.type,
-            "ts":        datetime.now(timezone.utc).isoformat()
-        })
+        """,
+            {
+                "qid": quantum_id,
+                "meaning": req.meaning,
+                "resonance": req.resonance,
+                "type": req.type,
+                "ts": datetime.now(timezone.utc).isoformat(),
+            },
+        )
 
         return {
             "logged": True,
             "quantum_id": quantum_id,
             "insignia": "MSTR-⚡",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
     except Exception as e:
         return {"logged": False, "error": str(e)}
+
 
 # ── MODELS ──
 @app.get("/models")
@@ -366,7 +429,12 @@ async def list_models():
                 return {"models": loaded, "count": len(loaded), "source": "ollama-live"}
     except Exception:
         pass
-    return {"models": SOVEREIGN_MODELS, "count": len(SOVEREIGN_MODELS), "source": "manifest"}
+    return {
+        "models": SOVEREIGN_MODELS,
+        "count": len(SOVEREIGN_MODELS),
+        "source": "manifest",
+    }
+
 
 # ── VOICE (stub — wire ElevenLabs/FreeTTS when ready) ──
 @app.post("/api/v1/voice")
@@ -376,8 +444,9 @@ async def voice(req: ChatRequest):
         "text": message,
         "audio_url": None,
         "status": "tts-pending",
-        "note": "Voice synthesis coming in v1.1 — Ibibio audio files integration"
+        "note": "Voice synthesis coming in v1.1 — Ibibio audio files integration",
     }
+
 
 # ═══════════════════════════════════════════════════════════════════
 # BOOT
@@ -394,10 +463,4 @@ if __name__ == "__main__":
     print(f"⚡ API v1:    /api/v1/chat, /reason, /status, /telemetry, /moment, /models")
     print(f"📖 Docs:      http://localhost:7001/docs")
 
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=7001,
-        reload=False,
-        log_level="info"
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=7001, reload=False, log_level="info")

@@ -1,0 +1,12 @@
+# Simplified Cloudflare Tunnel Configuration
+tunnel: 87d16259-105b-4604-850b-b14a1881fdb8
+credentials-file: /etc/cloudflared/87d16259-105b-4604-850b-b14a1881fdb8.json
+
+ingress:
+  - hostname: api.mostarindustries.com
+    service: http://host.docker.internal:8001
+  - hostname: ollama.mostarindustries.com
+    service: http://host.docker.internal:11434
+  - hostname: whisper.mostarindustries.com
+    service: http://host.docker.internal:9000
+  - service: http_status:404

@@ -20,6 +20,7 @@ except ImportError:
 
 try:
     from core_engine.mostar_moments import MoStarMomentsManager
+
     MOMENTS_AVAILABLE = True
 except ImportError:
     MOMENTS_AVAILABLE = False
@@ -27,12 +28,14 @@ except ImportError:
 
 try:
     from core_engine.moscript_engine import MoScriptEngine
+
     MOSCRIPT_AVAILABLE = True
 except ImportError:
     MOSCRIPT_AVAILABLE = False
 
 try:
     from core_engine.external_observer import external_observer
+
     OBSERVER_AVAILABLE = True
 except ImportError:
     OBSERVER_AVAILABLE = False
@@ -41,7 +44,10 @@ except ImportError:
 try:
     from core_engine.mostar_moments_log import log_mostar_moment
 except ImportError:
-    def log_mostar_moment(*args, **kwargs): pass
+
+    def log_mostar_moment(*args, **kwargs):
+        pass
+
 
 # ═══════════════════════════════════════════════════════════════════
 # SOVEREIGN MODEL REGISTRY
@@ -69,13 +75,14 @@ REMOSTAR_MODELS = {
 
 COMPLEXITY_THRESHOLD = float(os.getenv("COMPLEXITY_THRESHOLD", "0.7"))
 
-NEO4J_URI      = os.getenv("NEO4J_URI",      "bolt://localhost:7687")
-NEO4J_USER     = os.getenv("NEO4J_USER",     "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "mostar123")
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
 
 # ── Singleton managers ────────────────────────────────────────────
 _moments_manager = None
 _moscript_engine = None
+
 
 def get_moments_manager():
     global _moments_manager
@@ -83,43 +90,80 @@ def get_moments_manager():
         _moments_manager = MoStarMomentsManager()
     return _moments_manager
 
+
 def get_moscript_engine():
     global _moscript_engine
     if _moscript_engine is None and MOSCRIPT_AVAILABLE:
         _moscript_engine = MoScriptEngine()
     return _moscript_engine
 
+
 # ═══════════════════════════════════════════════════════════════════
 # ROUTING KEYWORDS
 # ═══════════════════════════════════════════════════════════════════
 FORCE_COMPLEX = {
-    "analyze", "why", "verify", "explain", "compare",
-    "synthesize", "ifa", "odu", "simulate", "evaluate",
-    "topsis", "ntopsis", "grey theory", "ahp", "neutrosophic",
-    "sovereignty", "covenant", "flamecodex",
+    "analyze",
+    "why",
+    "verify",
+    "explain",
+    "compare",
+    "synthesize",
+    "ifa",
+    "odu",
+    "simulate",
+    "evaluate",
+    "topsis",
+    "ntopsis",
+    "grey theory",
+    "ahp",
+    "neutrosophic",
+    "sovereignty",
+    "covenant",
+    "flamecodex",
 }
 
 LOGISTICS_KEYWORDS = {
-    "cargo", "supply", "ship", "delivery", "transport",
-    "logistics", "dispatch", "manifest", "medical", "aid",
-    "warehouse", "prepositioning", "afrotrack",
+    "cargo",
+    "supply",
+    "ship",
+    "delivery",
+    "transport",
+    "logistics",
+    "dispatch",
+    "manifest",
+    "medical",
+    "aid",
+    "warehouse",
+    "prepositioning",
+    "afrotrack",
 }
 
 HEALTH_KEYWORDS = {
-    "disease", "outbreak", "surveillance", "epidemic",
-    "cholera", "malaria", "lassa", "alert", "who", "afro",
-    "rad-x", "sentinel", "health",
+    "disease",
+    "outbreak",
+    "surveillance",
+    "epidemic",
+    "cholera",
+    "malaria",
+    "lassa",
+    "alert",
+    "who",
+    "afro",
+    "rad-x",
+    "sentinel",
+    "health",
 }
+
 
 # ═══════════════════════════════════════════════════════════════════
 # MAIN ROUTER — MOSCRIPT RITUAL INITIATOR
 # ═══════════════════════════════════════════════════════════════════
 async def route_query(
-    prompt:        str,
-    system:        str = "",
+    prompt: str,
+    system: str = "",
     neo4j_context: str = "",
-    user_id:       str = "User",
-    metadata:      Dict[str, Any] = None,
+    user_id: str = "User",
+    metadata: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
     """
     Initiates a sovereign reasoning ritual through the MoScriptEngine.
@@ -136,13 +180,13 @@ async def route_query(
     ritual = {
         "operation": "route_reasoning",
         "payload": {
-            "query":         prompt,
-            "system":        system,
+            "query": prompt,
+            "system": system,
             "neo4j_context": neo4j_context,
-            "metadata":      metadata,
-            "purpose":       metadata.get("purpose", "general_reasoning")
+            "metadata": metadata,
+            "purpose": metadata.get("purpose", "general_reasoning"),
         },
-        "target": "Grid.Mind"
+        "target": "Grid.Mind",
     }
 
     # ── EXECUTE VIA COVENANT INTERPRETER ──────────────────────────
@@ -150,22 +194,22 @@ async def route_query(
 
     if response.get("status") == "denied":
         return {
-            "error":    response.get("error"),
-            "refusal":  True,
-            "layer":    "Guardian",
+            "error": response.get("error"),
+            "refusal": True,
+            "layer": "Guardian",
             "insignia": "MSTR-⚡",
         }
 
     result = response.get("result", {})
     return {
-        "response":         result.get("logic_deduced", "Ritual disrupted."),
-        "lingua_parsed":    result.get("lingua_parsed"),
+        "response": result.get("logic_deduced", "Ritual disrupted."),
+        "lingua_parsed": result.get("lingua_parsed"),
         "complexity_score": result.get("resonance", 0.95),
-        "routed_to":        "dcx_ritual",
-        "layer":            "CONSCIOUSNESS",
-        "moment_id":        result.get("ritual_id"),
-        "insignia":         "MSTR-⚡",
-        "blessing":         response.get("blessing")
+        "routed_to": "dcx_ritual",
+        "layer": "CONSCIOUSNESS",
+        "moment_id": result.get("ritual_id"),
+        "insignia": "MSTR-⚡",
+        "blessing": response.get("blessing"),
     }
 
 
@@ -189,9 +233,9 @@ async def fetch_neo4j_context(prompt: str, limit: int = 5) -> str:
             """,
             "params": {"prompt": prompt, "limit": limit},
             "purpose": "context_retrieval",
-            "redaction_level": "standard"
+            "redaction_level": "standard",
         },
-        "target": "Grid.Soul"
+        "target": "Grid.Soul",
     }
 
     response = await engine.interpret(ritual)
@@ -203,6 +247,7 @@ async def fetch_neo4j_context(prompt: str, limit: int = 5) -> str:
 
 
 if __name__ == "__main__":
+
     async def main():
         print("=== RITUAL ROUTING TEST ===\n")
         result = await route_query("Nnọọ! Who are you?")
