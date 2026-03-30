@@ -694,11 +694,13 @@ class MoScriptEngine:
         if agent_id is None or strength is None:
             raise ValueError("Missing agent_id or new_strength for mutation.")
 
-        driver = GraphDatabase.driver(
-            os.getenv("NEO4J_URI", "bolt://localhost:7687"),
-            auth=(os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASSWORD", "")),
-            trusted_certificates=TrustAll(),
-        )
+        _uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+        _user = os.getenv("NEO4J_USER", "neo4j")
+        _pw = os.getenv("NEO4J_PASSWORD", "")
+        _driver_kwargs = {"auth": (_user, _pw)}
+        if _uri.startswith(("neo4j+s://", "bolt+s://", "neo4j+ssc://", "bolt+ssc://")):
+            _driver_kwargs["trusted_certificates"] = TrustAll()
+        driver = GraphDatabase.driver(_uri, **_driver_kwargs)
 
         with driver.session() as session:
             session.run(

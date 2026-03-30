@@ -29,11 +29,14 @@ if (Test-Path $envFile) {
     Write-Host "   Loaded Neo4j config from backend/.env" -ForegroundColor Gray
 }
 else {
-    Write-Host "   ⚠ backend/.env not found, using defaults" -ForegroundColor Yellow
-    $NEO4J_URI = 'neo4j+s://371530ba.databases.neo4j.io'
-    $NEO4J_USER = 'neo4j'
-    $NEO4J_PASSWORD = ''
+    Write-Host "   WARNING: backend/.env not found, using defaults" -ForegroundColor Yellow
 }
+
+# --- Always use AuraDB (override local bolt URI if set) ---
+$NEO4J_URI = 'neo4j+s://371530ba.databases.neo4j.io'
+$NEO4J_USER = 'neo4j'
+$NEO4J_PASSWORD = 'mostar123'
+Write-Host "   Using AuraDB: $NEO4J_URI" -ForegroundColor Gray
 
 if (-not (Test-Path $LogsDir)) { New-Item -ItemType Directory -Path $LogsDir | Out-Null }
 
@@ -153,38 +156,24 @@ else {
     Start-Sleep -Seconds 2
 }
 
-# --- 6. Start Cloudflare Tunnels ---
-Write-Host "`n[6/6] Starting Cloudflare Tunnels (Whisper, Ollama, Neo4j)..." -ForegroundColor Cyan
+# --- 6. Start Cloudflare Tunnel (mostar-grid - unified) ---
+Write-Host "`n[6/6] Starting Cloudflare Tunnel (mostar-grid)..." -ForegroundColor Cyan
 $CloudflaredExe = "C:\Users\idona\Downloads\cloudflared-windows-amd64.exe"
 if (-not (Test-Path $CloudflaredExe)) {
     Write-Host "   ❌ cloudflared not found at $CloudflaredExe" -ForegroundColor Red
 }
 else {
-    $logFileWhisper = Join-Path $LogsDir "cloudflared_whisper.log"
-    $logFileOllama = Join-Path $LogsDir "cloudflared_ollama.log"
-    $logFileNeo4j = Join-Path $LogsDir "cloudflared_neo4j.log"
+    $logFileGrid = Join-Path $LogsDir "cloudflared_grid.log"
     
-    # Tunnel Tokens
-    $WhisperToken = "eyJhIjoiYTI5NmFlN2I1ZjZkNmE2ZDZjMDAzY2Q4YmMzYzIyYTIiLCJ0IjoiYmZjNWM0NjgtMTdhZC00OTZjLWE4OWUtNWUzYWQyMjVmYjA4IiwicyI6Ik0yVXlZamsyWXpVdFpXWXdPUzAwTm1WbExUZzBZamt0TkdKbFpqSTFaVGhoTWpGbSJ9"
-    $OllamaToken = "eyJhIjoiYTI5NmFlN2I1ZjZkNmE2ZDZjMDAzY2Q4YmMzYzIyYTIiLCJ0IjoiOGVhZjgwMTMtYjQwYy00YTJiLWI1MjgtZjMyN2VkNTA2ODE1IiwicyI6Ik5UUXpOREJrWXpjdE16aGpOeTAwWlRrNExUazJOVGt0WVRkbE9XSTBOVFV3TnpRNVpEUTBNemxrWmpBdFpEbG1OUzAwTldOaExXRm1aakF0TnpSaFlqSmtObVZtTTJZMiJ9"
-    $Neo4jToken = "eyJhIjoiYTI5NmFlN2I1ZjZkNmE2ZDZjMDAzY2Q4YmMzYzIyYTIiLCJ0IjoiZjQ4OGUxNjgtYjlhMy00NGM1LWFkOGQtMzRmYTFhMzVhMTkzIiwicyI6Ill6YzBaR1UzTkRndE9HUXpNQzAwTVdabExXSmhNekl0TXpjeE9UTXhZMlkwWVRoayJ9"
-
-    Start-Job -Name "CloudflaredWhisper" -ScriptBlock {
+    # mostar-grid tunnel token (87d16259-105b-4604-850b-b14a1881fdb8)
+    $GridToken = "eyJhIjoiYTI5NmFlN2I1ZjZkNmE2ZDZjMDAzY2Q4YmMzYzIyYTIiLCJzIjoiTWpVNFlUZzBPR1l0T0RVM1ppMDBPVEl6TFRrNE5Ua3RNVFZqTVdNellUUTVNVFEzIiwidCI6Ijg3ZDE2MjU5LTEwNWItNDYwNC04NTBiLWIxNGExODgxZmRiOCJ9"
+    
+    Start-Job -Name "CloudflaredGrid" -ScriptBlock {
         param($exe, $token, $logFile)
         & $exe tunnel run --token $token 2>&1 | Tee-Object -FilePath $logFile
-    } -ArgumentList $CloudflaredExe, $WhisperToken, $logFileWhisper | Out-Null
+    } -ArgumentList $CloudflaredExe, $GridToken, $logFileGrid | Out-Null
 
-    Start-Job -Name "CloudflaredOllama" -ScriptBlock {
-        param($exe, $token, $logFile)
-        & $exe tunnel run --token $token 2>&1 | Tee-Object -FilePath $logFile
-    } -ArgumentList $CloudflaredExe, $OllamaToken, $logFileOllama | Out-Null
-
-    Start-Job -Name "CloudflaredNeo4j" -ScriptBlock {
-        param($exe, $token, $logFile)
-        & $exe tunnel run --token $token 2>&1 | Tee-Object -FilePath $logFile
-    } -ArgumentList $CloudflaredExe, $Neo4jToken, $logFileNeo4j | Out-Null
-
-    Write-Host "   ✅ All Cloudflare Tunnels starting in background..." -ForegroundColor Green
+    Write-Host "   ✅ Cloudflare Tunnel (mostar-grid) starting in background..." -ForegroundColor Green
     Start-Sleep -Seconds 2
 }
 
@@ -214,9 +203,7 @@ try {
                     "CoreEngine" { $color = "Yellow" }
                     "MoExecutor" { $color = "Magenta" }
                     "Frontend" { $color = "Blue" }
-                    "CloudflaredWhisper" { $color = "DarkCyan" }
-                    "CloudflaredOllama" { $color = "DarkYellow" }
-                    "CloudflaredNeo4j" { $color = "DarkGreen" }
+                    "CloudflaredGrid" { $color = "DarkCyan" }
                     default { $color = "White" }
                 }
                 foreach ($line in $output) {
