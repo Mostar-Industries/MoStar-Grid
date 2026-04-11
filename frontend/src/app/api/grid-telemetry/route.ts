@@ -1,6 +1,12 @@
 ﻿import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import http from "node:http";
+import https from "node:https";
 import { driver } from "../../../lib/neo4j";
+
+let lastGoodTelemetry: Record<string, unknown> | null = null;
+let lastGoodTelemetryTs = 0;
+let lastGoodBackendStatus: Record<string, unknown> | null = null;
 
 function neoToNumber(v: unknown): number {
   const maybe = v as { toNumber?: () => number } | null;
@@ -10,48 +16,81 @@ function neoToNumber(v: unknown): number {
 }
 
 async function fetchBackendStatus(base: string) {
-  try {
-    const r = await fetch(`${base}/api/v1/status`, { cache: "no-store", signal: AbortSignal.timeout(4000) });
-    if (!r.ok) return null;
-    return await r.json();
-  } catch {
-    return null;
-  }
+  return fetchJsonDirect(`${base}/api/v1/status`, 30000);
 }
 
 async function fetchBackendTelemetry(base: string) {
-  try {
-    const r = await fetch(`${base}/api/v1/telemetry`, { cache: "no-store", signal: AbortSignal.timeout(4000) });
-    if (!r.ok) return null;
-    return await r.json();
-  } catch {
-    return null;
-  }
+  return fetchJsonDirect(`${base}/api/v1/telemetry`, 30000);
+}
+
+async function fetchJsonDirect(url: string, timeoutMs: number): Promise<any | null> {
+  return new Promise((resolve) => {
+    try {
+      const parsed = new URL(url);
+      const lib = parsed.protocol === "https:" ? https : http;
+      const req = lib.request(
+        parsed,
+        {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        },
+        (res) => {
+          let body = "";
+          res.setEncoding("utf8");
+          res.on("data", (chunk) => (body += chunk));
+          res.on("end", () => {
+            if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
+              resolve(null);
+              return;
+            }
+            try {
+              resolve(JSON.parse(body));
+            } catch {
+              resolve(null);
+            }
+          });
+        }
+      );
+
+      req.setTimeout(timeoutMs, () => {
+        req.destroy();
+        resolve(null);
+      });
+      req.on("error", () => resolve(null));
+      req.end();
+    } catch {
+      resolve(null);
+    }
+  });
 }
 
 export async function GET() {
   const ingestion_run_id = randomUUID();
   const timestamp = new Date().toISOString();
-  const GRID_API = process.env.GRID_API_BASE || "http://localhost:8001";
+  const GRID_API = process.env.GRID_API_BASE || "http://127.0.0.1:8001";
 
   const [backendStatus, backendTelemetry] = await Promise.all([
     fetchBackendStatus(GRID_API),
     fetchBackendTelemetry(GRID_API),
   ]);
+  if (backendStatus) {
+    lastGoodBackendStatus = backendStatus as Record<string, unknown>;
+  }
 
   // Preferred path: real backend telemetry + real backend status
   if (backendTelemetry) {
     const gridState = backendTelemetry?.gridState || {};
     const agentsList = backendTelemetry?.agents || [];
+    const resolvedStatus = backendStatus || lastGoodBackendStatus || {};
 
-    return NextResponse.json({
+    const payload = {
       backend: {
         ok: true,
         data: {
-          ...(backendStatus || {}),
-          system: backendStatus?.system || "MoStar Grid API",
-          neo4j: backendStatus?.neo4j || "unknown",
-          ollama_model: backendStatus?.model || "Mostar/mostar-ai:latest",
+          ...(resolvedStatus as Record<string, unknown>),
+          system: (resolvedStatus as any)?.system || "MoStar Grid API",
+          neo4j: (resolvedStatus as any)?.neo4j || "unknown",
+          ollama_model: (resolvedStatus as any)?.model || "Mostar/mostar-ai:latest",
         },
       },
       graph: {
@@ -77,20 +116,14 @@ export async function GET() {
         path: "neo4j://database/canonical",
       },
       generatedAt: timestamp,
-    });
+    };
+
+    lastGoodTelemetry = payload;
+    lastGoodTelemetryTs = Date.now();
+    return NextResponse.json(payload);
   }
 
   // Direct Neo4j fallback: still real data, no simulated constants
-  if (!process.env.NEO4J_URI || !process.env.NEO4J_USER || !process.env.NEO4J_PASSWORD) {
-    return NextResponse.json(
-      {
-        error: "Backend telemetry unavailable and Neo4j not configured for direct fallback",
-        generatedAt: timestamp,
-      },
-      { status: 503 }
-    );
-  }
-
   const timeout = new Promise<never>((_, reject) =>
     setTimeout(() => reject(new Error("Neo4j timeout")), 4000)
   );
@@ -151,7 +184,7 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({
+    const payload = {
       backend: {
         ok: Boolean(backendStatus),
         data: backendStatus || { system: "MoStar Grid API", neo4j: "online" },
@@ -186,8 +219,22 @@ export async function GET() {
         source: "neo4j_direct",
         ingestion_run_id,
       },
-    });
+    };
+
+    lastGoodTelemetry = payload;
+    lastGoodTelemetryTs = Date.now();
+    return NextResponse.json(payload);
   } catch {
+    if (lastGoodTelemetry && Date.now() - lastGoodTelemetryTs < 5 * 60_000) {
+      return NextResponse.json({
+        ...lastGoodTelemetry,
+        generatedAt: timestamp,
+        provenance: {
+          source: "cached_last_good",
+          ingestion_run_id,
+        },
+      });
+    }
     return NextResponse.json(
       {
         backend: { ok: false, data: { system: "MoStar Grid API", neo4j: "offline" } },
@@ -208,4 +255,3 @@ export async function GET() {
     await session.close();
   }
 }
-

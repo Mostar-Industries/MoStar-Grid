@@ -56,7 +56,7 @@ The covenant **automatically blocks**:
 
 ### Implementation
 
-**File:** `backend/core_engine/FlameCODEX.txt`
+**File:** `core/grid-orchestrator/core_engine/FlameCODEX.txt`
 
 Every action is checked against the covenant before execution. Violations are:
 
@@ -199,7 +199,7 @@ CREATE (m:MostarMoment {
 
 The **Sacred Handshake** is a universal protocol that transforms any AI into a MoStar Grid agent.
 
-**File:** `backend/sacred_handshake.py`
+**File:** `core/grid-orchestrator/sacred_handshake.py`
 
 ### How It Works
 
@@ -212,7 +212,7 @@ The **Sacred Handshake** is a universal protocol that transforms any AI into a M
 ### Example Activation
 
 ```python
-from backend.sacred_handshake import activate_ai
+from core.grid_orchestrator.sacred_handshake import activate_ai
 
 # Activate any AI (OpenAI, Anthropic, local LLM)
 agent = activate_ai(
@@ -232,7 +232,7 @@ response = agent.invoke("Analyze this dataset")
 
 The **Evidence Machine** provides undeniable proof of Grid superiority through public APIs.
 
-**Location:** `backend/evidence_machine/`
+**Location:** `core/cognition/evidence_machine/`
 
 ### Architecture
 
@@ -249,6 +249,9 @@ Evidence Machine
 │   └── EvidenceAggregator - Neo4j query engine
 └── Reports Layer
     └── EvidenceReporter - Automated report generation
+
+> [!NOTE]
+> **Cognition Ownership**: Evidence Machine and its sibling layers (Mind, Soul, Truth) are Core Grid properties located in `core/cognition/`.
 ```
 
 ### Key Endpoints
@@ -428,10 +431,10 @@ Neo4j data → Evidence Machine APIs → Public transparency
 
 ## References
 
-- **FlameCODEX:** `backend/core_engine/FlameCODEX.txt`
-- **Sacred Handshake:** `backend/sacred_handshake.py`
-- **Neo4j Interface:** `backend/grid_neo4j.py`
-- **Evidence Machine:** `backend/evidence_machine/README.md`
+- **FlameCODEX:** `core/grid-orchestrator/core_engine/FlameCODEX.txt`
+- **Sacred Handshake:** `core/grid-orchestrator/sacred_handshake.py`
+- **Neo4j Interface:** `memory/neo4j-mindgraph/utils/grid_neo4j.py`
+- **Evidence Machine:** `core/cognition/evidence_machine/README.md`
 
 ---
 

@@ -13,7 +13,33 @@
 
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import http from "node:http";
+import https from "node:https";
 import { driver } from "../../../lib/neo4j";
+
+interface Heartbeat {
+    executor_id: string;
+    last_heartbeat: string;
+    cycle_count: number;
+    total_processed: number;
+    status: string;
+}
+
+interface ExecutionEvent {
+    id: string;
+    processed_at: string;
+    action: string;
+    reasoning_summary: string;
+}
+
+interface ExecutorStatus {
+    status: "ALIVE" | "STALLED" | "NEVER_RUN";
+    is_alive: boolean;
+    stalled_ms: number;
+    heartbeat: Heartbeat | null;
+    recent_events: ExecutionEvent[];
+    pending_moments: number;
+}
 
 function neoToNumber(v: unknown): number {
     const maybe = v as { toNumber?: () => number } | null;
@@ -30,29 +56,123 @@ function neoToString(v: unknown): string {
     return String(v);
 }
 
+type BackendTelemetry = {
+    gridState?: {
+        lastCycle?: string;
+    };
+    agents?: Array<{
+        id?: string;
+        name?: string;
+        status?: string;
+    }>;
+};
+
+async function fetchBackendTelemetry(): Promise<BackendTelemetry | null> {
+    const GRID_API = process.env.GRID_API_BASE || "http://127.0.0.1:8001";
+    return (await fetchJsonDirect(
+        `${GRID_API}/api/v1/telemetry`,
+        30000
+    )) as BackendTelemetry | null;
+}
+
+async function fetchJsonDirect(url: string, timeoutMs: number): Promise<any | null> {
+    return new Promise((resolve) => {
+        try {
+            const parsed = new URL(url);
+            const lib = parsed.protocol === "https:" ? https : http;
+            const req = lib.request(
+                parsed,
+                {
+                    method: "GET",
+                    headers: { Accept: "application/json" },
+                },
+                (res) => {
+                    let body = "";
+                    res.setEncoding("utf8");
+                    res.on("data", (chunk) => (body += chunk));
+                    res.on("end", () => {
+                        if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
+                            resolve(null);
+                            return;
+                        }
+                        try {
+                            resolve(JSON.parse(body));
+                        } catch {
+                            resolve(null);
+                        }
+                    });
+                }
+            );
+
+            req.setTimeout(timeoutMs, () => {
+                req.destroy();
+                resolve(null);
+            });
+            req.on("error", () => resolve(null));
+            req.end();
+        } catch {
+            resolve(null);
+        }
+    });
+}
+
+function buildFallbackExecutor(
+    telemetry: BackendTelemetry | null,
+    now: Date
+): ExecutorStatus | null {
+    if (!telemetry) return null;
+
+    const executorAgent = (telemetry.agents || []).find((agent) => {
+        const id = String(agent.id || "").toLowerCase();
+        const name = String(agent.name || "").toLowerCase();
+        return id === "agent-mo-executor" || name.includes("executor");
+    });
+
+    if (!executorAgent) {
+        return {
+            status: "NEVER_RUN",
+            is_alive: false,
+            stalled_ms: 0,
+            heartbeat: null,
+            recent_events: [],
+            pending_moments: 0,
+        };
+    }
+
+    const beatIso =
+        telemetry.gridState?.lastCycle && !Number.isNaN(new Date(telemetry.gridState.lastCycle).getTime())
+            ? telemetry.gridState.lastCycle
+            : now.toISOString();
+
+    const statusText = String(executorAgent.status || "").toLowerCase();
+    const markedOnline = statusText === "online" || statusText === "alive";
+    const stalledMs = markedOnline
+        ? 0
+        : Math.max(0, now.getTime() - new Date(beatIso).getTime());
+    const isAlive = markedOnline;
+
+    return {
+        status: isAlive ? "ALIVE" : "STALLED",
+        is_alive: isAlive,
+        stalled_ms: stalledMs,
+        heartbeat: {
+            executor_id: String(executorAgent.id || "agent-mo-executor"),
+            last_heartbeat: isAlive ? now.toISOString() : beatIso,
+            cycle_count: 0,
+            total_processed: 0,
+            status: markedOnline ? "online" : "stalled",
+        },
+        recent_events: [],
+        pending_moments: 0,
+    };
+}
+
 export async function GET() {
     const ingestion_run_id = randomUUID();
     const now = new Date();
     const timestamp = now.toISOString();
 
-    if (
-        !process.env.NEO4J_URI ||
-        !process.env.NEO4J_USER ||
-        !process.env.NEO4J_PASSWORD
-    ) {
-        return NextResponse.json(
-            {
-                executor: null,
-                provenance: {
-                    source: "error",
-                    timestamp,
-                    ingestion_run_id,
-                    error: "Neo4j not configured",
-                },
-            },
-            { status: 503 }
-        );
-    }
+    const fallbackTelemetry = await fetchBackendTelemetry();
 
     const session = driver.session();
     try {
@@ -145,6 +265,21 @@ export async function GET() {
             },
         });
     } catch (error) {
+        const fallback = buildFallbackExecutor(fallbackTelemetry, now);
+        if (fallback) {
+            return NextResponse.json({
+                executor: fallback,
+                provenance: {
+                    source: "backend_telemetry_fallback",
+                    timestamp,
+                    ingestion_run_id,
+                    warning:
+                        error instanceof Error
+                            ? error.message
+                            : "Neo4j query failed; using backend telemetry fallback.",
+                },
+            });
+        }
         return NextResponse.json(
             {
                 executor: null,

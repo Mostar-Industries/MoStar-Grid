@@ -80,5 +80,12 @@
         "**/frontend/.next": true,
         "**/frontend/node_modules": true
     },
-    "pieces.cloudCapabilities": "Local"
+    "pieces.cloudCapabilities": "Local",
+    "git.ignoreLimitWarning": true,
+    "chat.tools.terminal.autoApprove": {
+        "/^wsl bash -c \"cat /opt/mostar/mostar-grid/\\.env\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
 }

@@ -1,0 +1,45 @@
+{
+  "package": "MoStar Restoration Pack",
+  "generated_at": "2026-04-05T08:23:04.605825Z",
+  "purpose": "Capture missing architecture elements and provide import-ready files without autonomous database execution.",
+  "based_on": [
+    "prior Mo/Woo/Grid collation summary",
+    "restoration batch status through F",
+    "uploaded data.zip inventory"
+  ],
+  "deliverables": [
+    "entity_capture_matrix.csv",
+    "missing_modules_seed.csv",
+    "gap_capture_manifest.json",
+    "phase_g_missing_modules.cypher",
+    "integrity_audit_queries.cypher",
+    "restoration_runbook.md"
+  ],
+  "generated_modules": [
+    {
+      "id": "module_deepcal",
+      "name": "DeepCAL",
+      "reason": "Referenced but no import-ready data file found"
+    },
+    {
+      "id": "module_code_conduit",
+      "name": "CodeConduit",
+      "reason": "Referenced but no import-ready data file found"
+    },
+    {
+      "id": "module_woo_commerce",
+      "name": "WooCommerceLayer",
+      "reason": "Referenced but no import-ready data file found"
+    },
+    {
+      "id": "module_woo_truth_bridge",
+      "name": "WooTruthBridge",
+      "reason": "Integration gap between Woo and TruthEngine/Verdict"
+    },
+    {
+      "id": "module_flameborn_bridge",
+      "name": "FlameBornMoStarBridge",
+      "reason": "Integration gap between FlameBorn and MoStar Grid"
+    }
+  ]
+}

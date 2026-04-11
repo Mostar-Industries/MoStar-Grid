@@ -1,0 +1,16 @@
+component,layer,status,summary,source_basis,next_action
+Mo,Soul,Captured,Existing soulprint/codex identity,"mo_soulprint.json, Codex",No action
+Woo,Soul/Mind,Captured,Resonance judge and covenant filter,"woo_identity.yaml, mission_values.md, woo_soulprint.json",Bridge to TruthEngine needed
+FlameBorn,Soul/Reality,Captured,Health sovereignty mission/system,Understanding FlameBorn PDF,Live subgraph import later
+TruthEngine,Mind,Captured,Verdict/restoration engine,truth_engine.py,Bridge to Woo/Verdict needed
+VerdictEngine,Mind,Captured,Truth scoring / justice filter,mind_layer_verdict_engine.py,API chain needed
+IfaOracle,Mind,Captured,Cultural diagnostic engine,mind_layer_ifa_oracle.py,Already present
+DeepCAL,Mind,MissingFileGenerated,Predictive synthesis module placeholder,deepcal_core.ts placeholder,Generated seed + cypher
+CodeConduit,Body,MissingFileGenerated,AI↔repo↔deploy pipeline module,Not found as import-ready source,Generated seed + cypher
+WooCommerceLayer,Body,MissingFileGenerated,Commerce/transaction intelligence layer,Referenced in prior collation only,Generated seed + cypher
+APIExecutor,Body,Captured,MoScript executor/inter-layer comms,body_layer_api_executor.py,Already present
+SpiritualEngine,Soul/Body,Captured,Alignment and portal service,soul_layer_spiritual_engine.py,Already present
+MostarMoment,Memory,Captured,Memory/event ledger,mostar_moments_log.py,Background process appears active
+GridManifest,Hidden,Captured,Namespace binding and registration,mostar_grid_manifest.json,Already present
+EventDataLayer,Reality,Captured,Sensors/rumor/movement/clinic model,ground-truth schema/sql,Live ingest later
+MNTRK,Mind/Soul,PendingRepair,Mentor registry,MNTRK_Agent.json malformed,Needs repair before import

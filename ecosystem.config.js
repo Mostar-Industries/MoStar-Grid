@@ -6,9 +6,12 @@
 const fs = require("fs");
 const path = require("path");
 
-const ROOT = "/home/idona/MoStar/MoStar-Grid";
+const ROOT = __dirname;
 const LOGS = path.join(ROOT, "logs");
-const BACKEND_ENV_FILE = path.join(ROOT, "backend", ".env");
+const CONFIG_ENV_FILE = path.join(ROOT, "config", ".env");
+const PYTHON_BIN = fs.existsSync(path.join(ROOT, ".venv-wsl", "bin", "python"))
+  ? path.join(ROOT, ".venv-wsl", "bin", "python")
+  : "/usr/bin/python3";
 
 function parseEnv(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -46,16 +49,17 @@ function parseEnv(filePath) {
     }, {});
 }
 
+// Ensure PM2 sets PYTHONPATH so modules resolve instantly without bash wrappers.
 const backendEnv = {
-  ...parseEnv(BACKEND_ENV_FILE),
-  PYTHONPATH: ROOT,
+  ...parseEnv(CONFIG_ENV_FILE),
+  PYTHONPATH: `${ROOT}:${path.join(ROOT, "core", "grid-orchestrator")}:${path.join(ROOT, "core", "cognition")}:${path.join(ROOT, "engines", "idim-ikang")}:${path.join(ROOT, "memory", "neo4j-mindgraph")}`,
   PYTHONUNBUFFERED: "1",
   PYTHONUTF8: "1",
   PYTHONIOENCODING: "utf-8",
-  OLLAMA_HOST: "http://localhost:11434",
-  NEO4J_URI: "bolt://localhost:7687",
+  OLLAMA_HOST: "http://127.0.0.1:11434",
+  NEO4J_URI: "bolt://127.0.0.1:7687",
   NEO4J_USER: "neo4j",
-  REDIS_URL: "redis://localhost:6379",
+  REDIS_URL: "redis://127.0.0.1:6379",
 };
 
 const frontendEnv = {
@@ -70,12 +74,39 @@ const frontendEnv = {
   PORT: "3000",
 };
 
+const cloudflaredEnv = {
+  CLOUDFLARED_BIN: "/mnt/c/Users/idona/Desktop/cloudflared-windows-amd64.exe",
+  CLOUDFLARED_CONFIG: path.join(ROOT, "cloudflared", "config-direct.yml"),
+  ...(process.env.CLOUDFLARED_TOKEN ? { CLOUDFLARED_TOKEN: process.env.CLOUDFLARED_TOKEN } : {}),
+};
+
+const ollamaEnv = {
+  OLLAMA_HOST: "127.0.0.1:11434",
+  OLLAMA_HOME: path.join(ROOT, ".ollama"),
+  OLLAMA_MODELS: path.join(ROOT, ".ollama", "models"),
+};
+
 module.exports = {
   apps: [
     {
-      name: "mostar-memory-layer",
-      script: "/usr/bin/python3",
-      args: "-m uvicorn backend.memory_layer.api.main:app --host 0.0.0.0 --port 8000",
+      name: "mostar-ollama",
+      script: "/bin/bash",
+      args: path.join(ROOT, "scripts", "run-ollama.sh"),
+      cwd: ROOT,
+      interpreter: "none",
+      watch: false,
+      autorestart: true,
+      restart_delay: 5000,
+      max_restarts: 10,
+      env: ollamaEnv,
+      log_date_format: "YYYY-MM-DD HH:mm:ss",
+      out_file: path.join(LOGS, "ollama.out.log"),
+      error_file: path.join(LOGS, "ollama.err.log"),
+    },
+    {
+      name: "mostar-api-ingress",
+      script: PYTHON_BIN,
+      args: path.join(ROOT, "core", "mostar-api", "main.py"),
       cwd: ROOT,
       interpreter: "none",
       watch: false,
@@ -84,28 +115,13 @@ module.exports = {
       max_restarts: 10,
       env: backendEnv,
       log_date_format: "YYYY-MM-DD HH:mm:ss",
-      out_file: path.join(LOGS, "memory-api.out.log"),
-      error_file: path.join(LOGS, "memory-api.err.log"),
+      out_file: path.join(LOGS, "api-ingress.out.log"),
+      error_file: path.join(LOGS, "api-ingress.err.log"),
     },
     {
-      name: "mostar-core-engine",
-      script: "/usr/bin/python3",
-      args: "-m uvicorn backend.core_engine.api_gateway:app --host 0.0.0.0 --port 8001",
-      cwd: ROOT,
-      interpreter: "none",
-      watch: false,
-      autorestart: true,
-      restart_delay: 3000,
-      max_restarts: 10,
-      env: backendEnv,
-      log_date_format: "YYYY-MM-DD HH:mm:ss",
-      out_file: path.join(LOGS, "core-api.out.log"),
-      error_file: path.join(LOGS, "core-api.err.log"),
-    },
-    {
-      name: "mostar-executor",
-      script: "/usr/bin/python3",
-      args: path.join(ROOT, "backend", "mo_executor.py"),
+      name: "mostar-orchestrator",
+      script: PYTHON_BIN,
+      args: path.join(ROOT, "core", "grid-orchestrator", "mo_executor.py"),
       cwd: ROOT,
       interpreter: "none",
       watch: false,
@@ -119,7 +135,8 @@ module.exports = {
     },
     {
       name: "mostar-frontend",
-      script: path.join(ROOT, "scripts", "run-frontend.sh"),
+      script: "/bin/bash",
+      args: path.join(ROOT, "scripts", "run-frontend.sh"),
       cwd: path.join(ROOT, "frontend"),
       interpreter: "none",
       watch: false,
@@ -133,13 +150,15 @@ module.exports = {
     },
     {
       name: "mostar-cloudflared",
-      script: path.join(ROOT, "scripts", "run-cloudflared.sh"),
+      script: "/bin/bash",
+      args: path.join(ROOT, "scripts", "run-cloudflared.sh"),
       cwd: ROOT,
       interpreter: "none",
       watch: false,
       autorestart: true,
       restart_delay: 5000,
       max_restarts: 10,
+      env: cloudflaredEnv,
       log_date_format: "YYYY-MM-DD HH:mm:ss",
       out_file: path.join(LOGS, "cloudflared.out.log"),
       error_file: path.join(LOGS, "cloudflared.err.log"),

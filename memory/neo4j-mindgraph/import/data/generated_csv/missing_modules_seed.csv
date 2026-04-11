@@ -1,0 +1,6 @@
+id,label,name,layer,subgraph,status,summary,source
+module_deepcal,SystemModule,DeepCAL,Mind,grid_core,planned,"Predictive synthesis core for pattern, intelligence, and simulation fusion",generated_from_gap_analysis
+module_code_conduit,SystemModule,CodeConduit,Body,grid_core,planned,AI-to-repo-to-deploy orchestration pipeline,generated_from_gap_analysis
+module_woo_commerce,SystemModule,WooCommerceLayer,Body,grid_core,planned,"Commerce, transaction, and economic intelligence layer",generated_from_gap_analysis
+module_woo_truth_bridge,IntegrationBridge,WooTruthBridge,Mind,grid_core,planned,Bridges Woo resonance scoring to TruthEngine verdict execution,generated_from_gap_analysis
+module_flameborn_bridge,IntegrationBridge,FlameBornMoStarBridge,Reality,flameborn,planned,Connects FlameBorn field signals and DAO actions into MoStar intelligence loops,generated_from_gap_analysis

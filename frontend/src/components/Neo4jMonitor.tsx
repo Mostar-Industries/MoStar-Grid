@@ -10,7 +10,7 @@ export default function Neo4jMonitor() {
 
     const neo4jStatus = telemetry?.backend?.data?.neo4j || "unknown";
     const ok = telemetry?.graph?.ok;
-    const isStreaming = ok && neo4jStatus === "connected";
+    const isStreaming = Boolean(ok) && ["connected", "online"].includes(String(neo4jStatus).toLowerCase());
 
     // Pulse on new moments
     const moments = telemetry?.graph.stats?.totalMoments || 0;

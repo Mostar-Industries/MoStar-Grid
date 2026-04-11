@@ -1,0 +1,1100 @@
+{
+openapi: 3.1.0
+info:
+  title: MNTRK by MoStar Industries AI Agent API
+  description: >
+    This API provides robust and accurate tools for tracking Mastomys Natalensis
+    populations,
+
+    analyzing ecological trends, and supporting Lassa fever outbreak management
+    in Nigeria.
+
+    Designed with a focus on real-time data, environmental analysis, and
+    outbreak hotspots.
+
+    This is the API for the AI agent, providing direct interaction with the AI
+    system.
+  version: 1.3.0
+  contact:
+    name: Mastomys Tracker Support Team
+    url: 'https: //www.mo-overlord.tech/'
+    email: akanimo@57vflx.onmicrosoft.com
+servers:
+  - url: 'https: //www.mo-overlord.tech/'
+    description: Primary Production Server (Nigeria-focused)
+paths:
+  /ai/habitats:
+    post:
+      summary: Analyze satellite and environmental data to identify potential habitats.
+      operationId: ai_habitats_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: >-
+                #/paths/~1ai~1movements/get/responses/500/content/application~1json/schema
+              examples:
+                - summary: 'Example 1: Lagos Data'
+                  value:
+                    satellite_data: >-
+                      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR42mP8/wAAAwAB...
+                    environmental_data:
+                      temperature: 28
+                      rainfall: 150
+                      vegetation_index: 0.75
+                      soil_moisture: 40
+                      elevation: 300
+                      humidity: 65
+                      vegetation_type: Savanna
+                    geographic_coordinates:
+                      latitude: 6.5244
+                      longitude: 3.3792
+                    analysis_parameters:
+                      vegetation_threshold: 0.7
+                      temperature_range:
+                        - 25
+                        - 30
+                - summary: 'Example 2: Abuja Data'
+                  value:
+                    satellite_data: >-
+                      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR42mP8/wAAAwAB...
+                    environmental_data:
+                      temperature: 30
+                      rainfall: 130
+                      vegetation_index: 0.68
+                      soil_moisture: 35
+                      elevation: 250
+                      humidity: 70
+                      vegetation_type: Grassland
+                    geographic_coordinates:
+                      latitude: 9.0765
+                      longitude: 7.3986
+                    analysis_parameters:
+                      vegetation_threshold: 0.6
+                      temperature_range:
+                        - 20
+                        - 35
+        responses:
+          '200':
+            description: Successful habitat detection
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/HabitatPrediction'
+                examples:
+                  - summary: 'Example 1: Lagos Prediction'
+                    value:
+                      - id: 1
+                        location:
+                          latitude: 6.5244
+                          longitude: 3.3792
+                        suitability_score: 0.87
+                        environmental_data:
+                          temperature: 28
+                          rainfall: 150
+                          vegetation_index: 0.75
+                          humidity: 65
+                          vegetation_type: Savanna
+                        is_mock: false
+                  - summary: 'Example 2: Abuja Prediction'
+                    value:
+                      - id: 2
+                        location:
+                          latitude: 9.0765
+                          longitude: 7.3986
+                        suitability_score: 0.72
+                        environmental_data:
+                          temperature: 30
+                          rainfall: 130
+                          vegetation_index: 0.68
+                          humidity: 70
+                          vegetation_type: Grassland
+                        is_mock: true
+          '400':
+            description: Bad Request - Missing or invalid input
+          '500':
+            description: Internal Server Error
+  /ai/detections:
+    post:
+      summary: Record detected patterns of Mastomys Natalensis populations.
+      operationId: ai_detections_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: >-
+                #/paths/~1ai~1augmentation~1remote-sensing/post/responses/200/content/application~1json/schema
+            examples 1:
+              - summary: 'Example 1: Lagos Detection'
+                value:
+                  id: 10
+                  location:
+                    latitude: 6.5248
+                    longitude: 3.38
+                  confidence: 0.93
+                  detection_date: 2024-12-01T00: 00: 00.000Z
+                  is_mock: false
+              - summary: 'Example 2: Abuja Detection'
+                value:
+                  id: 11
+                  location:
+                    latitude: 9.0765
+                    longitude: 7.3986
+                  confidence: 0.89
+                  detection_date: 2024-12-02T00: 00: 00.000Z
+                  is_mock: true
+      responses:
+        '200':
+          description: Detection recorded successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DetectionPattern'
+              examples:
+                - summary: 'Example 1: Lagos Detection Confirmation'
+                  value:
+                    - id: 10
+                      location:
+                        latitude: 6.5248
+                        longitude: 3.38
+                      confidence: 0.93
+                      detection_date: 2024-12-01T00: 00: 00.000Z
+                      is_mock: false
+                - summary: 'Example 2: Abuja Detection Confirmation'
+                  value:
+                    - id: 11
+                      location:
+                        latitude: 9.0765
+                        longitude: 7.3986
+                      confidence: 0.89
+                      detection_date: 2024-12-02T00: 00: 00.000Z
+                      is_mock: true
+        '400':
+          description: Bad Request - Invalid input or missing fields
+        '500':
+          description: Internal Server Error
+  /ai/vision/analyze:
+    post:
+      summary: Analyze an image for Mastomys natalensis presence.
+      description: >-
+        This endpoint analyzes a base64-encoded image to detect Mastomys
+        natalensis and returns detections with bounding boxes, confidence
+        scores, and classifications.
+      operationId: ai_vision_analyze_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: byte
+                  description: Base64-encoded image data.
+                confidence_threshold:
+                  type: number
+                  format: float
+                  description: Minimum confidence score for detections.
+            examples:
+              - summary: 'Example 1: Rodent Image'
+                value:
+                  image: iVBORw0KGgoAAAANSUhEUgAA...
+                  confidence_threshold: 0.9
+              - summary: 'Example 2: No Rodent Image'
+                value:
+                  image: UEFBQUFBQUFBQUFBQUFBQUFBQ...
+                  confidence_threshold: 0.5
+      responses:
+        '200':
+          description: Successful analysis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Status of the analysis
+                    enum:
+                      - success
+                      - error
+                  detections:
+                    type: array
+                    description: List of detected objects
+                    items:
+                      $ref: '#/components/schemas/Detection'
+              examples:
+                - summary: 'Example 1: Rodent Found'
+                  value:
+                    status: success
+                    detections:
+                      - bounding_box:
+                          x_min: 45
+                          y_min: 60
+                          x_max: 120
+                          y_max: 180
+                        confidence: 0.92
+                        classification: Mastomys natalensis
+                - summary: 'Example 2: No Rodent Found'
+                  value:
+                    status: success
+                    detections: []
+        '400':
+          description: Bad Request - Invalid input or missing fields
+        '500':
+          description: Server error
+      security:
+        - openAIAuth: []
+  /ai/augmentation/remote-sensing:
+    post:
+      summary: Apply augmentation to remote sensing data.
+      description: >
+        Applies augmentation techniques to satellite imagery or LiDAR data to
+        enhance detection accuracy
+
+        for Mastomys Natalensis habitat mapping. Integrates with Supabase for
+        dataset storage and uses advanced
+
+        OpenAI algorithms for analysis.
+      operationId: ai_augmentation_remoteSensing_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoteSensingAugmentation'
+            examples:
+              - summary: 'Example 1: Mastomys detection'
+                value:
+                  dataset_url: >-
+                    https: //supabase.storage.example.com/datasets/africa_lidar.json
+                  augmentation_type: mastomys_natalensis_detection
+                  openai_prompt: Detect Mastomys Natalensis habitat trends in this dataset.
+              - summary: 'Example 2: Geospatial Enhancement'
+                value:
+                  dataset_url: >-
+                    https: //supabase.storage.example.com/datasets/nigeria_satellite.json
+                  augmentation_type: geospatial_enhancement
+                  openai_prompt: Enhance geospatial data for feature extraction.
+      responses:
+        '200':
+          description: Augmentation applied successfully. Results URL will be provided.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+                  results_url:
+                    type: string
+                    description: URL to the augmented results.
+              examples:
+                - summary: 'Example 1: Successful Augmentation'
+                  value:
+                    message: Augmentation successfully applied.
+                    results_url: >-
+                      https: //supabase.storage.example.com/results/augmentation_results_africa.json
+                - summary: 'Example 2: Successful Augmentation (Geospatial)'
+                  value:
+                    message: Augmentation successfully applied.
+                    results_url: >-
+                      https: //supabase.storage.example.com/results/geospatial_augmentation.json
+        '400':
+          description: Invalid request due to incorrect parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message for the bad request.
+                  details:
+                    type: string
+                    description: Additional details about the error.
+              examples:
+                - summary: 'Example 1: Missing URL error'
+                  value:
+                    error: Invalid augmentation type or missing dataset_url.
+                    details: dataset_url is required but missing.
+                - summary: 'Example 2: Invalid Augmentation Error'
+                  value:
+                    error: Invalid augmentation type.
+                    details: Augmentation type should be one of the valid enumeration.
+        '500':
+          description: Internal server error during augmentation.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message for server issues.
+                  details:
+                    type: string
+                    description: Additional error details.
+              examples:
+                - summary: 'Example 1: Storage Error'
+                  value:
+                    error: Supabase storage service is unavailable.
+                    details: Failed to upload results to Supabase storage bucket.
+                - summary: 'Example 2: Server Error'
+                  value:
+                    error: Unexpected error while augmenting data.
+                    details: Please contact support.
+      security:
+        - OAuth2:
+            - 'write:userfiles'
+  /ai/data-transformation:
+    post:
+      summary: Transform and clean datasets for analysis purposes.
+      description: >
+        Apply transformations and cleaning techniques to ensure data accuracy
+        and consistency.
+      operationId: ai_data_transformation_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataTransformation'
+            examples:
+              - summary: 'Example 1: Geospatial Data Transformation'
+                value:
+                  dataset_url: >-
+                    https: //supabase.storage.example.com/datasets/raw_geospatial_data.json
+                  cleaning_parameters:
+                    handle_missing: impute
+                    outlier_detection: z_score
+                  transformation_parameters:
+                    scaling: min_max
+                    encoding: one_hot
+                  transformation_type: geospatial
+              - summary: 'Example 2: Machine Learning Data Transformation'
+                value:
+                  dataset_url: >-
+                    https: //supabase.storage.example.com/datasets/raw_ml_data.json
+                  cleaning_parameters:
+                    handle_missing: drop
+                    outlier_detection: iqr
+                  transformation_parameters:
+                    scaling: standard
+                    encoding: label
+                  transformation_type: machine_learning
+      responses:
+        '200':
+          description: Data cleaned and transformed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+                  results_url:
+                    type: string
+                    description: URL of the cleaned and transformed dataset.
+              examples:
+                - summary: 'Example 1: Successful Transformation'
+                  value:
+                    message: Transformation completed successfully.
+                    results_url: >-
+                      https: //supabase.storage.example.com/results/cleaned_geospatial_data.json
+                - summary: 'Example 2: Successful Transformation for ML'
+                  value:
+                    message: Transformation completed successfully.
+                    results_url: >-
+                      https: //supabase.storage.example.com/results/transformed_ml_data.json
+        '400':
+          description: Invalid request due to missing or invalid parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1: Missing URL'
+                  value:
+                    error: dataset_url is required but missing.
+                - summary: 'Example 2: Invalid parameters'
+                  value:
+                    error: dataset_url or file_type are required.
+        '500':
+          description: Internal server error during transformation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Server error message.
+              examples:
+                - summary: 'Example 1: Transformation Pipeline Error'
+                  value:
+                    error: Unexpected error during data transformation.
+                - summary: 'Example 2: Server is unavailable'
+                  value:
+                    error: Transformation service is unavailable at this time.
+      security:
+        - OAuth2:
+            - 'write:userfiles'
+  /ai/anomaly-detection:
+    post:
+      summary: Detect unusual patterns in environmental data.
+      description: >
+        Analyze datasets to identify anomalies using various detection
+        algorithms.
+      operationId: ai_anomaly_detection_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnomalyDetectionRequest'
+            examples:
+              - summary: 'Example 1: CSV Data Anomaly'
+                value:
+                  input_file: >-
+                    iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR42mP8/wAAAwAB
+                  file_type: csv
+                  detection_method: isolation_forest
+                  parameters:
+                    contamination: 0.05
+                    distance_metric: euclidean
+              - summary: 'Example 2: GeoJSON Data Anomaly'
+                value:
+                  input_file: >-
+                    iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR42mP8/wAAAwAB
+                  file_type: geojson
+                  detection_method: dbscan
+                  parameters:
+                    contamination: 0.1
+                    distance_metric: manhattan
+      responses:
+        '200':
+          description: Anomalies detected successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+                  anomaly_results_url:
+                    type: string
+                    description: URL to download the anomaly detection results.
+              examples:
+                - summary: 'Example 1: Anomaly Results CSV'
+                  value:
+                    message: Anomalies detected successfully.
+                    anomaly_results_url: >-
+                      https: //supabase.storage.example.com/results/anomalies.json
+                - summary: 'Example 2: Anomaly Results GeoJSON'
+                  value:
+                    message: Anomalies detected successfully.
+                    anomaly_results_url: >-
+                      https: //supabase.storage.example.com/results/anomalies_geojson.json
+        '400':
+          description: Invalid request due to incorrect parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1: Missing File Error'
+                  value:
+                    error: Input file is required but missing.
+                - summary: 'Example 2: Invalid parameter error'
+                  value:
+                    error: Detection method not valid.
+        '500':
+          description: Internal server error during anomaly detection.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Server error message.
+              examples:
+                - summary: 'Example 1: Algorithmic Failure'
+                  value:
+                    error: Unexpected error during anomaly detection.
+                - summary: 'Example 2: Anomaly Detection Failure'
+                  value:
+                    error: Anomaly detection service is down at this time.
+      security:
+        - OAuth2:
+            - 'write:userfiles'
+  /ai/adaptive-learning:
+    post:
+      summary: Configure adaptive learning parameters.
+      description: >
+        Configure adaptive learning parameters for continuous improvement of
+        prediction models.
+      operationId: ai_adaptiveLearning_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model_type:
+                  type: string
+                  enum:
+                    - lstm
+                    - cnn
+                    - random_forest
+                    - gradient_boosting
+                    - svm
+                  description: Type of model for adaptive learning.
+                hyperparameters:
+                  type: object
+                  description: >-
+                    Configuration of hyperparameters for the adaptive learning
+                    process.
+                  properties:
+                    learning_rate:
+                      type: number
+                      description: Learning rate for training the model.
+                    batch_size:
+                      type: integer
+                      description: Batch size for model training.
+                augmentation_enabled:
+                  type: boolean
+                  description: Enable or disable data augmentation during training.
+            examples:
+              - summary: 'Example 1: LSTM Model Configuration'
+                value:
+                  model_type: lstm
+                  hyperparameters:
+                    learning_rate: 0.01
+                    batch_size: 64
+                  augmentation_enabled: true
+              - summary: 'Example 2: CNN Model Configuration'
+                value:
+                  model_type: cnn
+                  hyperparameters:
+                    learning_rate: 0.005
+                    batch_size: 128
+                  augmentation_enabled: false
+      responses:
+        '200':
+          description: Adaptive learning configured successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+              examples:
+                - summary: 'Example 1: LSTM Confirmed'
+                  value:
+                    message: Adaptive learning configuration applied successfully.
+                - summary: 'Example 2: CNN Confirmed'
+                  value:
+                    message: Adaptive learning configuration applied successfully.
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1: Missing parameter'
+                  value:
+                    error: Model type is missing.
+                - summary: 'Example 2: Invalid Model Type'
+                  value:
+                    error: Model type not supported.
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1: Hyperparameter error'
+                  value:
+                    error: Unexpected error during model configuration.
+                - summary: 'Example 2: Server is down'
+                  value:
+                    error: Model configuration service is unavailable at this time.
+      security:
+        - OAuth2:
+            - 'write:userfiles'
+  /ai/context-aware:
+    post:
+      summary: Enable context-aware prediction.
+      description: |
+        Enable context-aware responses for interactive and dynamic predictions.
+      operationId: ai_contextAware_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context_data:
+                  type: object
+                  description: Information about the current context for predictions.
+                  properties:
+                    region:
+                      type: string
+                      description: Region for context-aware prediction.
+                    time_frame:
+                      type: string
+                      description: Time frame for contextual predictions.
+                    environmental_factors:
+                      type: array
+                      items:
+                        type: string
+                      description: Key environmental factors to consider.
+            examples:
+              - summary: 'Example 1: Nigeria Daily Context'
+                value:
+                  context_data:
+                    region: Nigeria
+                    time_frame: daily
+                    environmental_factors:
+                      - temperature
+                      - rainfall
+              - summary: 'Example 2: Nigeria Monthly Context'
+                value:
+                  context_data:
+                    region: Nigeria
+                    time_frame: monthly
+                    environmental_factors:
+                      - temperature
+                      - rainfall
+                      - vegetation_index
+      responses:
+        '200':
+          description: Context-aware prediction enabled.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+              examples:
+                - summary: 'Example 1: Context Confirmed'
+                  value:
+                    message: Context-aware prediction successfully enabled.
+                - summary: 'Example 2: Context Confirmed for Monthly'
+                  value:
+                    message: Context-aware prediction successfully enabled.
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1: Context Data Missing'
+                  value:
+                    error: Context data is required.
+                - summary: 'Example 2: Invalid parameters'
+                  value:
+                    error: Context data parameters invalid.
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1: Context Error'
+                  value:
+                    error: Unexpected error during enabling context-aware prediction.
+                - summary: 'Example 2: Server is down'
+                  value:
+                    error: Context aware service is currently unavailable.
+      security:
+        - OAuth2:
+            - 'write:userfiles'
+  /ai/data-quality:
+    post:
+      summary: Perform data quality checks.
+      description: >
+        Perform comprehensive data quality checks and generate a detailed
+        report.
+      operationId: ai_dataQuality_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input_file:
+                  type: string
+                  format: base64
+                  description: Base64-encoded dataset to analyze for quality.
+                quality_checks:
+                  type: array
+                  items:
+                    type: string
+                  description: >-
+                    List of quality checks to perform (e.g., missing values,
+                    outliers).
+                examples:
+                - summary: 'Example 1: Missing Values Check'
+                  value:
+                    input_file: >-
+                      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR42mP8/wAAAwAB
+                    quality_checks:
+                      - missing_values
+                - summary: 'Example 2: Outliers Check'
+                  value:
+                    input_file: >-
+                      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR42mP8/wAAAwAB
+                    quality_checks:
+                      - outliers
+      responses:
+        '200':
+          description: Data quality checks completed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report_url:
+                    type: string
+                    description: URL to the generated quality report.
+              examples:
+                - summary: 'Example 1: Quality Report Link'
+                  value:
+                    report_url: 'https: //mo-overlord.tech/reports/quality_report.pdf'
+                - summary: 'Example 2:  Quality Report Link2'
+                  value:
+                    report_url: 'https: //mo-overlord.tech/reports/quality_report2.pdf'
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1: Input file Missing'
+                  value:
+                    error: Input file is required.
+                - summary: 'Example 2: Invalid quality Checks '
+                  value:
+                    error: Quality checks not valid
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1: Data quality failure'
+                  value:
+                    error: Unexpected error during data quality checks.
+                - summary: 'Example 2: Server Unavailable'
+                  value:
+                    error: Data Quality service is unavailable at this time.
+      security:
+        - OAuth2:
+            - 'write:userfiles'
+  /ai/movements:
+    get:
+      summary: Predict movements of rodent populations.
+      description: >
+        Forecast potential future movements of Mastomys natalensis populations
+        based on environmental factors and historical data.
+      operationId: ai_movements_get
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          schema:
+            type: number
+            description: Latitude of the location for prediction.
+        - name: longitude
+          in: query
+          required: true
+          schema:
+            type: number
+            description: Longitude of the location for prediction.
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            description: Date for prediction in `YYYY-MM-DD` format.
+      responses:
+        '200':
+          description: Predicted movements.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MovementPredictionResponse'
+              examples:
+                - summary: 'Example 1: Lagos Movement'
+                  value:
+                    - status: success
+                      data:
+                        predictions:
+                          - latitude: 6.5244
+                            longitude: 3.3792
+                            suitability_score: 0.87
+                            confidence: 0.9
+                          - latitude: 7.5
+                            longitude: 3.8
+                            suitability_score: 0.8
+                            confidence: 0.85
+                - summary: 'Example 2: Abuja Movement'
+                  value:
+                    - status: success
+                      data:
+                        predictions:
+                          - latitude: 9.0765
+                            longitude: 7.3986
+                            suitability_score: 0.7
+                            confidence: 0.8
+                          - latitude: 8.9
+                            longitude: 7.5
+                            suitability_score: 0.65
+                            confidence: 0.75
+        '400':
+          description: Invalid request parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1: Coordinates Missing'
+                  value:
+                    error: Latitude and longitude required.
+                - summary: 'Example 2: Invalid Date'
+                  value:
+                    error: Date is not a valid format.
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1: Prediction Service Failed'
+                  value:
+                    error: Prediction service failed.
+                - summary: 'Example 2: Prediction Error'
+                  value:
+                    error: Unable to predict movement at this time.
+      security:
+        - OAuth2:
+            - 'read:userfiles'
+  /ai/rate-limiting:
+    post:
+      summary: Configure rate limiting.
+      description: >
+        Configure rate limits for API usage to prevent overloading and ensure
+        stable performance.
+      operationId: ai_rateLimiting_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RateLimitingBody'
+            examples:
+              - summary: 'Example 1: Standard Rate Limit'
+                value:
+                  max_requests_per_minute: 100
+                  burst_capacity: 20
+              - summary: 'Example 2: High Rate Limit'
+                value:
+                  max_requests_per_minute: 200
+                  burst_capacity: 50
+      responses:
+        '200':
+          description: Rate limiting configured successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+              examples:
+                - summary: 'Example 1: Rate Limit Success'
+                  value:
+                    message: Rate limiting applied successfully.
+                - summary: 'Example 2: Rate Limit Success 2'
+                  value:
+                    message: Rate limiting applied successfully.
+        '400':
+          description: Invalid request parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1:  Missing Parameters'
+                  value:
+                    error: Rate limiting requires request parameters.
+                - summary: 'Example 2: Invalid Parameter'
+                  value:
+                    error: burst capacity should be a number
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1: Rate limiting Failure'
+                  value:
+                    error: Rate limiting service failed.
+                - summary: 'Example 2: Service unavailable'
+                  value:
+                    error: Rate limiting service is currently unavailable.
+      security:
+        - OAuth2:
+            - 'write:userfiles'
+  /ai/caching:
+    post:
+      summary: Configure caching strategies.
+      description: >
+        Configure caching strategies to optimize API performance and reduce
+        redundant data processing.
+      operationId: ai_caching_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CachingBody'
+            examples:
+              - summary: 'Example 1: In Memory Cache'
+                value:
+                  cache_type: in-memory
+                  expiration_time: 300
+              - summary: 'Example 2: Distributed Cache'
+                value:
+                  cache_type: distributed
+                  expiration_time: 3600
+      responses:
+        '200':
+          description: Caching configuration applied successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+              examples:
+                - summary: 'Example 1: Cache Configured'
+                  value:
+                    message: Caching strategy successfully applied.
+                - summary: 'Example 2: Distributed Cache configured'
+                  value:
+                    message: Caching strategy successfully applied.
+        '400':
+          description: Invalid request parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+              examples:
+                - summary: 'Example 1: Missing Parameter'
+                  value:
+                    error: Missing Parameters for caching.
+                - summary: 'Example 2: Invalid Parameters'
+                  value:
+                    error: Caching type not valid.
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: null
+components:
+  securitySchemes:
+    openAIAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+
+                    }
